@@ -27,15 +27,11 @@ func main() {
 
 	fs := http.FileServer(http.Dir(webDir))
 	http.Handle("/", fs)
-	http.HandleFunc("/api/", serveApi)
+
+	api := internal.NewAPI(config)
+	http.HandleFunc("/api/outlet_group/", api.ValidateRequest(api.HandleOutletGroupRequest))
+	http.HandleFunc("/api/outlet/", api.ValidateRequest(api.HandleOutletRequest))
 
 	log.Printf("Listening on %s...\n", listenAddress)
 	http.ListenAndServe(listenAddress, nil)
-}
-
-func serveApi(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("api call"))
-
-	log.Println(r.RequestURI)
 }
