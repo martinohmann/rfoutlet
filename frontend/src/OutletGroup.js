@@ -1,11 +1,9 @@
 import React from 'react';
-import {List,ListItem} from 'material-ui/List';
-import Subheader from 'material-ui/Subheader';
-import Toggle from 'material-ui/Toggle';
-import Outlet from './Outlet';
-
+import { List } from 'material-ui/List';
 import FlatButton from 'material-ui/FlatButton';
-import {Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle} from 'material-ui/Toolbar';
+import { Toolbar, ToolbarGroup, ToolbarTitle } from 'material-ui/Toolbar';
+
+import Outlet from './Outlet';
 
 class OutletGroup extends React.Component {
   constructor(props, context) {
@@ -41,20 +39,13 @@ class OutletGroup extends React.Component {
 
   registerOutlet(outlet) {
     var outlets = this.state.outlets;
-
     outlets.push(outlet);
-
-    this.setState({
-      outlets: outlets,
-    });
+    this.setState({ outlets: outlets });
   }
 
   updateOutletStates(callback) {
     this.state.outlets.map(outlet => {
-      outlet.setState({
-        isEnabled: callback(outlet),
-        updatedAsSideEffect: true,
-      });
+      return outlet.setState({ isEnabled: callback(outlet) });
     });
   }
 

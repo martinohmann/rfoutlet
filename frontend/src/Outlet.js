@@ -1,5 +1,5 @@
 import React from 'react';
-import {ListItem} from 'material-ui/List';
+import { ListItem } from 'material-ui/List';
 import Toggle from 'material-ui/Toggle';
 
 class Outlet extends React.Component {
@@ -16,20 +16,22 @@ class Outlet extends React.Component {
   }
 
   handleToggle(event, isEnabled) {
-    this.setState({
-      isEnabled: isEnabled,
-    });
-  }
-
-  renderToggle() {
-    return (
-      <Toggle onToggle={this.handleToggle} toggled={this.state.isEnabled} />
-    )
+    this.setState({ isEnabled: isEnabled });
   }
 
   render() {
+    var toggle = (
+      <Toggle
+        onToggle={this.handleToggle}
+        toggled={this.state.isEnabled}
+      />
+    );
+
     return (
-      <ListItem primaryText={this.props.identifier} rightToggle={this.renderToggle()} />
+      <ListItem
+        primaryText={this.props.identifier}
+        rightToggle={toggle}
+      />
     );
   }
 }
