@@ -1,0 +1,8 @@
+hash: 90c058b1114e8c573f2f196e90ed929636fe17e25a5263bb001b7776f5f06510
+updated: 2017-09-29T11:02:54.17349749+02:00
+imports:
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+- name: gopkg.in/yaml.v2
+  version: 1be3d31502d6eabc0dd7ce5b0daab022e14a5538
+testImports: []

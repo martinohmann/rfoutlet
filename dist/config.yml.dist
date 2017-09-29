@@ -1,0 +1,10 @@
+outlet_groups:
+  - identifier: Living Room
+    outlets:
+      - identifier: Lamp 1
+      - identifier: Lamp 2
+      - identifier: TV
+  - identifier: Bed Room
+    outlets:
+      - identifier: Lamp
+      - identifier: Reading Lamp

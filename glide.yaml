@@ -1,0 +1,5 @@
+package: internal
+import:
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+- package: gopkg.in/yaml.v2
