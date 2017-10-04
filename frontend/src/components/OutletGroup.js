@@ -55,17 +55,17 @@ class OutletGroup extends React.Component {
           <ToolbarGroup>
             <IconButton
               iconClassName="material-icons"
-              iconStyle={styles.buttonOn}
-              onClick={(e) => this.handleButtonClick('on') }
-            >
-              flash_on
-            </IconButton>
-            <IconButton
-              iconClassName="material-icons"
               iconStyle={styles.buttonOff}
               onClick={(e) => this.handleButtonClick('off') }
             >
               flash_off
+            </IconButton>
+            <IconButton
+              iconClassName="material-icons"
+              iconStyle={styles.buttonOn}
+              onClick={(e) => this.handleButtonClick('on') }
+            >
+              flash_on
             </IconButton>
             <IconButton
               iconClassName="material-icons"
