@@ -1,6 +1,6 @@
-const apiBaseUri = 'http://127.0.0.1:3334/api';
+import { api } from './config';
 
-function makeApiRequest(requestUri, data, success) {
+export function makeApiRequest(requestUri, data, success) {
   let formData = new FormData();
 
   for (var key in data) {
@@ -9,7 +9,7 @@ function makeApiRequest(requestUri, data, success) {
     }
   }
 
-  fetch(`${apiBaseUri}${requestUri}`, {
+  fetch(api.baseUri + requestUri, {
     method: "POST",
     body: formData,
   }).then(response => {
@@ -21,4 +21,10 @@ function makeApiRequest(requestUri, data, success) {
   });
 }
 
-export default makeApiRequest;
+export function isOutletEnabled(outlet) {
+  if (undefined === outlet || undefined === outlet.state) {
+    return false;
+  }
+
+  return 1 === outlet.state;
+}

@@ -2,7 +2,7 @@ import React from 'react';
 import { ListItem } from 'material-ui/List';
 import Toggle from 'material-ui/Toggle';
 
-import makeApiRequest from './api.js'
+import { makeApiRequest, isOutletEnabled } from '../util'
 
 class Outlet extends React.Component {
   constructor(props, context) {
@@ -11,23 +11,23 @@ class Outlet extends React.Component {
     this.handleToggle = this.handleToggle.bind(this)
 
     this.state = {
-      isEnabled: this.props.attributes.state === 1,
+      isEnabled: isOutletEnabled(props.attributes),
     };
 
     this.props.registerOutlet(this);
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState({
-      isEnabled: nextProps.attributes.state === 1,
-    });
+    let outlet = nextProps.attributes;
+
+    this.setState({ isEnabled: isOutletEnabled(outlet) });
   }
 
   handleToggle(event, isEnabled) {
     let data = { group_id: this.props.groupId, outlet_id: this.props.outletId };
 
-    makeApiRequest('/outlet/toggle', data, result => {
-      this.setState({ isEnabled: result.state === 1 });
+    makeApiRequest('/outlet/toggle', data, outlet => {
+      this.setState({ isEnabled: isOutletEnabled(outlet) });
     });
   }
 

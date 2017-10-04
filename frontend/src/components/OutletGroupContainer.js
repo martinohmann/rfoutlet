@@ -1,14 +1,15 @@
 import React from 'react';
 
 import OutletGroup from './OutletGroup';
-import makeApiRequest from './api.js'
+import { makeApiRequest } from '../util'
+import { styles } from '../config'
 
 class OutletGroupContainer extends React.Component {
   constructor(props, context) {
     super(props, context)
 
     this.state = {
-      outletGroups: props.outletGroups,
+      outletGroups: [],
     };
   }
 
@@ -20,11 +21,11 @@ class OutletGroupContainer extends React.Component {
 
   render() {
     return (
-      <div style={this.props.style}>
-        {this.state.outletGroups.map((attributes, key) =>
+      <div style={styles.outletGroupContainer}>
+        {this.state.outletGroups.map((attributes, groupId) =>
           <OutletGroup
-            key={key}
-            groupId={key}
+            key={groupId}
+            groupId={groupId}
             attributes={attributes}
           />
         )}
