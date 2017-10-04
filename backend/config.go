@@ -1,4 +1,4 @@
-package internal
+package backend
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ const DefaultConfigFilename = "config.yml"
 
 // Config type definition
 type Config struct {
-	OutletGroups []*OutletGroup `yaml:"outlet_groups"`
+	OutletGroups []*OutletGroup `yaml:"outlet_groups" json:"outlet_groups"`
 }
 
 // Print prints the current config values

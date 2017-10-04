@@ -1,4 +1,4 @@
-package internal
+package backend
 
 import "fmt"
 
@@ -12,17 +12,17 @@ const DefaultPulseLength = 189
 
 // Outlet type definition
 type Outlet struct {
-	Identifier  string `yaml:"identifier"`
-	PulseLength int    `yaml:"pulse_length"`
-	CodeOn      int    `yaml:"code_on"`
-	CodeOff     int    `yaml:"code_off"`
-	State       int    `yaml:"state"`
+	Identifier  string `yaml:"identifier" json:"identifier"`
+	PulseLength int    `yaml:"pulse_length" json:"pulse_length"`
+	CodeOn      int    `yaml:"code_on" json:"code_on"`
+	CodeOff     int    `yaml:"code_off" json:"code_off"`
+	State       int    `yaml:"state" json:"state"`
 }
 
 // OutletGroup type definition
 type OutletGroup struct {
-	Identifier string    `yaml:"identifier"`
-	Outlets    []*Outlet `yaml:"outlets"`
+	Identifier string    `yaml:"identifier" json:"identifier"`
+	Outlets    []*Outlet `yaml:"outlets" json:"outlets"`
 }
 
 // NewOutletGroup creates a new instance of the Outlet struct
@@ -59,7 +59,7 @@ func (o *Outlet) SwitchOff() error {
 	if err := Transmit(o.CodeOff, o.PulseLength); err != nil {
 		return err
 	}
-	o.State = StateOn
+	o.State = StateOff
 	return nil
 }
 

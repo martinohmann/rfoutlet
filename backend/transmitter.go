@@ -1,8 +1,7 @@
-package internal
+package backend
 
 import (
 	"fmt"
-	"os/exec"
 )
 
 const gpioPin = 0
@@ -13,13 +12,15 @@ const transmitCommand = "codesend"
 func Transmit(code int, pulseLength int) error {
 	fmt.Printf("transmitting code %d with pulse length %d\n", code, pulseLength)
 
-	args := []string{
-		fmt.Sprintf("%d", code),
-		"-p",
-		fmt.Sprintf("%d", gpioPin),
-		"-l",
-		fmt.Sprintf("%d", pulseLength),
-	}
+	return nil
 
-	return exec.Command(transmitCommand, args...).Run()
+	// args := []string{
+	// 	fmt.Sprintf("%d", code),
+	// 	"-p",
+	// 	fmt.Sprintf("%d", gpioPin),
+	// 	"-l",
+	// 	fmt.Sprintf("%d", pulseLength),
+	// }
+
+	// return exec.Command(transmitCommand, args...).Run()
 }

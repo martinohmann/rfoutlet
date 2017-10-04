@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"rf-outlet/internal"
+	"rf-outlet/backend"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 func main() {
 	configFilename := os.Getenv("RF_CONFIG")
 	if configFilename == "" {
-		configFilename = internal.DefaultConfigFilename
+		configFilename = backend.DefaultConfigFilename
 	}
 
 	listenAddress := os.Getenv("LISTEN_ADDRESS")
@@ -22,13 +22,15 @@ func main() {
 		listenAddress = "0.0.0.0:3000"
 	}
 
-	config := internal.ReadConfig(configFilename)
+	config := backend.ReadConfig(configFilename)
 	config.Print()
 
 	fs := http.FileServer(http.Dir(webDir))
 	http.Handle("/", fs)
 
-	api := internal.NewAPI(config)
+	api := backend.NewAPI(config)
+
+	http.HandleFunc("/api/status", api.HandleStatusRequest)
 	http.HandleFunc("/api/outlet_group/", api.ValidateRequest(api.HandleOutletGroupRequest))
 	http.HandleFunc("/api/outlet/", api.ValidateRequest(api.HandleOutletRequest))
 
