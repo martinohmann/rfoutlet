@@ -19,7 +19,7 @@ func main() {
 
 	listenAddress := os.Getenv("LISTEN_ADDRESS")
 	if listenAddress == "" {
-		listenAddress = "0.0.0.0:3000"
+		listenAddress = "0.0.0.0:3333"
 	}
 
 	config := backend.ReadConfig(configFilename)
