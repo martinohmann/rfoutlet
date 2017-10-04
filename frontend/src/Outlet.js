@@ -2,6 +2,8 @@ import React from 'react';
 import { ListItem } from 'material-ui/List';
 import Toggle from 'material-ui/Toggle';
 
+import makeApiRequest from './api.js'
+
 class Outlet extends React.Component {
   constructor(props, context) {
     super(props, context)
@@ -9,14 +11,24 @@ class Outlet extends React.Component {
     this.handleToggle = this.handleToggle.bind(this)
 
     this.state = {
-      isEnabled: this.props.state === 1,
+      isEnabled: this.props.attributes.state === 1,
     };
 
     this.props.registerOutlet(this);
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      isEnabled: nextProps.attributes.state === 1,
+    });
+  }
+
   handleToggle(event, isEnabled) {
-    this.setState({ isEnabled: isEnabled });
+    let data = { group_id: this.props.groupId, outlet_id: this.props.outletId };
+
+    makeApiRequest('/outlet/toggle', data, result => {
+      this.setState({ isEnabled: result.state === 1 });
+    });
   }
 
   render() {
@@ -29,7 +41,7 @@ class Outlet extends React.Component {
 
     return (
       <ListItem
-        primaryText={this.props.identifier}
+        primaryText={this.props.attributes.identifier}
         rightToggle={toggle}
       />
     );

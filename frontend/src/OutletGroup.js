@@ -4,6 +4,7 @@ import FlatButton from 'material-ui/FlatButton';
 import { Toolbar, ToolbarGroup, ToolbarTitle } from 'material-ui/Toolbar';
 
 import Outlet from './Outlet';
+import makeApiRequest from './api.js'
 
 class OutletGroup extends React.Component {
   constructor(props, context) {
@@ -39,26 +40,38 @@ class OutletGroup extends React.Component {
 
   registerOutlet(outlet) {
     var outlets = this.state.outlets;
+
     outlets.push(outlet);
+
     this.setState({ outlets: outlets });
   }
 
-  updateOutletStates(callback) {
-    this.state.outlets.map(outlet => {
-      return outlet.setState({ isEnabled: callback(outlet) });
+  updateOutletStates(action) {
+    let data = { group_id: this.props.groupId };
+
+    makeApiRequest(`/outlet_group/${action}`, data, result => {
+      result.outlets.map((outlet, key) => {
+        if (undefined !== this.state.outlets[key]) {
+          this.state.outlets[key].setState({
+            isEnabled: outlet.state === 1,
+          });
+        }
+
+        return outlet;
+      });
     });
   }
 
   handleOnButtonClick() {
-    this.updateOutletStates(outlet => true);
+    this.updateOutletStates('on');
   }
 
   handleOffButtonClick() {
-    this.updateOutletStates(outlet => false);
+    this.updateOutletStates('off');
   }
 
   handleToggleButtonClick() {
-    this.updateOutletStates(outlet => !outlet.state.isEnabled);
+    this.updateOutletStates('toggle');
   }
 
   render() {
@@ -66,7 +79,7 @@ class OutletGroup extends React.Component {
       <List>
         <Toolbar style={this.styles.toolbar}>
           <ToolbarGroup>
-            <ToolbarTitle text={this.props.identifier} style={this.styles.title} />
+            <ToolbarTitle text={this.props.attributes.identifier} style={this.styles.title} />
           </ToolbarGroup>
           <ToolbarGroup>
             <FlatButton
@@ -91,11 +104,12 @@ class OutletGroup extends React.Component {
             />
           </ToolbarGroup>
         </Toolbar>
-        {this.props.outlets.map((outlet, key) =>
+        {this.props.attributes.outlets.map((attributes, key) =>
           <Outlet
             key={key}
-            identifier={outlet.identifier}
-            state={outlet.state}
+            outletId={key}
+            groupId={this.props.groupId}
+            attributes={attributes}
             registerOutlet={this.registerOutlet}
           />
         )}
