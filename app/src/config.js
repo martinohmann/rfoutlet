@@ -1,7 +1,7 @@
 import { cyan500, pink500 } from 'material-ui/styles/colors';
 
 export const strings = {
-  appTitle: "Outlet Control",
+  appTitle: "rfoutlet",
   on: "On",
   off: "Off",
   toggle: "Toggle",
