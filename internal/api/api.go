@@ -1,13 +1,10 @@
-package backend
+package api
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
+
+	"github.com/martinohmann/rfoutlet/internal/outlet"
 )
 
 const (
@@ -21,10 +18,10 @@ type APIHandlerFunc func(http.ResponseWriter, *http.Request, string, int)
 var validActions = []string{ActionOn, ActionOff, ActionToggle}
 
 type API struct {
-	config *Config
+	config *outlet.Config
 }
 
-func NewAPI(config *Config) *API {
+func New(config *outlet.Config) *API {
 	return &API{
 		config: config,
 	}
@@ -111,35 +108,6 @@ func (a *API) HandleOutletRequest(w http.ResponseWriter, r *http.Request, action
 	renderJSON(w, outlet, http.StatusOK)
 }
 
-func parseIntField(r *http.Request, fieldName string) (int, error) {
-	rawValue := r.FormValue(fieldName)
-	if rawValue == "" {
-		return 0, fmt.Errorf("%s field missing", fieldName)
-	}
-
-	id, err := strconv.Atoi(rawValue)
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
-}
-
-func parseAction(r *http.Request) (string, error) {
-	urlParts := strings.Split(r.URL.Path, "/")
-
-	if len(urlParts) < 3 {
-		return "", errors.New("invalid url path")
-	}
-
-	action := urlParts[3]
-	if !isValidAction(action) {
-		return "", fmt.Errorf("%s is not a valid action", action)
-	}
-
-	return action, nil
-}
-
 func isValidAction(action string) bool {
 	for _, validAction := range validActions {
 		if action == validAction {
@@ -147,30 +115,4 @@ func isValidAction(action string) bool {
 		}
 	}
 	return false
-}
-
-func renderJSON(w http.ResponseWriter, payload interface{}, statusCode int) {
-	responseBody, err := json.Marshal(payload)
-
-	if err != nil {
-		renderJSONError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(statusCode)
-	w.Write(responseBody)
-}
-
-func renderJSONError(w http.ResponseWriter, msg string, statusCode int) {
-	payload := make(map[string]string)
-	payload["error"] = msg
-
-	responseBody, _ := json.Marshal(payload)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(statusCode)
-	w.Write(responseBody)
 }

@@ -1,6 +1,10 @@
-package backend
+package outlet
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/martinohmann/rfoutlet/internal/gpio"
+)
 
 const (
 	StateUnknown = iota
@@ -9,6 +13,13 @@ const (
 )
 
 const DefaultPulseLength = 189
+
+// Switcher defines the interface for a toggleable switch
+type Switcher interface {
+	SwitchOn() error
+	SwitchOff() error
+	ToggleState() error
+}
 
 // Outlet type definition
 type Outlet struct {
@@ -19,13 +30,7 @@ type Outlet struct {
 	State       int    `yaml:"state" json:"state"`
 }
 
-// OutletGroup type definition
-type OutletGroup struct {
-	Identifier string    `yaml:"identifier" json:"identifier"`
-	Outlets    []*Outlet `yaml:"outlets" json:"outlets"`
-}
-
-// NewOutletGroup creates a new instance of the Outlet struct
+// NewOutlet creates a new outlet
 func NewOutlet(identifier string, pulseLength int, codeOn int, codeOff int) *Outlet {
 	return &Outlet{
 		Identifier:  identifier,
@@ -40,26 +45,28 @@ func (o *Outlet) ToggleState() error {
 	switch o.State {
 	case StateOn:
 		return o.SwitchOff()
-	case StateOff:
-		return o.SwitchOn()
 	default:
 		return o.SwitchOn()
 	}
 }
 
 func (o *Outlet) SwitchOn() error {
-	if err := Transmit(o.CodeOn, o.PulseLength); err != nil {
+	if err := gpio.Transmit(o.CodeOn, o.PulseLength); err != nil {
 		return err
 	}
+
 	o.State = StateOn
+
 	return nil
 }
 
 func (o *Outlet) SwitchOff() error {
-	if err := Transmit(o.CodeOff, o.PulseLength); err != nil {
+	if err := gpio.Transmit(o.CodeOff, o.PulseLength); err != nil {
 		return err
 	}
+
 	o.State = StateOff
+
 	return nil
 }
 
@@ -83,53 +90,6 @@ func (o *Outlet) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	*o = Outlet(raw)
+
 	return nil
-}
-
-// NewOutletGroup creates a new instance of the OutletGroup struct
-func NewOutletGroup(identifier string) *OutletGroup {
-	return &OutletGroup{Identifier: identifier}
-}
-
-func (og *OutletGroup) AddOutlet(outlet *Outlet) {
-	og.Outlets = append(og.Outlets, outlet)
-}
-
-func (og *OutletGroup) Outlet(offset int) (*Outlet, error) {
-	if offset >= 0 && len(og.Outlets) > offset {
-		return og.Outlets[offset], nil
-	}
-	return nil, fmt.Errorf("invalid offset %d", offset)
-}
-
-func (og *OutletGroup) ToggleState() error {
-	for _, o := range og.Outlets {
-		if err := o.ToggleState(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (og *OutletGroup) SwitchOn() error {
-	for _, o := range og.Outlets {
-		if err := o.SwitchOn(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (og *OutletGroup) SwitchOff() error {
-	for _, o := range og.Outlets {
-		if err := o.SwitchOff(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// String returns the string representation of an OutletGroup
-func (og *OutletGroup) String() string {
-	return fmt.Sprintf("OutletGroup{Identifier: \"%s\"}", og.Identifier)
 }

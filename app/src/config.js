@@ -42,5 +42,5 @@ export const styles = {
 };
 
 export const api = {
-  baseUri: `http://${window.location.hostname}:3333/api`,
+  baseUri: `http://${window.location.hostname}:${window.location.port}/api`,
 };

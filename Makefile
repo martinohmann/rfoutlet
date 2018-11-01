@@ -1,8 +1,25 @@
-PROGRAM_NAME := rf-outlet
+all: deps deps-app build build-app
 
-DEPLOY_ROOT ?= /tmp/$(PROGRAM_NAME)
+.PHONY: deps
+deps:
+	go get github.com/Masterminds/glide
+	glide install
 
-default: build
+.PHONY: deps-app
+deps-app:
+	cd app && npm install
+
+.PHONY: build
+build:
+	go build ./cmd/rfoutlet
+
+.PHONY: build-app
+build-app:
+	cd app && yarn build
+
+.PHONY: run
+run: build
+	./rfoutlet
 
 .PHONY: test
 test:
@@ -12,22 +29,8 @@ test:
 coverage:
 	scripts/coverage
 
-.PHONY: deps
-deps:
-	go get github.com/Masterminds/glide
-	glide install
-	cd frontend && npm install
-
-.PHONY: build
-build:
-	go build
-	cd frontend && yarn build
-
-.PHONY: run
-run:
-	go run main.go
 
 .PHONY: clean
 clean:
 	rm -rf vendor/
-	rm $(PROGRAM_NAME)
+	rm rfoutlet
