@@ -1,6 +1,10 @@
 package outlet
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/martinohmann/rfoutlet/internal/gpio"
+)
 
 // OutletGroup type definition
 type OutletGroup struct {
@@ -25,9 +29,9 @@ func (og *OutletGroup) Outlet(offset int) (*Outlet, error) {
 	return nil, fmt.Errorf("invalid offset %d", offset)
 }
 
-func (og *OutletGroup) ToggleState() error {
+func (og *OutletGroup) ToggleState(t gpio.CodeTransmitter) error {
 	for _, o := range og.Outlets {
-		if err := o.ToggleState(); err != nil {
+		if err := o.ToggleState(t); err != nil {
 			return err
 		}
 	}
@@ -35,9 +39,9 @@ func (og *OutletGroup) ToggleState() error {
 	return nil
 }
 
-func (og *OutletGroup) SwitchOn() error {
+func (og *OutletGroup) SwitchOn(t gpio.CodeTransmitter) error {
 	for _, o := range og.Outlets {
-		if err := o.SwitchOn(); err != nil {
+		if err := o.SwitchOn(t); err != nil {
 			return err
 		}
 	}
@@ -45,9 +49,9 @@ func (og *OutletGroup) SwitchOn() error {
 	return nil
 }
 
-func (og *OutletGroup) SwitchOff() error {
+func (og *OutletGroup) SwitchOff(t gpio.CodeTransmitter) error {
 	for _, o := range og.Outlets {
-		if err := o.SwitchOff(); err != nil {
+		if err := o.SwitchOff(t); err != nil {
 			return err
 		}
 	}

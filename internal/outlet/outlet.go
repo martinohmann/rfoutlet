@@ -16,9 +16,9 @@ const DefaultPulseLength = 189
 
 // Switcher defines the interface for a toggleable switch
 type Switcher interface {
-	SwitchOn() error
-	SwitchOff() error
-	ToggleState() error
+	SwitchOn(gpio.CodeTransmitter) error
+	SwitchOff(gpio.CodeTransmitter) error
+	ToggleState(gpio.CodeTransmitter) error
 }
 
 // Outlet type definition
@@ -29,7 +29,6 @@ type Outlet struct {
 	CodeOn      int    `yaml:"code_on" json:"code_on"`
 	CodeOff     int    `yaml:"code_off" json:"code_off"`
 	State       int    `yaml:"state" json:"state"`
-	transmit    gpio.TransmitFunc
 }
 
 // NewOutlet creates a new outlet
@@ -41,21 +40,20 @@ func NewOutlet(identifier string, gpioPin int, pulseLength int, codeOn int, code
 		CodeOn:      codeOn,
 		CodeOff:     codeOff,
 		State:       StateUnknown,
-		transmit:    gpio.Transmit,
 	}
 }
 
-func (o *Outlet) ToggleState() error {
+func (o *Outlet) ToggleState(t gpio.CodeTransmitter) error {
 	switch o.State {
 	case StateOn:
-		return o.SwitchOff()
+		return o.SwitchOff(t)
 	default:
-		return o.SwitchOn()
+		return o.SwitchOn(t)
 	}
 }
 
-func (o *Outlet) SwitchOn() error {
-	if err := o.transmit(o.CodeOn, o.GpioPin, o.PulseLength); err != nil {
+func (o *Outlet) SwitchOn(t gpio.CodeTransmitter) error {
+	if err := t.Transmit(o.CodeOn, o.PulseLength); err != nil {
 		return err
 	}
 
@@ -64,18 +62,14 @@ func (o *Outlet) SwitchOn() error {
 	return nil
 }
 
-func (o *Outlet) SwitchOff() error {
-	if err := o.transmit(o.CodeOff, o.GpioPin, o.PulseLength); err != nil {
+func (o *Outlet) SwitchOff(t gpio.CodeTransmitter) error {
+	if err := t.Transmit(o.CodeOff, o.PulseLength); err != nil {
 		return err
 	}
 
 	o.State = StateOff
 
 	return nil
-}
-
-func (o *Outlet) SetTransmitFunc(f gpio.TransmitFunc) {
-	o.transmit = f
 }
 
 // String returns the string representation of an Outlet
@@ -90,7 +84,6 @@ func (o *Outlet) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	raw := rawOutlet{
 		PulseLength: DefaultPulseLength,
-		transmit:    gpio.Transmit,
 		State:       StateUnknown,
 	}
 

@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/martinohmann/rfoutlet/internal/api"
+	"github.com/martinohmann/rfoutlet/internal/gpio"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 )
 
@@ -14,20 +15,23 @@ const (
 	defaultWebDir         = "app/build"
 	defaultListenAddress  = "0.0.0.0:3333"
 	defaultConfigFilename = "config.yml"
+	defaultGpioPin        = 0
 )
 
 var (
 	webDir         = flag.String("web-dir", defaultWebDir, "web directory")
 	configFilename = flag.String("config", defaultConfigFilename, "config filename")
 	listenAddress  = flag.String("listen-address", defaultListenAddress, "listen address")
+	gpioPin        = flag.Int("gpio-pin", defaultGpioPin, "gpio pin to transmit on")
 )
 
 func main() {
 	flag.Parse()
 
-	config := outlet.ReadConfig(*configFilename)
+	outletConfig := outlet.ReadConfig(*configFilename)
+	transmitter := gpio.NewCodesendTransmitter(*gpioPin)
 
-	api := api.New(config)
+	api := api.New(outletConfig, transmitter)
 
 	logger := log.New(os.Stdout, "http: ", log.LstdFlags|log.Lshortfile)
 
@@ -44,8 +48,6 @@ func main() {
 	}
 
 	logger.Printf("Listening on %s\n", *listenAddress)
-
-	config.Print()
 
 	server.ListenAndServe()
 }

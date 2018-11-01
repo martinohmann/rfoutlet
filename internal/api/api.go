@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/martinohmann/rfoutlet/internal/gpio"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 )
 
@@ -26,12 +27,14 @@ func init() {
 }
 
 type API struct {
-	config *outlet.Config
+	config      *outlet.Config
+	transmitter gpio.CodeTransmitter
 }
 
-func New(config *outlet.Config) *API {
+func New(config *outlet.Config, transmitter gpio.CodeTransmitter) *API {
 	return &API{
-		config: config,
+		config:      config,
+		transmitter: transmitter,
 	}
 }
 
@@ -69,7 +72,7 @@ func (a *API) HandleOutletGroupRequest(w http.ResponseWriter, r *http.Request, a
 		return
 	}
 
-	handleSwitchRequest(w, outletGroup, action)
+	handleSwitchRequest(w, outletGroup, a.transmitter, action)
 }
 
 func (a *API) HandleOutletRequest(w http.ResponseWriter, r *http.Request, action string, groupId int) {
@@ -91,19 +94,19 @@ func (a *API) HandleOutletRequest(w http.ResponseWriter, r *http.Request, action
 		return
 	}
 
-	handleSwitchRequest(w, outlet, action)
+	handleSwitchRequest(w, outlet, a.transmitter, action)
 }
 
-func handleSwitchRequest(w http.ResponseWriter, s outlet.Switcher, action string) {
+func handleSwitchRequest(w http.ResponseWriter, s outlet.Switcher, t gpio.CodeTransmitter, action string) {
 	var err error
 
 	switch action {
 	case ActionOn:
-		err = s.SwitchOn()
+		err = s.SwitchOn(t)
 	case ActionOff:
-		err = s.SwitchOff()
+		err = s.SwitchOff(t)
 	case ActionToggle:
-		err = s.ToggleState()
+		err = s.ToggleState(t)
 	}
 
 	if err != nil {
