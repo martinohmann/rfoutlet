@@ -69,11 +69,9 @@ func (t *NativeTransmitter) Transmit(code uint64, pulseLength int) error {
 	pin := rpio.Pin(t.gpioPin)
 	pin.Output()
 
-	var j uint
-
 	for i := 0; i < 10; i++ {
-		for j = 24 - 1; j >= 0; j-- {
-			if code&(1<<j) == 1 {
+		for j := 24 - 1; j >= 0; j-- {
+			if code&(1<<uint64(j)) == 1 {
 				t.send1(pin, pulseLength)
 			} else {
 				t.send0(pin, pulseLength)
