@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/martinohmann/rfoutlet/internal/api"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
@@ -28,14 +29,34 @@ func main() {
 
 	api := api.New(config)
 
-	http.Handle("/", http.FileServer(http.Dir(*webDir)))
-	http.HandleFunc("/api/status", api.HandleStatusRequest)
-	http.HandleFunc("/api/outlet_group/", api.ValidateRequest(api.HandleOutletGroupRequest))
-	http.HandleFunc("/api/outlet/", api.ValidateRequest(api.HandleOutletRequest))
+	logger := log.New(os.Stdout, "http: ", log.LstdFlags|log.Lshortfile)
 
-	log.Printf("Listening on %s\n", *listenAddress)
+	router := http.NewServeMux()
+
+	router.Handle("/", http.FileServer(http.Dir(*webDir)))
+	router.HandleFunc("/api/status", api.HandleStatusRequest)
+	router.HandleFunc("/api/outlet_group/", api.ValidateRequest(api.HandleOutletGroupRequest))
+	router.HandleFunc("/api/outlet/", api.ValidateRequest(api.HandleOutletRequest))
+
+	server := &http.Server{
+		Addr:    *listenAddress,
+		Handler: logging(logger)(router),
+	}
+
+	logger.Printf("Listening on %s\n", *listenAddress)
 
 	config.Print()
 
-	http.ListenAndServe(*listenAddress, nil)
+	server.ListenAndServe()
+}
+
+func logging(logger *log.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				logger.Println(r.Method, r.URL.Path, r.RemoteAddr, r.UserAgent())
+			}()
+			next.ServeHTTP(w, r)
+		})
+	}
 }

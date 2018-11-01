@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/martinohmann/rfoutlet/internal/outlet"
@@ -61,18 +60,7 @@ func (a *API) HandleOutletGroupRequest(w http.ResponseWriter, r *http.Request, a
 		return
 	}
 
-	switch action {
-	case ActionOn:
-		_ = outletGroup.SwitchOn()
-	case ActionOff:
-		_ = outletGroup.SwitchOff()
-	case ActionToggle:
-		_ = outletGroup.ToggleState()
-	}
-
-	log.Printf("%s, action: %s, group_id: %d\n", r.RequestURI, action, groupId)
-
-	renderJSON(w, outletGroup, http.StatusOK)
+	handleSwitchRequest(w, outletGroup, action)
 }
 
 func (a *API) HandleOutletRequest(w http.ResponseWriter, r *http.Request, action string, groupId int) {
@@ -94,18 +82,27 @@ func (a *API) HandleOutletRequest(w http.ResponseWriter, r *http.Request, action
 		return
 	}
 
+	handleSwitchRequest(w, outlet, action)
+}
+
+func handleSwitchRequest(w http.ResponseWriter, s outlet.Switcher, action string) {
+	var err error
+
 	switch action {
 	case ActionOn:
-		_ = outlet.SwitchOn()
+		err = s.SwitchOn()
 	case ActionOff:
-		_ = outlet.SwitchOff()
+		err = s.SwitchOff()
 	case ActionToggle:
-		_ = outlet.ToggleState()
+		err = s.ToggleState()
 	}
 
-	log.Printf("%s, action: %s, group_id: %d, outlet_id: %d\n", r.RequestURI, action, groupId, outletId)
+	if err != nil {
+		renderJSONError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	renderJSON(w, outlet, http.StatusOK)
+	renderJSON(w, s, http.StatusOK)
 }
 
 func isValidAction(action string) bool {
