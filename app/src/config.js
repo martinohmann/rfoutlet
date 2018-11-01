@@ -1,4 +1,4 @@
-import { cyan500, pink500 } from 'material-ui/styles/colors';
+import { red500, green500 } from 'material-ui/styles/colors';
 
 export const strings = {
   appTitle: "rfoutlet",
@@ -34,13 +34,13 @@ export const styles = {
     fontSize: 12,
   },
   buttonOn: {
-    color: cyan500,
+    color: green500,
   },
   buttonOff: {
-    color: pink500,
+    color: red500,
   },
 };
 
 export const api = {
-  baseUri: `http://${window.location.hostname}:${window.location.port}/api`,
+  baseUri: `/api`,
 };
