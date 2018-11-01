@@ -1,6 +1,8 @@
-hash: 18924544309314359b53f32771203cfa39c5987a3f9571a364341ee77020899f
-updated: 2018-11-01T19:19:35.245501131+01:00
+hash: e16587deef129ddc51b1e0267af1de5e6ea8891b281df5cc62b194fa539f286a
+updated: 2018-11-01T23:36:04.647056471+01:00
 imports:
+- name: github.com/stianeikeland/go-rpio
+  version: 019f406b4939d0ac8fb6801637506f0e2fe872d3
 - name: github.com/stretchr/testify
   version: f35b8ab0b5a2cef36673838d662e249dd9c94686
 - name: gopkg.in/yaml.v2
