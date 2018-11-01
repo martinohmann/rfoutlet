@@ -17,6 +17,8 @@ func renderJSON(w http.ResponseWriter, payload interface{}, statusCode int) {
 }
 
 func renderJSONError(w http.ResponseWriter, msg string, statusCode int) {
+	logger.Println("error: ", msg)
+
 	payload := make(map[string]string)
 	payload["error"] = msg
 

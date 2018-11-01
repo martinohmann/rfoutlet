@@ -1,7 +1,9 @@
 package api
 
 import (
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 )
@@ -14,7 +16,14 @@ const (
 
 type APIHandlerFunc func(http.ResponseWriter, *http.Request, string, int)
 
-var validActions = []string{ActionOn, ActionOff, ActionToggle}
+var (
+	validActions = []string{ActionOn, ActionOff, ActionToggle}
+	logger       *log.Logger
+)
+
+func init() {
+	logger = log.New(os.Stdout, "api: ", log.LstdFlags|log.Lshortfile)
+}
 
 type API struct {
 	config *outlet.Config

@@ -29,6 +29,7 @@ type Outlet struct {
 	CodeOn      int    `yaml:"code_on" json:"code_on"`
 	CodeOff     int    `yaml:"code_off" json:"code_off"`
 	State       int    `yaml:"state" json:"state"`
+	transmit    gpio.TransmitFunc
 }
 
 // NewOutlet creates a new outlet
@@ -40,6 +41,7 @@ func NewOutlet(identifier string, gpioPin int, pulseLength int, codeOn int, code
 		CodeOn:      codeOn,
 		CodeOff:     codeOff,
 		State:       StateUnknown,
+		transmit:    gpio.Transmit,
 	}
 }
 
@@ -53,7 +55,7 @@ func (o *Outlet) ToggleState() error {
 }
 
 func (o *Outlet) SwitchOn() error {
-	if err := gpio.Transmit(o.CodeOn, o.GpioPin, o.PulseLength); err != nil {
+	if err := o.transmit(o.CodeOn, o.GpioPin, o.PulseLength); err != nil {
 		return err
 	}
 
@@ -63,13 +65,17 @@ func (o *Outlet) SwitchOn() error {
 }
 
 func (o *Outlet) SwitchOff() error {
-	if err := gpio.Transmit(o.CodeOff, o.GpioPin, o.PulseLength); err != nil {
+	if err := o.transmit(o.CodeOff, o.GpioPin, o.PulseLength); err != nil {
 		return err
 	}
 
 	o.State = StateOff
 
 	return nil
+}
+
+func (o *Outlet) SetTransmitFunc(f gpio.TransmitFunc) {
+	o.transmit = f
 }
 
 // String returns the string representation of an Outlet
@@ -84,6 +90,7 @@ func (o *Outlet) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	raw := rawOutlet{
 		PulseLength: DefaultPulseLength,
+		transmit:    gpio.Transmit,
 		State:       StateUnknown,
 	}
 

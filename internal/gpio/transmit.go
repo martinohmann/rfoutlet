@@ -11,6 +11,8 @@ const transmitCommand = "codesend"
 
 var logger *log.Logger
 
+type TransmitFunc func(int, int, int) error
+
 func init() {
 	logger = log.New(os.Stdout, "gpio: ", log.LstdFlags|log.Lshortfile)
 }
