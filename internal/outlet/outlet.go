@@ -25,13 +25,13 @@ type Switcher interface {
 type Outlet struct {
 	Identifier  string `yaml:"identifier" json:"identifier"`
 	PulseLength int    `yaml:"pulse_length" json:"pulse_length"`
-	CodeOn      int    `yaml:"code_on" json:"code_on"`
-	CodeOff     int    `yaml:"code_off" json:"code_off"`
+	CodeOn      uint64 `yaml:"code_on" json:"code_on"`
+	CodeOff     uint64 `yaml:"code_off" json:"code_off"`
 	State       int    `yaml:"state" json:"state"`
 }
 
 // NewOutlet creates a new outlet
-func NewOutlet(identifier string, gpioPin int, pulseLength int, codeOn int, codeOff int) *Outlet {
+func NewOutlet(identifier string, gpioPin int, pulseLength int, codeOn uint64, codeOff uint64) *Outlet {
 	return &Outlet{
 		Identifier:  identifier,
 		PulseLength: pulseLength,

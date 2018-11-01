@@ -17,7 +17,7 @@ func init() {
 }
 
 type CodeTransmitter interface {
-	Transmit(int, int) error
+	Transmit(uint64, int) error
 }
 
 type CodesendTransmitter struct {
@@ -31,7 +31,7 @@ func NewCodesendTransmitter(gpioPin int) *CodesendTransmitter {
 }
 
 // Transmit transmits the given code via the configured gpio pin
-func (t *CodesendTransmitter) Transmit(code int, pulseLength int) error {
+func (t *CodesendTransmitter) Transmit(code uint64, pulseLength int) error {
 	logger.Printf("transmitting code=%d pulseLength=%d\n", code, pulseLength)
 
 	args := []string{
@@ -56,7 +56,7 @@ func NewNativeTransmitter(gpioPin int) *NativeTransmitter {
 }
 
 // Transmit transmits the given code via the configured gpio pin
-func (t *NativeTransmitter) Transmit(code int, pulseLength int) error {
+func (t *NativeTransmitter) Transmit(code uint64, pulseLength int) error {
 	logger.Printf("transmitting code=%d pulseLength=%d\n", code, pulseLength)
 
 	err := rpio.Open()
@@ -68,15 +68,15 @@ func (t *NativeTransmitter) Transmit(code int, pulseLength int) error {
 
 	pin := rpio.Pin(t.gpioPin)
 	pin.Output()
-	binCode := fmt.Sprintf("%024b", code)
+
+	var j uint
 
 	for i := 0; i < 10; i++ {
-		for _, c := range binCode {
-			switch c {
-			case '0':
-				t.send0(pin, pulseLength)
-			case '1':
+		for j = 24 - 1; j >= 0; j-- {
+			if code&(1<<j) == 1 {
 				t.send1(pin, pulseLength)
+			} else {
+				t.send0(pin, pulseLength)
 			}
 		}
 		t.sendSync(pin, pulseLength)
