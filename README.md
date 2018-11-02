@@ -8,6 +8,8 @@ TODO
 Installation
 ------------
 
+### Using `go get`
+
 `node` executable is required to build the frontend. rfoutlet was tested with
 `node v10.11.0+` and `go v1.11+` but may also work with older versions.
 
@@ -17,6 +19,10 @@ cd $GOPATH/github.com/martinohmann/rfoutlet
 make build
 make install
 ```
+
+### Using docker
+
+TODO
 
 Raspberry PI Setup
 ------------------
