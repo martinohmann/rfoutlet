@@ -30,7 +30,7 @@ type Outlet struct {
 }
 
 // NewOutlet creates a new outlet
-func NewOutlet(identifier string, gpioPin int, pulseLength int, protocol int, codeOn uint64, codeOff uint64) *Outlet {
+func NewOutlet(identifier string, pulseLength int, protocol int, codeOn uint64, codeOff uint64) *Outlet {
 	return &Outlet{
 		Identifier:  identifier,
 		PulseLength: pulseLength,
