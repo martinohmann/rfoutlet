@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"time"
 
 	rpio "github.com/stianeikeland/go-rpio"
@@ -47,37 +46,6 @@ func init() {
 type CodeTransmitter interface {
 	Transmit(uint64, int, int) error
 	Close() error
-}
-
-type CodesendTransmitter struct {
-	gpioPin int
-}
-
-func NewCodesendTransmitter(gpioPin int) (*CodesendTransmitter, error) {
-	t := &CodesendTransmitter{
-		gpioPin: gpioPin,
-	}
-
-	return t, nil
-}
-
-// Transmit transmits the given code via the configured gpio pin
-func (t *CodesendTransmitter) Transmit(code uint64, protocol int, pulseLength int) error {
-	logger.Printf("transmitting code=%d pulseLength=%d\n", code, pulseLength)
-
-	args := []string{
-		fmt.Sprintf("%d", code),
-		"-p",
-		fmt.Sprintf("%d", t.gpioPin),
-		"-l",
-		fmt.Sprintf("%d", pulseLength),
-	}
-
-	return exec.Command("codesend", args...).Run()
-}
-
-func (t *CodesendTransmitter) Close() error {
-	return nil
 }
 
 // NativeTransmitter type definition
