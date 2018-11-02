@@ -36,3 +36,12 @@ func parseAction(r *http.Request) (string, error) {
 
 	return action, nil
 }
+
+func isValidAction(action string) bool {
+	for _, validAction := range validActions {
+		if action == validAction {
+			return true
+		}
+	}
+	return false
+}

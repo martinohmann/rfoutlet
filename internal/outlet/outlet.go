@@ -41,6 +41,7 @@ func NewOutlet(identifier string, gpioPin int, pulseLength int, protocol int, co
 	}
 }
 
+// ToggleState toggles the state of the outlet
 func (o *Outlet) ToggleState(t gpio.CodeTransmitter) error {
 	switch o.State {
 	case StateOn:
@@ -50,6 +51,7 @@ func (o *Outlet) ToggleState(t gpio.CodeTransmitter) error {
 	}
 }
 
+// SwitchOn switches the outlet on
 func (o *Outlet) SwitchOn(t gpio.CodeTransmitter) error {
 	if err := o.sendCode(t, o.CodeOn); err != nil {
 		return err
@@ -60,6 +62,7 @@ func (o *Outlet) SwitchOn(t gpio.CodeTransmitter) error {
 	return nil
 }
 
+// SwitchOff switches the outlet off
 func (o *Outlet) SwitchOff(t gpio.CodeTransmitter) error {
 	if err := o.sendCode(t, o.CodeOff); err != nil {
 		return err

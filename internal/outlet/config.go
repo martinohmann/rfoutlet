@@ -23,7 +23,7 @@ func (c *Config) Print() {
 	}
 }
 
-// OutletGroup returns the outlet groups that belongs to given index
+// OutletGroup returns the outlet group at given offset in the config
 func (c *Config) OutletGroup(offset int) (*OutletGroup, error) {
 	if offset >= 0 && len(c.OutletGroups) > offset {
 		return c.OutletGroups[offset], nil
