@@ -7,8 +7,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-const DefaultConfigFilename = "config.yml"
-
 // Config type definition
 type Config struct {
 	OutletGroups []*OutletGroup `yaml:"outlet_groups" json:"outlet_groups"`
@@ -25,10 +23,12 @@ func (c *Config) Print() {
 	}
 }
 
+// OutletGroup returns the outlet groups that belongs to given index
 func (c *Config) OutletGroup(offset int) (*OutletGroup, error) {
 	if offset >= 0 && len(c.OutletGroups) > offset {
 		return c.OutletGroups[offset], nil
 	}
+
 	return nil, fmt.Errorf("invalid offset %d", offset)
 }
 
