@@ -32,20 +32,19 @@ func (c *Config) OutletGroup(offset int) (*OutletGroup, error) {
 	return nil, fmt.Errorf("invalid offset %d", offset)
 }
 
-// ReadConfig reads the outlet config from a yaml file. Will panic if the file
-// is not readable or if it contains invalid yaml
-func ReadConfig(filename string) *Config {
+// ReadConfig reads the outlet config from a yaml file
+func ReadConfig(filename string) (*Config, error) {
 	contents, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	config := &Config{}
 
 	err = yaml.Unmarshal(contents, config)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return config
+	return config, nil
 }

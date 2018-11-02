@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,7 +16,7 @@ import (
 const (
 	webDir                = "../../app/build"
 	defaultListenAddress  = "0.0.0.0:3333"
-	defaultConfigFilename = "config.yml"
+	defaultConfigFilename = "/etc/rfoutlet/config.yml"
 )
 
 var (
@@ -27,10 +28,16 @@ var (
 func main() {
 	flag.Parse()
 
-	outletConfig := outlet.ReadConfig(*configFilename)
+	outletConfig, err := outlet.ReadConfig(*configFilename)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	transmitter, err := gpio.NewTransmitter(*gpioPin)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	defer transmitter.Close()
