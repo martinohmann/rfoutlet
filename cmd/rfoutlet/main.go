@@ -28,7 +28,7 @@ func main() {
 	flag.Parse()
 
 	outletConfig := outlet.ReadConfig(*configFilename)
-	transmitter, err := gpio.NewNativeTransmitter(*gpioPin)
+	transmitter, err := gpio.NewTransmitter(*gpioPin)
 	if err != nil {
 		panic(err)
 	}

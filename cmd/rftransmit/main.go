@@ -29,7 +29,7 @@ func main() {
 
 	code := uint64(c)
 
-	t, err := gpio.NewNativeTransmitter(*gpioPin)
+	t, err := gpio.NewTransmitter(*gpioPin)
 	if err != nil {
 		panic(err)
 	}
