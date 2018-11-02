@@ -5,3 +5,4 @@ import:
 - package: gopkg.in/yaml.v2
 - package: github.com/stianeikeland/go-rpio
   version: ^4.2.0
+- package: github.com/gobuffalo/packr

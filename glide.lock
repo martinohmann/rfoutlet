@@ -1,10 +1,45 @@
-hash: e16587deef129ddc51b1e0267af1de5e6ea8891b281df5cc62b194fa539f286a
-updated: 2018-11-01T23:36:04.647056471+01:00
+hash: c90445e7af6e6e70123a11290da515c7a80b54e6da8e759f84baa2c8f89281e6
+updated: 2018-11-02T17:20:20.51631888+01:00
 imports:
+- name: github.com/gobuffalo/envy
+  version: e0b181c424e7ca1a36f6f2db4bdfd25ef3421e77
+- name: github.com/gobuffalo/logger
+  version: 9cf4dd0efe466cea86fe6aeeee12e3b50bab4ebd
+- name: github.com/gobuffalo/packd
+  version: c8273487026482b912d61bdbffd54705e96d1e8e
+- name: github.com/gobuffalo/packr
+  version: 6b12e1c51b1a3691c784c1b42ac72358009723fd
+  subpackages:
+  - v2
+  - v2/file
+  - v2/file/resolver
+  - v2/file/resolver/encoding/hex
+  - v2/plog
+- name: github.com/joho/godotenv
+  version: c0b86d615e06d6fa5f869364d68f774ba49a86e3
+- name: github.com/karrick/godirwalk
+  version: 2de2192f9e35ce981c152a873ed943b93b79ced4
+- name: github.com/konsorten/go-windows-terminal-sequences
+  version: 5c8c8bd35d3832f5d134ae1e1e375b69a4d25242
+- name: github.com/markbates/oncer
+  version: 05fccaae8fc423476d98fd4c3e4699ba0fbbde48
+- name: github.com/pkg/errors
+  version: c605e284fe17294bda444b34710735b29d1a9d90
+- name: github.com/sirupsen/logrus
+  version: bcd833dfe83d3cebad139e4a29ed79cb2318bf95
 - name: github.com/stianeikeland/go-rpio
   version: 019f406b4939d0ac8fb6801637506f0e2fe872d3
 - name: github.com/stretchr/testify
   version: f35b8ab0b5a2cef36673838d662e249dd9c94686
+- name: golang.org/x/crypto
+  version: 4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06
+  subpackages:
+  - ssh/terminal
+- name: golang.org/x/sys
+  version: 9b800f95dbbc54abff0acf7ee32d88ba4e328c89
+  subpackages:
+  - unix
+  - windows
 - name: gopkg.in/yaml.v2
   version: 1be3d31502d6eabc0dd7ce5b0daab022e14a5538
 testImports: []

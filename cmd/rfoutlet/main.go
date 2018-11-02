@@ -6,19 +6,19 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gobuffalo/packr"
 	"github.com/martinohmann/rfoutlet/internal/api"
 	"github.com/martinohmann/rfoutlet/internal/gpio"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 )
 
 const (
-	defaultWebDir         = "app/build"
+	webDir                = "../../app/build"
 	defaultListenAddress  = "0.0.0.0:3333"
 	defaultConfigFilename = "config.yml"
 )
 
 var (
-	webDir         = flag.String("web-dir", defaultWebDir, "web directory")
 	configFilename = flag.String("config", defaultConfigFilename, "config filename")
 	listenAddress  = flag.String("listen-address", defaultListenAddress, "listen address")
 	gpioPin        = flag.Int("gpio-pin", gpio.DefaultGpioPin, "gpio pin to transmit on")
@@ -35,13 +35,15 @@ func main() {
 
 	defer transmitter.Close()
 
+	box := packr.NewBox(webDir)
+
 	api := api.New(outletConfig, transmitter)
 
 	logger := log.New(os.Stdout, "http: ", log.LstdFlags|log.Lshortfile)
 
 	router := http.NewServeMux()
 
-	router.Handle("/", http.FileServer(http.Dir(*webDir)))
+	router.Handle("/", http.FileServer(box))
 	router.HandleFunc("/api/status", api.HandleStatusRequest)
 	router.HandleFunc("/api/outlet_group/", api.ValidateRequest(api.HandleOutletGroupRequest))
 	router.HandleFunc("/api/outlet/", api.ValidateRequest(api.HandleOutletRequest))
