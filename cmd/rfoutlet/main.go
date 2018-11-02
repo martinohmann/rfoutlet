@@ -23,7 +23,15 @@ var (
 	configFilename = flag.String("config", defaultConfigFilename, "config filename")
 	listenAddress  = flag.String("listen-address", defaultListenAddress, "listen address")
 	gpioPin        = flag.Int("gpio-pin", gpio.DefaultGpioPin, "gpio pin to transmit on")
+	usage          = func() {
+		fmt.Fprintf(os.Stderr, "usage: %s\n", os.Args[0])
+		flag.PrintDefaults()
+	}
 )
+
+func init() {
+	flag.Usage = usage
+}
 
 func main() {
 	flag.Parse()
