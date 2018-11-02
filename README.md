@@ -23,6 +23,11 @@ Raspberry PI Setup
 
 TODO
 
+Outlets
+-------
+
+TODO
+
 Usage example
 -------------
 
@@ -34,10 +39,25 @@ available config values.
 Start the server:
 
 ```sh
-sudo rfoutlet --listen-address 0.0.0.0:3333 --config /etc/rfoutlet/config.yml
+sudo rfoutlet -listen-address 0.0.0.0:3333 -config /etc/rfoutlet/config.yml
 ```
 
 Browse to `locahost:3333`.
+
+By default rfoutlet uses gpio pin 17 (physical 11 / wiringPi 0) for
+transmission of the rf codes. A different pin can be use by providing the
+`-gpio-pin` flag. Check out the [Raspberry Pi pinouts](https://pinout.xyz/) for
+reference.
+
+Code transmission
+-----------------
+
+This repo provides a tool called `rftransmit` to send rf codes. You can use
+this for testing or wrap it with your own outlet control tool.
+
+```sh
+rftransmit -help
+```
 
 Development / Testing
 ---------------------
@@ -48,7 +68,24 @@ transmission of the rf codes is simulated.
 
 Run `make` without arguments to see other available commands.
 
+Todo
+----
+
+- [x] port [codesend](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/codesend.cpp) to golang
+- [ ] port [RFSniffer](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/RFSniffer.cpp) to golang
+- [ ] persist outlet state across server restarts
+- [ ] time switch: switch outlets on/off using user defined rules
+- [ ] make transmission code available as library
+
 License
 -------
 
 rfoutlet is released under the MIT License. See the bundled LICENSE file for details.
+
+Resources
+---------
+
+- [Raspberry Pi pinouts](https://pinout.xyz/)
+- [Wireless Power Outlets](https://timleland.com/wireless-power-outlets/)
+- [ninjablocks 433Utils](https://github.com/ninjablocks/433Utils)
+- [WiringPi](https://projects.drogon.net/raspberry-pi/wiringpi/download-and-install/)
