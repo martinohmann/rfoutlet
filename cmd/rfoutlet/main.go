@@ -15,21 +15,25 @@ const (
 	defaultWebDir         = "app/build"
 	defaultListenAddress  = "0.0.0.0:3333"
 	defaultConfigFilename = "config.yml"
-	defaultGpioPin        = 17
 )
 
 var (
 	webDir         = flag.String("web-dir", defaultWebDir, "web directory")
 	configFilename = flag.String("config", defaultConfigFilename, "config filename")
 	listenAddress  = flag.String("listen-address", defaultListenAddress, "listen address")
-	gpioPin        = flag.Int("gpio-pin", defaultGpioPin, "gpio pin to transmit on")
+	gpioPin        = flag.Int("gpio-pin", gpio.DefaultGpioPin, "gpio pin to transmit on")
 )
 
 func main() {
 	flag.Parse()
 
 	outletConfig := outlet.ReadConfig(*configFilename)
-	transmitter := gpio.NewNativeTransmitter(*gpioPin)
+	transmitter, err := gpio.NewNativeTransmitter(*gpioPin)
+	if err != nil {
+		panic(err)
+	}
+
+	defer transmitter.Close()
 
 	api := api.New(outletConfig, transmitter)
 

@@ -7,14 +7,10 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/gpio"
 )
 
-const (
-	defaultPulseLength = 189
-	defaultGpioPin     = 0
-)
-
 var (
-	pulseLength = flag.Int("pulse-length", defaultPulseLength, "pulse length")
-	gpioPin     = flag.Int("gpio-pin", defaultGpioPin, "gpio pin to transmit on")
+	pulseLength = flag.Int("pulse-length", gpio.DefaultPulseLength, "pulse length")
+	gpioPin     = flag.Int("gpio-pin", gpio.DefaultGpioPin, "gpio pin to transmit on")
+	protocol    = flag.Int("protocol", gpio.DefaultProtocol, "transmission protocol")
 )
 
 func main() {
@@ -33,9 +29,14 @@ func main() {
 
 	code := uint64(c)
 
-	t := gpio.NewNativeTransmitter(*gpioPin)
+	t, err := gpio.NewNativeTransmitter(*gpioPin)
+	if err != nil {
+		panic(err)
+	}
 
-	err = t.Transmit(code, *pulseLength)
+	defer t.Close()
+
+	err = t.Transmit(code, *protocol, *pulseLength)
 	if err != nil {
 		panic(err)
 	}

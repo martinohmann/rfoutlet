@@ -10,28 +10,58 @@ import (
 	rpio "github.com/stianeikeland/go-rpio"
 )
 
-var logger *log.Logger
+const (
+	DefaultGpioPin     = 17
+	DefaultProtocol    = 1
+	DefaultPulseLength = 189
+
+	numRetries = 10
+	bitLength  = 24
+)
+
+type highLow struct {
+	high, low int
+}
+
+type protocol struct {
+	pulseLength     int
+	sync, zero, one highLow
+}
+
+var (
+	logger    *log.Logger
+	protocols = []protocol{
+		protocol{350, highLow{1, 31}, highLow{1, 3}, highLow{3, 1}},
+		protocol{650, highLow{1, 10}, highLow{1, 2}, highLow{2, 1}},
+		protocol{100, highLow{30, 71}, highLow{4, 11}, highLow{9, 6}},
+		protocol{380, highLow{1, 6}, highLow{1, 3}, highLow{3, 1}},
+		protocol{500, highLow{6, 14}, highLow{1, 2}, highLow{2, 1}},
+	}
+)
 
 func init() {
 	logger = log.New(os.Stdout, "gpio: ", log.LstdFlags|log.Lshortfile)
 }
 
 type CodeTransmitter interface {
-	Transmit(uint64, int) error
+	Transmit(uint64, int, int) error
+	Close() error
 }
 
 type CodesendTransmitter struct {
 	gpioPin int
 }
 
-func NewCodesendTransmitter(gpioPin int) *CodesendTransmitter {
-	return &CodesendTransmitter{
+func NewCodesendTransmitter(gpioPin int) (*CodesendTransmitter, error) {
+	t := &CodesendTransmitter{
 		gpioPin: gpioPin,
 	}
+
+	return t, nil
 }
 
 // Transmit transmits the given code via the configured gpio pin
-func (t *CodesendTransmitter) Transmit(code uint64, pulseLength int) error {
+func (t *CodesendTransmitter) Transmit(code uint64, protocol int, pulseLength int) error {
 	logger.Printf("transmitting code=%d pulseLength=%d\n", code, pulseLength)
 
 	args := []string{
@@ -45,59 +75,74 @@ func (t *CodesendTransmitter) Transmit(code uint64, pulseLength int) error {
 	return exec.Command("codesend", args...).Run()
 }
 
-type NativeTransmitter struct {
-	gpioPin int
+func (t *CodesendTransmitter) Close() error {
+	return nil
 }
 
-func NewNativeTransmitter(gpioPin int) *NativeTransmitter {
-	return &NativeTransmitter{
-		gpioPin: gpioPin,
+type NativeTransmitter struct {
+	gpioPin  rpio.Pin
+	protocol protocol
+}
+
+func NewNativeTransmitter(gpioPin int) (*NativeTransmitter, error) {
+	if err := rpio.Open(); err != nil {
+		return nil, err
 	}
+
+	t := &NativeTransmitter{
+		gpioPin: rpio.Pin(gpioPin),
+	}
+
+	t.gpioPin.Output()
+
+	return t, nil
 }
 
 // Transmit transmits the given code via the configured gpio pin
-func (t *NativeTransmitter) Transmit(code uint64, pulseLength int) error {
+func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength int) error {
 	logger.Printf("transmitting code=%d pulseLength=%d\n", code, pulseLength)
 
-	err := rpio.Open()
-	if err != nil {
+	if err := t.selectProtocol(protocol); err != nil {
 		return err
 	}
 
-	defer rpio.Close()
+	t.setPulseLength(pulseLength)
 
-	pin := rpio.Pin(t.gpioPin)
-	pin.Output()
-
-	for i := 0; i < 10; i++ {
-		for j := 24 - 1; j >= 0; j-- {
+	for retry := 0; retry < numRetries; retry++ {
+		for j := bitLength - 1; j >= 0; j-- {
 			if code&(1<<uint64(j)) > 0 {
-				t.send1(pin, pulseLength)
+				t.transmit(t.protocol.one)
 			} else {
-				t.send0(pin, pulseLength)
+				t.transmit(t.protocol.zero)
 			}
 		}
-		t.sendSync(pin, pulseLength)
+		t.transmit(t.protocol.sync)
 	}
 
 	return nil
 }
 
-func (t *NativeTransmitter) send0(pin rpio.Pin, pulseLength int) {
-	t.transmit(pin, 1, 3, pulseLength)
+func (t *NativeTransmitter) Close() error {
+	return rpio.Close()
 }
 
-func (t *NativeTransmitter) send1(pin rpio.Pin, pulseLength int) {
-	t.transmit(pin, 3, 1, pulseLength)
+func (t *NativeTransmitter) selectProtocol(protocol int) error {
+	if protocol < 1 || protocol > len(protocols) {
+		return fmt.Errorf("Protocol %d does not exist", protocol)
+	}
+
+	t.protocol = protocols[protocol-1]
+
+	return nil
 }
 
-func (t *NativeTransmitter) sendSync(pin rpio.Pin, pulseLength int) {
-	t.transmit(pin, 1, 31, pulseLength)
+func (t *NativeTransmitter) setPulseLength(pulseLength int) {
+	t.protocol.pulseLength = pulseLength
 }
 
-func (t *NativeTransmitter) transmit(pin rpio.Pin, highPulses int, lowPulses int, pulseLength int) {
-	pin.High()
-	time.Sleep(time.Microsecond * time.Duration(pulseLength*highPulses))
-	pin.Low()
-	time.Sleep(time.Microsecond * time.Duration(pulseLength*lowPulses))
+func (t *NativeTransmitter) transmit(pulses highLow) {
+	t.gpioPin.High()
+	time.Sleep(time.Microsecond * time.Duration(t.protocol.pulseLength*pulses.high))
+	t.gpioPin.Low()
+	time.Sleep(time.Microsecond * time.Duration(t.protocol.pulseLength*pulses.low))
 }
