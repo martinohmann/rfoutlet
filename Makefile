@@ -12,6 +12,7 @@ deps-app:
 .PHONY: build
 build:
 	go build ./cmd/rfoutlet
+	go build ./cmd/rftransmit
 
 .PHONY: build-app
 build-app:
@@ -33,4 +34,4 @@ coverage:
 .PHONY: clean
 clean:
 	rm -rf vendor/
-	rm rfoutlet
+	rm rfoutlet rftransmit
