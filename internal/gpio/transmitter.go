@@ -71,7 +71,7 @@ func (t *NativeTransmitter) Transmit(code uint64, pulseLength int) error {
 
 	for i := 0; i < 10; i++ {
 		for j := 24 - 1; j >= 0; j-- {
-			if code&(1<<uint64(j)) == 1 {
+			if code&(1<<uint64(j)) > 0 {
 				t.send1(pin, pulseLength)
 			} else {
 				t.send0(pin, pulseLength)
