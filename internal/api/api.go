@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/martinohmann/rfoutlet/internal/gpio"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
 
 const (

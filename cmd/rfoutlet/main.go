@@ -9,8 +9,8 @@ import (
 
 	"github.com/gobuffalo/packr"
 	"github.com/martinohmann/rfoutlet/internal/api"
-	"github.com/martinohmann/rfoutlet/internal/gpio"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
 
 const (

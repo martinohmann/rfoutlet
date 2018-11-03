@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/martinohmann/rfoutlet/internal/gpio"
+	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
 
 var (

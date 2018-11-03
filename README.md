@@ -49,6 +49,15 @@ transmission of the rf codes. A different pin can be use by providing the
 `-gpio-pin` flag. Check out the [Raspberry Pi pinouts](https://pinout.xyz/) for
 reference.
 
+Code sniffing
+-------------
+
+TODO
+
+```sh
+sudo rfsniff -help
+```
+
 Code transmission
 -----------------
 
@@ -56,7 +65,7 @@ This repo provides a tool called `rftransmit` to send rf codes. You can use
 this for testing or wrap it with your own outlet control tool.
 
 ```sh
-rftransmit -help
+sudo rftransmit -help
 ```
 
 Development / Testing
@@ -71,11 +80,16 @@ Run `make` without arguments to see other available commands.
 Todo
 ----
 
-- [x] port [codesend](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/codesend.cpp) to golang
-- [x] port [RFSniffer](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/RFSniffer.cpp) to golang
+- [x] port
+  [codesend](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/codesend.cpp)
+  to golang (see [`cmd/rftransmit`](cmd/rftransmit))
+- [x] port
+  [RFSniffer](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/RFSniffer.cpp)
+  to golang  (see [`cmd/rfsniff`](cmd/rfsniff))
+- [x] make transmitter/receiver code available as library below `pkg/`
 - [ ] persist outlet state across server restarts
+- [ ] use receiver to detect outlet state changes (e.g. via remote control)?
 - [ ] time switch: switch outlets on/off using user defined rules
-- [ ] make transmitter/receiver code available as library
 
 License
 -------
