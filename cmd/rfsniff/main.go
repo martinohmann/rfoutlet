@@ -30,4 +30,6 @@ func main() {
 	receiver.Receive(func(code uint64, pulseLength int64, bitLength uint, protocol int) {
 		fmt.Printf("received code=%d pulseLength=%d bitLength=%d protocol=%d\n", code, pulseLength, bitLength, protocol)
 	})
+
+	receiver.Wait()
 }
