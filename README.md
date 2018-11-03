@@ -22,7 +22,13 @@ make install
 
 ### Using docker
 
-TODO
+Build the image for armv7:
+
+```sh
+make image-rfoutlet-armv7
+```
+
+This will create an image called `mohmann/rfoutlet:armv7`.
 
 Raspberry PI Setup
 ------------------
@@ -34,35 +40,69 @@ Outlets
 
 TODO
 
-Usage example
--------------
+Usage
+-----
 
-`sudo` is required in order to access `/dev/gpiomem`. If not provided,
-rfoutlet looks in `/etc/rfoutlet/config.yml` for its config. Check
+`sudo` is required in order to access `/dev/mem` and `/dev/gpiomem`. If not
+provided, rfoutlet looks in `/etc/rfoutlet/config.yml` for its config (you can
+change that by providing the `-config` flag). Check
 [dist/config.yml](dist/config.yml) for an example config file with all
 available config values.
-
-Start the server:
-
-```sh
-sudo rfoutlet -listen-address 0.0.0.0:3333 -config /etc/rfoutlet/config.yml
-```
-
-Browse to `locahost:3333`.
 
 By default rfoutlet uses gpio pin 17 (physical 11 / wiringPi 0) for
 transmission of the rf codes. A different pin can be use by providing the
 `-gpio-pin` flag. Check out the [Raspberry Pi pinouts](https://pinout.xyz/) for
 reference.
 
+rfoutlet listens on `0.0.0.0:3333` by default but you can change the listen
+address by providing the `-listen-address` flag.
+
+### Installed locally
+
+Start the server and browse to `<raspberry-ip-address>:3333`:
+
+```sh
+sudo rfoutlet -listen-address 0.0.0.0:3333 -config /etc/rfoutlet/config.yml
+```
+
+### Via docker
+
+Start the container and browse to `<raspberry-ip-address>:3333`:
+
+```sh
+docker run --rm \
+    --privileged \
+    -p 3333:3333 \
+    -v $(pwd)/dist/config.yml:/etc/rfoutlet/config.yml \
+    -v /dev/mem:/dev/mem \
+    -v /dev/gpiomem:/dev/gpiomem \
+    mohmann/rfoutlet:armv7
+```
+
+The container has to run in privileged mode in order to be able to access
+`/dev/mem` and `/dev/gpiomem`.
+
 Code transmission
 -----------------
 
 This repo provides a tool called `rftransmit` to send rf codes. You can use
-this for testing or wrap it with your own outlet control tool.
+this for testing or wrap it with your own outlet control tool. Check the help
+for available options:
 
 ```sh
-rftransmit -help
+sudo rftransmit -help
+```
+
+Or using docker:
+
+```sh
+make image-rftransmit-armv7
+docker run --rm \
+    --privileged \
+    -v /dev/mem:/dev/mem \
+    -v /dev/gpiomem:/dev/gpiomem \
+    mohmann/rftransmit:armv7 \
+    -help
 ```
 
 Development / Testing

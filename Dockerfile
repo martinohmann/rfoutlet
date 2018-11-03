@@ -24,7 +24,7 @@ RUN apk --no-cache add git && \
 COPY --from=node-builder /app/build app/build
 
 ARG GOARCH=arm
-ARG GOARM=
+ARG GOARM=7
 
 RUN CGO_ENABLED=0 GOOS=linux packr build ./cmd/rfoutlet
 

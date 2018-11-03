@@ -34,7 +34,6 @@ test: ## run tests
 coverage: ## generate code coverage
 	scripts/coverage
 
-
 .PHONY: clean
 clean: ## clean dependencies and artifacts
 	rm -rf vendor/ app/node_modules/ app/build/
@@ -46,12 +45,19 @@ install: ## install go commands into $GOPATH/bin
 	go install ./cmd/rftransmit
 
 .PHONY: images
-images: image-amd64 image-armv7 ## build docker images
+images: images-amd64 images-armv7 ## build docker images
 
 .PHONY: image-amd64
-image-amd64: ## build amd64 image
+images-amd64: ## build amd64 images
 	docker build --build-arg GOARCH=amd64 -t mohmann/rfoutlet:amd64 .
 
 .PHONY: image-armv7
-image-armv7: ## build armv7 image
-	docker build --build-arg GOARCH=arm --build-arg GOARM=7 -t mohmann/rfoutlet:armv7 .
+images-armv7: image-rfoutlet-armv7 image-rftransmit-armv7 ## build armv7 images
+
+.PHONY: image-rfoutlet-armv7
+image-rfoutlet-armv7: ## build rfoutlet armv7 image
+	docker build -t mohmann/rfoutlet:armv7 .
+
+.PHONY: image-rftransmit-armv7
+image-rftransmit-armv7: ## build rftransmit armv7 image
+	docker build -t mohmann/rftransmit:armv7 -f Dockerfile.rftransmit .
