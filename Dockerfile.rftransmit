@@ -20,4 +20,4 @@ FROM scratch
 
 COPY --from=golang-builder /go/src/github.com/martinohmann/rfoutlet/rftransmit /rftransmit
 
-ENTRYPOINT ["/rfoutlet"]
+ENTRYPOINT ["/rftransmit"]
