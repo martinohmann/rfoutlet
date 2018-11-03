@@ -20,6 +20,7 @@ deps-app: ## install node deps
 .PHONY: build
 build: ## build go commands
 	packr build ./cmd/rfoutlet
+	go build ./cmd/rfsniff
 	go build ./cmd/rftransmit
 
 .PHONY: build-app
