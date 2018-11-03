@@ -11,9 +11,6 @@ FROM golang:1.9-alpine as golang-builder
 
 WORKDIR /go/src/github.com/martinohmann/rfoutlet
 
-ADD cmd/ cmd/
-ADD internal/ internal/
-ADD pkg/ pkg/
 ADD glide.lock .
 ADD glide.yaml .
 
@@ -23,6 +20,10 @@ RUN apk --no-cache add git && \
 	glide install
 
 COPY --from=node-builder /app/build app/build
+
+ADD cmd/ cmd/
+ADD internal/ internal/
+ADD pkg/ pkg/
 
 ARG GOARCH=arm
 ARG GOARM=7

@@ -2,7 +2,7 @@
 
 .PHONY: help
 help:
-	@grep -E '^[a-zA-Z0-9-]+:.*?## .*$$' Makefile | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "[32m%-12s[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9-]+:.*?## .*$$' Makefile | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "[32m%-23s[0m %s\n", $$1, $$2}'
 
 .PHONY: all
 all: deps deps-app build-app build ## install dependencies and build everything
@@ -54,11 +54,15 @@ images-amd64: ## build amd64 images
 	docker build --build-arg GOARCH=amd64 -t mohmann/rfoutlet:amd64 .
 
 .PHONY: image-armv7
-images-armv7: image-rfoutlet-armv7 image-rftransmit-armv7 ## build armv7 images
+images-armv7: image-rfoutlet-armv7 image-rfsniff-armv7 image-rftransmit-armv7 ## build armv7 images
 
 .PHONY: image-rfoutlet-armv7
 image-rfoutlet-armv7: ## build rfoutlet armv7 image
 	docker build -t mohmann/rfoutlet:armv7 .
+
+.PHONY: image-rfsniff-armv7
+image-rfsniff-armv7: ## build rfsniff armv7 image
+	docker build -t mohmann/rfsniff:armv7 -f Dockerfile.rfsniff .
 
 .PHONY: image-rftransmit-armv7
 image-rftransmit-armv7: ## build rftransmit armv7 image

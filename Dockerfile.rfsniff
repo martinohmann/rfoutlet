@@ -16,10 +16,10 @@ ADD pkg/ pkg/
 ARG GOARCH=arm
 ARG GOARM=7
 
-RUN CGO_ENABLED=0 GOOS=linux go build ./cmd/rftransmit
+RUN CGO_ENABLED=0 GOOS=linux go build ./cmd/rfsniff
 
 FROM scratch
 
-COPY --from=golang-builder /go/src/github.com/martinohmann/rfoutlet/rftransmit /rftransmit
+COPY --from=golang-builder /go/src/github.com/martinohmann/rfoutlet/rfsniff /rfsniff
 
-ENTRYPOINT ["/rftransmit"]
+ENTRYPOINT ["/rfsniff"]
