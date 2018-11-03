@@ -55,13 +55,14 @@ func NewNativeReceiver(gpioPin uint) *NativeReceiver {
 
 func (r *NativeReceiver) Receive(f ReceiveFunc) {
 	r.watcher.AddPin(r.gpioPin)
+	r.wg.Add(2)
 
 	go r.watch(r.stopWatching)
 	go r.receive(f, r.stopReceiving)
 }
 
 func (r *NativeReceiver) watch(done chan bool) {
-	r.wg.Add(1)
+	defer r.wg.Done()
 
 	var lastValue uint
 
@@ -82,7 +83,7 @@ func (r *NativeReceiver) watch(done chan bool) {
 }
 
 func (r *NativeReceiver) receive(f ReceiveFunc, done chan bool) {
-	r.wg.Add(1)
+	defer r.wg.Done()
 
 	for {
 		select {
