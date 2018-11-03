@@ -1,5 +1,9 @@
 package gpio
 
+// Most of the receiver code is ported from the rc-switch c++ implementation to
+// go. Check out the rc-switch repository at https://github.com/sui77/rc-switch
+// for the original implementation.
+
 import (
 	"sync"
 	"time"

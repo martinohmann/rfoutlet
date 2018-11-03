@@ -72,10 +72,10 @@ Todo
 ----
 
 - [x] port [codesend](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/codesend.cpp) to golang
-- [ ] port [RFSniffer](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/RFSniffer.cpp) to golang
+- [x] port [RFSniffer](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/RFSniffer.cpp) to golang
 - [ ] persist outlet state across server restarts
 - [ ] time switch: switch outlets on/off using user defined rules
-- [ ] make transmission code available as library
+- [ ] make transmitter/receiver code available as library
 
 License
 -------
