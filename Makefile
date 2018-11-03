@@ -38,9 +38,10 @@ coverage: ## generate code coverage
 .PHONY: clean
 clean: ## clean dependencies and artifacts
 	rm -rf vendor/ app/node_modules/ app/build/
-	rm rfoutlet rftransmit
+	rm rfoutlet rfsniff rftransmit
 
 .PHONY: install
 install: ## install go commands into $GOPATH/bin
 	packr install ./cmd/rfoutlet
+	go install ./cmd/rfsniff
 	go install ./cmd/rftransmit
