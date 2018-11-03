@@ -4,9 +4,10 @@ ADD app/ /app
 
 WORKDIR /app
 
-RUN npm install && yarn build
+RUN npm install && \
+    yarn build
 
-FROM golang:1.11 as golang-builder
+FROM golang:1.9-alpine as golang-builder
 
 WORKDIR /go/src/github.com/martinohmann/rfoutlet
 
@@ -15,7 +16,8 @@ ADD internal/ internal/
 ADD glide.lock .
 ADD glide.yaml .
 
-RUN go get -u github.com/gobuffalo/packr/packr && \
+RUN apk --no-cache add git && \
+    go get -u github.com/gobuffalo/packr/packr && \
 	go get -u github.com/Masterminds/glide && \
 	glide install
 
