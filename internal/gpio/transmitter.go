@@ -6,7 +6,6 @@ package gpio
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -23,13 +22,7 @@ const (
 	bitLength  = 24
 )
 
-var logger *log.Logger
-
-func init() {
-	logger = log.New(os.Stdout, "gpio: ", log.LstdFlags|log.Lshortfile)
-}
-
-// CodeTransmitter defines the interface for a CodeTransmitter
+// CodeTransmitter defines the interface for a rf code transmitter.
 type CodeTransmitter interface {
 	Transmit(uint64, int, int) error
 	Close() error
@@ -51,8 +44,6 @@ func NewNativeTransmitter(gpioPin int) (*NativeTransmitter, error) {
 
 // Transmit transmits a code using given protocol and pulse length
 func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength int) error {
-	logger.Printf("transmitting code=%d pulseLength=%d\n", code, pulseLength)
-
 	if err := t.selectProtocol(protocol); err != nil {
 		return err
 	}
@@ -120,8 +111,6 @@ func NewNullTransmitter(gpioPin int) (*NullTransmitter, error) {
 
 // Transmit transmits the given code via the configured gpio pin
 func (t *NullTransmitter) Transmit(code uint64, protocol int, pulseLength int) error {
-	logger.Printf("simulating transmission code=%d pulseLength=%d\n", code, pulseLength)
-
 	return nil
 }
 

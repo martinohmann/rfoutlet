@@ -2,6 +2,8 @@ package outlet
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/martinohmann/rfoutlet/internal/gpio"
 )
@@ -11,6 +13,12 @@ const (
 	StateOn
 	StateOff
 )
+
+var logger *log.Logger
+
+func init() {
+	logger = log.New(os.Stdout, "outlet: ", log.LstdFlags|log.Lshortfile)
+}
 
 // Switcher defines the interface for a toggleable switch
 type Switcher interface {
@@ -74,6 +82,8 @@ func (o *Outlet) SwitchOff(t gpio.CodeTransmitter) error {
 }
 
 func (o *Outlet) sendCode(t gpio.CodeTransmitter, code uint64) error {
+	logger.Printf("transmitting code=%d pulseLength=%d protocol=%d\n", code, o.PulseLength, o.Protocol)
+
 	return t.Transmit(code, o.Protocol, o.PulseLength)
 }
 

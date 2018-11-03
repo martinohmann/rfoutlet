@@ -17,15 +17,18 @@ const (
 	maxChanges       uint  = 67
 )
 
+// ReceiveFunc type definition
 type ReceiveFunc func(uint64, int64, uint, int)
 
-type Receiver interface {
+// CodeReceiver defines the interface for a rf code receiver.
+type CodeReceiver interface {
 	Receive(ReceiveFunc)
 	Wait()
 	Close() error
 }
 
-type NativeReceiver struct {
+// Receiver type definition
+type Receiver struct {
 	gpioPin     uint
 	lastTime    int64
 	changeCount uint
@@ -44,10 +47,11 @@ type NativeReceiver struct {
 	wg            sync.WaitGroup
 }
 
-func NewNativeReceiver(gpioPin uint) *NativeReceiver {
+// NewReceiver create a new receiver on the gpio pin
+func NewReceiver(gpioPin uint) *Receiver {
 	watcher := gpio.NewWatcher()
 
-	r := &NativeReceiver{
+	r := &Receiver{
 		gpioPin:       gpioPin,
 		watcher:       watcher,
 		stopWatching:  make(chan bool),
@@ -57,7 +61,9 @@ func NewNativeReceiver(gpioPin uint) *NativeReceiver {
 	return r
 }
 
-func (r *NativeReceiver) Receive(f ReceiveFunc) {
+// Receive starts the goroutines for the watcher and receiver. The receive
+// function will be called whenever a code has been received.
+func (r *Receiver) Receive(f ReceiveFunc) {
 	r.watcher.AddPin(r.gpioPin)
 	r.wg.Add(2)
 
@@ -65,7 +71,7 @@ func (r *NativeReceiver) Receive(f ReceiveFunc) {
 	go r.receive(f, r.stopReceiving)
 }
 
-func (r *NativeReceiver) watch(done chan bool) {
+func (r *Receiver) watch(done chan bool) {
 	defer r.wg.Done()
 
 	var lastValue uint
@@ -86,7 +92,7 @@ func (r *NativeReceiver) watch(done chan bool) {
 	}
 }
 
-func (r *NativeReceiver) receive(f ReceiveFunc, done chan bool) {
+func (r *Receiver) receive(f ReceiveFunc, done chan bool) {
 	defer r.wg.Done()
 
 	for {
@@ -105,11 +111,13 @@ func (r *NativeReceiver) receive(f ReceiveFunc, done chan bool) {
 	}
 }
 
-func (r *NativeReceiver) Wait() {
+// Wait blocks until Close is called
+func (r *Receiver) Wait() {
 	r.wg.Wait()
 }
 
-func (r *NativeReceiver) Close() error {
+// Close stops the watcher and receiver goroutines and perform cleanup
+func (r *Receiver) Close() error {
 	r.stopReceiving <- true
 	r.stopWatching <- true
 	r.watcher.Close()
@@ -117,15 +125,15 @@ func (r *NativeReceiver) Close() error {
 	return nil
 }
 
-func (r *NativeReceiver) hasReceivedCode() bool {
+func (r *Receiver) hasReceivedCode() bool {
 	return r.ReceivedCode != 0
 }
 
-func (r *NativeReceiver) reset() {
+func (r *Receiver) reset() {
 	r.ReceivedCode = 0
 }
 
-func (r *NativeReceiver) handleInterrupt() {
+func (r *Receiver) handleInterrupt() {
 	t := time.Now().UnixNano() / int64(time.Microsecond)
 	duration := t - r.lastTime
 
@@ -157,7 +165,8 @@ func (r *NativeReceiver) handleInterrupt() {
 	r.lastTime = t
 }
 
-func (r *NativeReceiver) receiveProtocol(protocol int, changeCount uint) bool {
+// receiveProtocol tries to receive a code using the provided protocol
+func (r *Receiver) receiveProtocol(protocol int, changeCount uint) bool {
 	p := protocols[protocol-1]
 
 	var code uint64
@@ -181,16 +190,12 @@ func (r *NativeReceiver) receiveProtocol(protocol int, changeCount uint) bool {
 
 	if changeCount > 7 {
 		r.ReceivedCode = code
-		r.ReceivedBitLength = (r.changeCount - 1) / 2
+		r.ReceivedBitLength = (changeCount - 1) / 2
 		r.ReceivedPulseLength = delay
 		r.ReceivedProtocol = protocol
 	}
 
 	return true
-}
-
-func NewReceiver(gpioPin uint) Receiver {
-	return NewNativeReceiver(gpioPin)
 }
 
 func diff(a, b int64) int64 {
