@@ -1,16 +1,20 @@
 package gpio
 
+// Most of the transmitter code is ported from the rc-switch c++ implementation to
+// go. Check out the rc-switch repository at https://github.com/sui77/rc-switch
+// for the original implementation.
+
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
-	rpio "github.com/stianeikeland/go-rpio"
+	"github.com/brian-armstrong/gpio"
 )
 
 const (
-	DefaultGpioPin     = 17
+	DefaultTransmitPin = 17
+	DefaultReceivePin  = 27
 	DefaultProtocol    = 1
 	DefaultPulseLength = 189
 
@@ -18,31 +22,7 @@ const (
 	bitLength  = 24
 )
 
-type highLow struct {
-	high, low int
-}
-
-type protocol struct {
-	pulseLength     int
-	sync, zero, one highLow
-}
-
-var (
-	logger    *log.Logger
-	protocols = []protocol{
-		protocol{350, highLow{1, 31}, highLow{1, 3}, highLow{3, 1}},
-		protocol{650, highLow{1, 10}, highLow{1, 2}, highLow{2, 1}},
-		protocol{100, highLow{30, 71}, highLow{4, 11}, highLow{9, 6}},
-		protocol{380, highLow{1, 6}, highLow{1, 3}, highLow{3, 1}},
-		protocol{500, highLow{6, 14}, highLow{1, 2}, highLow{2, 1}},
-	}
-)
-
-func init() {
-	logger = log.New(os.Stdout, "gpio: ", log.LstdFlags|log.Lshortfile)
-}
-
-// CodeTransmitter defines the interface for a CodeTransmitter
+// CodeTransmitter defines the interface for a rf code transmitter.
 type CodeTransmitter interface {
 	Transmit(uint64, int, int) error
 	Close() error
@@ -50,28 +30,20 @@ type CodeTransmitter interface {
 
 // NativeTransmitter type definition
 type NativeTransmitter struct {
-	gpioPin  rpio.Pin
+	gpioPin  gpio.Pin
 	protocol protocol
 }
 
 func NewNativeTransmitter(gpioPin int) (*NativeTransmitter, error) {
-	if err := rpio.Open(); err != nil {
-		return nil, err
-	}
-
 	t := &NativeTransmitter{
-		gpioPin: rpio.Pin(gpioPin),
+		gpioPin: gpio.NewOutput(uint(gpioPin), false),
 	}
-
-	t.gpioPin.Output()
 
 	return t, nil
 }
 
 // Transmit transmits a code using given protocol and pulse length
 func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength int) error {
-	logger.Printf("transmitting code=%d pulseLength=%d\n", code, pulseLength)
-
 	if err := t.selectProtocol(protocol); err != nil {
 		return err
 	}
@@ -94,7 +66,9 @@ func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength int)
 
 // Close triggers rpio cleanup
 func (t *NativeTransmitter) Close() error {
-	return rpio.Close()
+	t.gpioPin.Close()
+
+	return nil
 }
 
 func (t *NativeTransmitter) selectProtocol(protocol int) error {
@@ -137,8 +111,6 @@ func NewNullTransmitter(gpioPin int) (*NullTransmitter, error) {
 
 // Transmit transmits the given code via the configured gpio pin
 func (t *NullTransmitter) Transmit(code uint64, protocol int, pulseLength int) error {
-	logger.Printf("simulating transmission code=%d pulseLength=%d\n", code, pulseLength)
-
 	return nil
 }
 

@@ -82,6 +82,15 @@ docker run --rm \
 The container has to run in privileged mode in order to be able to access
 `/dev/mem` and `/dev/gpiomem`.
 
+Code sniffing
+-------------
+
+TODO
+
+```sh
+sudo rfsniff -help
+```
+
 Code transmission
 -----------------
 
@@ -117,11 +126,16 @@ Run `make` without arguments to see other available commands.
 Todo
 ----
 
-- [x] port [codesend](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/codesend.cpp) to golang
-- [ ] port [RFSniffer](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/RFSniffer.cpp) to golang
+- [x] port
+  [codesend](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/codesend.cpp)
+  to golang (see [`cmd/rftransmit`](cmd/rftransmit))
+- [x] port
+  [RFSniffer](https://github.com/ninjablocks/433Utils/blob/master/RPi_utils/RFSniffer.cpp)
+  to golang  (see [`cmd/rfsniff`](cmd/rfsniff))
+- [x] make transmitter/receiver code available as library below `pkg/`
 - [ ] persist outlet state across server restarts
+- [ ] use receiver to detect outlet state changes (e.g. via remote control)?
 - [ ] time switch: switch outlets on/off using user defined rules
-- [ ] make transmission code available as library
 
 License
 -------

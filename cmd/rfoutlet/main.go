@@ -9,8 +9,8 @@ import (
 
 	"github.com/gobuffalo/packr"
 	"github.com/martinohmann/rfoutlet/internal/api"
-	"github.com/martinohmann/rfoutlet/internal/gpio"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 var (
 	configFilename = flag.String("config", defaultConfigFilename, "config filename")
 	listenAddress  = flag.String("listen-address", defaultListenAddress, "listen address")
-	gpioPin        = flag.Int("gpio-pin", gpio.DefaultGpioPin, "gpio pin to transmit on")
+	gpioPin        = flag.Int("gpio-pin", gpio.DefaultTransmitPin, "gpio pin to transmit on")
 	usage          = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s\n", os.Args[0])
 		flag.PrintDefaults()

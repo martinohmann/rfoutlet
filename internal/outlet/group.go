@@ -3,7 +3,7 @@ package outlet
 import (
 	"fmt"
 
-	"github.com/martinohmann/rfoutlet/internal/gpio"
+	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
 
 // OutletGroup type definition

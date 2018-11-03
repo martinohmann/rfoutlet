@@ -6,12 +6,12 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/martinohmann/rfoutlet/internal/gpio"
+	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
 
 var (
 	pulseLength = flag.Int("pulse-length", gpio.DefaultPulseLength, "pulse length")
-	gpioPin     = flag.Int("gpio-pin", gpio.DefaultGpioPin, "gpio pin to transmit on")
+	gpioPin     = flag.Int("gpio-pin", gpio.DefaultTransmitPin, "gpio pin to transmit on")
 	protocol    = flag.Int("protocol", gpio.DefaultProtocol, "transmission protocol")
 	usage       = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s <code>\n", os.Args[0])

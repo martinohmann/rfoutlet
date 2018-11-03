@@ -3,6 +3,6 @@ import:
 - package: github.com/stretchr/testify
   version: ^1.1.4
 - package: gopkg.in/yaml.v2
-- package: github.com/stianeikeland/go-rpio
-  version: ^4.2.0
 - package: github.com/gobuffalo/packr
+- package: github.com/brian-armstrong/gpio
+  version: ^1.0.0
