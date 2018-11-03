@@ -4,6 +4,7 @@ WORKDIR /go/src/github.com/martinohmann/rfoutlet
 
 ADD cmd/ cmd/
 ADD internal/ internal/
+ADD pkg/ pkg/
 ADD glide.lock .
 ADD glide.yaml .
 
