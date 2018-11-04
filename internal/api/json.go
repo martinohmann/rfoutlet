@@ -29,7 +29,6 @@ func renderJSONError(w http.ResponseWriter, msg string, statusCode int) {
 
 func writeJSON(w http.ResponseWriter, body []byte, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(statusCode)
 	w.Write(body)
 }

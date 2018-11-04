@@ -65,7 +65,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    *listenAddress,
-		Handler: logging(logger)(router),
+		Handler: cors("*")(logging(logger)(router)),
 	}
 
 	logger.Printf("Listening on %s\n", *listenAddress)
@@ -79,6 +79,15 @@ func logging(logger *log.Logger) func(http.Handler) http.Handler {
 			defer func() {
 				logger.Println(r.Method, r.URL.Path, r.RemoteAddr, r.UserAgent())
 			}()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func cors(origin string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
 			next.ServeHTTP(w, r)
 		})
 	}
