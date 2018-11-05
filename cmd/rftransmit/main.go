@@ -54,5 +54,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	<-t.Transmitted()
+	t.Wait()
 }

@@ -86,7 +86,7 @@ func (o *Outlet) sendCode(t gpio.CodeTransmitter, code uint64) error {
 
 	err := t.Transmit(code, o.Protocol, o.PulseLength)
 
-	<-t.Transmitted()
+	t.Wait()
 
 	return err
 }

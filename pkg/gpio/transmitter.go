@@ -34,7 +34,7 @@ type transmission struct {
 // CodeTransmitter defines the interface for a rf code transmitter.
 type CodeTransmitter interface {
 	Transmit(uint64, int, uint) error
-	Transmitted() chan bool
+	Wait()
 	Close() error
 }
 
@@ -105,8 +105,8 @@ func (t *NativeTransmitter) Close() error {
 }
 
 // Transmitted blocks until code is transmitted
-func (t *NativeTransmitter) Transmitted() chan bool {
-	return t.transmitted
+func (t *NativeTransmitter) Wait() {
+	<-t.transmitted
 }
 
 func (t *NativeTransmitter) watch() {
@@ -130,43 +130,29 @@ func (t *NativeTransmitter) send(pulses highLow, pulseLength uint) {
 }
 
 // NullTransmitter type definition
-type NullTransmitter struct {
-	transmitted chan bool
-	closed      bool
-}
+type NullTransmitter struct{}
 
 // NewNullTransmitter create a transmitter that does nothing except logging the
 // transmissions. This is mainly useful for development on systems where
 // /dev/gpiomem is not available.
 func NewNullTransmitter() (*NullTransmitter, error) {
-	t := &NullTransmitter{transmitted: make(chan bool, transmissionChanLen)}
+	t := &NullTransmitter{}
 
 	return t, nil
 }
 
 // Transmit transmits the given code via the configured gpio pin
 func (t *NullTransmitter) Transmit(code uint64, protocol int, pulseLength uint) error {
-	t.transmitted <- true
-
 	return nil
 }
 
 // Close performs cleanup
 func (t *NullTransmitter) Close() error {
-	if t.closed {
-		return errors.New("transmitter already closed")
-	}
-
-	t.closed = true
-	close(t.transmitted)
-
 	return nil
 }
 
 // Transmitted blocks until code is transmitted
-func (t *NullTransmitter) Transmitted() chan bool {
-	return t.transmitted
-}
+func (t *NullTransmitter) Wait() {}
 
 // NewTransmitter creates a NativeTransmitter when /dev/gpiomem is available,
 // NullTransmitter otherwise.
