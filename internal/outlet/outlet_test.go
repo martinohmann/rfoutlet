@@ -4,13 +4,15 @@ import (
 	"testing"
 
 	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type mockTransmitter struct{}
 
-func (t *mockTransmitter) Transmit(code uint64, protocol int, pulseLength int) error { return nil }
-func (t *mockTransmitter) Close() error                                              { return nil }
+func (t *mockTransmitter) Transmit(code uint64, protocol int, pulseLength uint) error { return nil }
+func (t *mockTransmitter) Close() error                                               { return nil }
 
 var transmitter = &mockTransmitter{}
 
@@ -18,7 +20,7 @@ func TestNewOutlet(t *testing.T) {
 	o := outlet.NewOutlet("foo", 1, 2, 3, 4)
 
 	assert.Equal(t, "foo", o.Identifier)
-	assert.Equal(t, 1, o.PulseLength)
+	assert.Equal(t, uint(1), o.PulseLength)
 	assert.Equal(t, 2, o.Protocol)
 	assert.Equal(t, uint64(3), o.CodeOn)
 	assert.Equal(t, uint64(4), o.CodeOff)
@@ -54,4 +56,15 @@ func TestOutletToggleState(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, outlet.StateOff, o.State)
+}
+
+func TestUnmarshalDefaults(t *testing.T) {
+	o := &outlet.Outlet{}
+
+	err := yaml.Unmarshal([]byte("{}"), o)
+
+	assert.Nil(t, err)
+	assert.Equal(t, outlet.StateUnknown, o.State)
+	assert.Equal(t, gpio.DefaultPulseLength, o.PulseLength)
+	assert.Equal(t, gpio.DefaultProtocol, o.Protocol)
 }
