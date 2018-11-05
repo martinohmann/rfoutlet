@@ -65,7 +65,16 @@ func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength uint
 		return fmt.Errorf("Protocol %d does not exist", protocol)
 	}
 
-	t.transmission <- transmission{code, protocols[protocol-1], pulseLength}
+	trans := transmission{
+		code:        code,
+		protocol:    protocols[protocol-1],
+		pulseLength: pulseLength,
+	}
+
+	select {
+	case t.transmission <- trans:
+	default:
+	}
 
 	return nil
 }
