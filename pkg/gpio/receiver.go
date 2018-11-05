@@ -152,11 +152,16 @@ func (r *Receiver) receiveProtocol(protocol int) bool {
 	}
 
 	if r.changeCount > 7 {
-		r.result <- ReceiveResult{
+		result := ReceiveResult{
 			Code:        code,
 			BitLength:   (r.changeCount - 1) / 2,
 			PulseLength: delay,
 			Protocol:    protocol,
+		}
+
+		select {
+		case r.result <- result:
+		default:
 		}
 	}
 
