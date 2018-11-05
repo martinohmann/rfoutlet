@@ -9,12 +9,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type mockTransmitter struct{}
-
-func (t *mockTransmitter) Transmit(code uint64, protocol int, pulseLength uint) error { return nil }
-func (t *mockTransmitter) Close() error                                               { return nil }
-
-var transmitter = &mockTransmitter{}
+var transmitter, _ = gpio.NewNullTransmitter()
 
 func TestNewOutlet(t *testing.T) {
 	o := outlet.NewOutlet("foo", 1, 2, 3, 4)

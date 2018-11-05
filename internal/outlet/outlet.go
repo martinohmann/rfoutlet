@@ -84,7 +84,11 @@ func (o *Outlet) SwitchOff(t gpio.CodeTransmitter) error {
 func (o *Outlet) sendCode(t gpio.CodeTransmitter, code uint64) error {
 	logger.Printf("transmitting code=%d pulseLength=%d protocol=%d\n", code, o.PulseLength, o.Protocol)
 
-	return t.Transmit(code, o.Protocol, o.PulseLength)
+	err := t.Transmit(code, o.Protocol, o.PulseLength)
+
+	<-t.Transmitted()
+
+	return err
 }
 
 // String returns the string representation of an Outlet
