@@ -5,7 +5,6 @@ package gpio
 // for the original implementation.
 
 import (
-	"errors"
 	"time"
 
 	"github.com/brian-armstrong/gpio"
@@ -15,6 +14,8 @@ const (
 	receiveTolerance int64 = 60
 	separationLimit  int64 = 4600
 	maxChanges       uint  = 67
+
+	receiveResultChanLen = 32
 )
 
 // ReceiveResult type definition
@@ -40,7 +41,6 @@ type Receiver struct {
 	timings     [maxChanges]int64
 
 	watcher *gpio.Watcher
-	closed  bool
 	done    chan bool
 	result  chan ReceiveResult
 }
@@ -53,7 +53,7 @@ func NewReceiver(gpioPin uint) *Receiver {
 		gpioPin: gpioPin,
 		watcher: watcher,
 		done:    make(chan bool, 1),
-		result:  make(chan ReceiveResult, 1),
+		result:  make(chan ReceiveResult, receiveResultChanLen),
 	}
 
 	r.watcher.AddPin(r.gpioPin)
@@ -90,11 +90,6 @@ func (r *Receiver) Receive() <-chan ReceiveResult {
 
 // Close stops the watcher and receiver goroutines and perform cleanup
 func (r *Receiver) Close() error {
-	if r.closed {
-		return errors.New("receiver already closed")
-	}
-
-	r.closed = true
 	r.done <- true
 	r.watcher.Close()
 

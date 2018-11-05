@@ -5,7 +5,6 @@ package gpio
 // for the original implementation.
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -44,7 +43,6 @@ type NativeTransmitter struct {
 	transmission chan transmission
 	transmitted  chan bool
 	done         chan bool
-	closed       bool
 }
 
 // NewNativeTransmitter create a native transmitter on the gpio pin
@@ -93,11 +91,6 @@ func (t *NativeTransmitter) transmit(trans transmission) {
 
 // Close triggers rpio cleanup
 func (t *NativeTransmitter) Close() error {
-	if t.closed {
-		return errors.New("transmitter already closed")
-	}
-
-	t.closed = true
 	t.done <- true
 	t.gpioPin.Close()
 
