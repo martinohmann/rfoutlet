@@ -13,7 +13,7 @@ Installation
 
 ```sh
 go get github.com/martinohmann/rfoutlet
-cd $GOPATH/github.com/martinohmann/rfoutlet
+cd $GOPATH/src/github.com/martinohmann/rfoutlet
 make build
 make install
 ```
