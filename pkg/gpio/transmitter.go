@@ -87,6 +87,12 @@ func (t *NativeTransmitter) transmit(trans transmission) {
 	case t.transmitted <- true:
 	default:
 	}
+
+	// if we send out codes too quickly in a row it will confuse outlets and
+	// they wont react on it. this is especially the case when sending out
+	// codes to multiple different outlets in a loop. we sleep a little bit
+	// after each transmission to better separate signals flying around.
+	time.Sleep(time.Millisecond * 200)
 }
 
 // Close triggers rpio cleanup
