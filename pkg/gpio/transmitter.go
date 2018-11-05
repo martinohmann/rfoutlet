@@ -18,8 +18,8 @@ const (
 	DefaultProtocol    int  = 1
 	DefaultPulseLength uint = 189
 
-	numRetries int  = 10
-	bitLength  uint = 24
+	numRetries int = 10
+	bitLength  int = 24
 )
 
 // CodeTransmitter defines the interface for a rf code transmitter.
