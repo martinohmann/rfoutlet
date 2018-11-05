@@ -1,11 +1,11 @@
 package gpio
 
 type highLow struct {
-	high, low int
+	high, low uint
 }
 
 type protocol struct {
-	pulseLength     int
+	pulseLength     uint
 	sync, zero, one highLow
 }
 

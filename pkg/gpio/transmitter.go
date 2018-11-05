@@ -13,18 +13,18 @@ import (
 )
 
 const (
-	DefaultTransmitPin = 17
-	DefaultReceivePin  = 27
-	DefaultProtocol    = 1
-	DefaultPulseLength = 189
+	DefaultTransmitPin uint = 17
+	DefaultReceivePin  uint = 27
+	DefaultProtocol    int  = 1
+	DefaultPulseLength uint = 189
 
-	numRetries = 10
-	bitLength  = 24
+	numRetries int  = 10
+	bitLength  uint = 24
 )
 
 // CodeTransmitter defines the interface for a rf code transmitter.
 type CodeTransmitter interface {
-	Transmit(uint64, int, int) error
+	Transmit(uint64, int, uint) error
 	Close() error
 }
 
@@ -34,16 +34,16 @@ type NativeTransmitter struct {
 	protocol protocol
 }
 
-func NewNativeTransmitter(gpioPin int) (*NativeTransmitter, error) {
+func NewNativeTransmitter(gpioPin uint) (*NativeTransmitter, error) {
 	t := &NativeTransmitter{
-		gpioPin: gpio.NewOutput(uint(gpioPin), false),
+		gpioPin: gpio.NewOutput(gpioPin, false),
 	}
 
 	return t, nil
 }
 
 // Transmit transmits a code using given protocol and pulse length
-func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength int) error {
+func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength uint) error {
 	if err := t.selectProtocol(protocol); err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (t *NativeTransmitter) selectProtocol(protocol int) error {
 	return nil
 }
 
-func (t *NativeTransmitter) setPulseLength(pulseLength int) {
+func (t *NativeTransmitter) setPulseLength(pulseLength uint) {
 	t.protocol.pulseLength = pulseLength
 }
 
@@ -94,23 +94,19 @@ func (t *NativeTransmitter) transmit(pulses highLow) {
 }
 
 // NullTransmitter type definition
-type NullTransmitter struct {
-	gpioPin int
-}
+type NullTransmitter struct{}
 
 // NewNullTransmitter create a transmitter that does nothing except logging the
 // transmissions. This is mainly useful for development on systems where
 // /dev/gpiomem is not available.
-func NewNullTransmitter(gpioPin int) (*NullTransmitter, error) {
-	t := &NullTransmitter{
-		gpioPin: gpioPin,
-	}
+func NewNullTransmitter() (*NullTransmitter, error) {
+	t := &NullTransmitter{}
 
 	return t, nil
 }
 
 // Transmit transmits the given code via the configured gpio pin
-func (t *NullTransmitter) Transmit(code uint64, protocol int, pulseLength int) error {
+func (t *NullTransmitter) Transmit(code uint64, protocol int, pulseLength uint) error {
 	return nil
 }
 
@@ -121,9 +117,9 @@ func (t *NullTransmitter) Close() error {
 
 // NewTransmitter creates a NativeTransmitter when /dev/gpiomem is available,
 // NullTransmitter otherwise.
-func NewTransmitter(gpioPin int) (CodeTransmitter, error) {
+func NewTransmitter(gpioPin uint) (CodeTransmitter, error) {
 	if _, err := os.Stat("/dev/gpiomem"); os.IsNotExist(err) {
-		return NewNullTransmitter(gpioPin)
+		return NewNullTransmitter()
 	}
 
 	return NewNativeTransmitter(gpioPin)

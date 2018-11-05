@@ -30,7 +30,7 @@ type Switcher interface {
 // Outlet type definition
 type Outlet struct {
 	Identifier  string `yaml:"identifier" json:"identifier"`
-	PulseLength int    `yaml:"pulse_length" json:"pulse_length"`
+	PulseLength uint   `yaml:"pulse_length" json:"pulse_length"`
 	Protocol    int    `yaml:"protocol" json:"protocol"`
 	CodeOn      uint64 `yaml:"code_on" json:"code_on"`
 	CodeOff     uint64 `yaml:"code_off" json:"code_off"`
@@ -38,7 +38,7 @@ type Outlet struct {
 }
 
 // NewOutlet creates a new outlet
-func NewOutlet(identifier string, pulseLength int, protocol int, codeOn uint64, codeOff uint64) *Outlet {
+func NewOutlet(identifier string, pulseLength uint, protocol int, codeOn uint64, codeOff uint64) *Outlet {
 	return &Outlet{
 		Identifier:  identifier,
 		PulseLength: pulseLength,

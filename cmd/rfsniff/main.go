@@ -9,9 +9,8 @@ import (
 )
 
 var (
-	pulseLength = flag.Int("pulse-length", 0, "pulse length")
-	gpioPin     = flag.Uint("gpio-pin", gpio.DefaultReceivePin, "gpio pin to sniff on")
-	usage       = func() {
+	gpioPin = flag.Uint("gpio-pin", gpio.DefaultReceivePin, "gpio pin to sniff on")
+	usage   = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s\n", os.Args[0])
 		flag.PrintDefaults()
 	}
