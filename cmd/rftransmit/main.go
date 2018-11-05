@@ -49,6 +49,8 @@ func main() {
 
 	defer t.Close()
 
+	fmt.Printf("transmitting code=%d pulseLength=%d protocol=%d\n", code, *pulseLength, *protocol)
+
 	if err = t.Transmit(code, *protocol, *pulseLength); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
