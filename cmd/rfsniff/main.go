@@ -27,10 +27,8 @@ func main() {
 	receiver := gpio.NewReceiver(*gpioPin)
 	defer receiver.Close()
 
-	receiver.Receive(func(res gpio.ReceiveResult) {
+	for res := range receiver.Receive() {
 		fmt.Printf("received code=%d pulseLength=%d bitLength=%d protocol=%d\n",
 			res.Code, res.PulseLength, res.BitLength, res.Protocol)
-	})
-
-	receiver.Wait()
+	}
 }
