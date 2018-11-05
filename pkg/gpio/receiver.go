@@ -18,7 +18,15 @@ const (
 )
 
 // ReceiveFunc type definition
-type ReceiveFunc func(uint64, int64, uint, int)
+type ReceiveFunc func(ReceiveResult)
+
+// ReceiveResult type definition
+type ReceiveResult struct {
+	Code        uint64
+	BitLength   uint
+	PulseLength int64
+	Protocol    int
+}
 
 // CodeReceiver defines the interface for a rf code receiver.
 type CodeReceiver interface {
@@ -33,18 +41,12 @@ type Receiver struct {
 	lastTime    int64
 	changeCount uint
 	repeatCount uint
-
-	ReceivedCode        uint64
-	ReceivedBitLength   uint
-	ReceivedPulseLength int64
-	ReceivedProtocol    int
-
-	timings [maxChanges]int64
+	timings     [maxChanges]int64
 
 	watcher       *gpio.Watcher
-	stopWatching  chan bool
-	stopReceiving chan bool
 	wg            sync.WaitGroup
+	done          chan bool
+	receiveResult chan ReceiveResult
 }
 
 // NewReceiver create a new receiver on the gpio pin
@@ -54,8 +56,8 @@ func NewReceiver(gpioPin uint) *Receiver {
 	r := &Receiver{
 		gpioPin:       gpioPin,
 		watcher:       watcher,
-		stopWatching:  make(chan bool),
-		stopReceiving: make(chan bool),
+		done:          make(chan bool),
+		receiveResult: make(chan ReceiveResult),
 	}
 
 	return r
@@ -65,21 +67,22 @@ func NewReceiver(gpioPin uint) *Receiver {
 // function will be called whenever a code has been received.
 func (r *Receiver) Receive(f ReceiveFunc) {
 	r.watcher.AddPin(r.gpioPin)
-	r.wg.Add(2)
+	r.wg.Add(1)
 
-	go r.watch(r.stopWatching)
-	go r.receive(f, r.stopReceiving)
+	go r.receive(f)
 }
 
-func (r *Receiver) watch(done chan bool) {
+func (r *Receiver) receive(f ReceiveFunc) {
 	defer r.wg.Done()
 
 	var lastValue uint
 
 	for {
 		select {
-		case <-done:
+		case <-r.done:
 			return
+		case res := <-r.receiveResult:
+			f(res)
 		default:
 			pin, value := r.watcher.Watch()
 
@@ -92,25 +95,6 @@ func (r *Receiver) watch(done chan bool) {
 	}
 }
 
-func (r *Receiver) receive(f ReceiveFunc, done chan bool) {
-	defer r.wg.Done()
-
-	for {
-		select {
-		case <-done:
-			return
-		default:
-			if r.hasReceivedCode() {
-				f(r.ReceivedCode, r.ReceivedPulseLength, r.ReceivedBitLength, r.ReceivedProtocol)
-
-				r.reset()
-			}
-
-			time.Sleep(time.Microsecond * 100)
-		}
-	}
-}
-
 // Wait blocks until Close is called
 func (r *Receiver) Wait() {
 	r.wg.Wait()
@@ -118,19 +102,10 @@ func (r *Receiver) Wait() {
 
 // Close stops the watcher and receiver goroutines and perform cleanup
 func (r *Receiver) Close() error {
-	r.stopReceiving <- true
-	r.stopWatching <- true
+	r.done <- true
 	r.watcher.Close()
 
 	return nil
-}
-
-func (r *Receiver) hasReceivedCode() bool {
-	return r.ReceivedCode != 0
-}
-
-func (r *Receiver) reset() {
-	r.ReceivedCode = 0
 }
 
 func (r *Receiver) handleInterrupt() {
@@ -189,10 +164,12 @@ func (r *Receiver) receiveProtocol(protocol int, changeCount uint) bool {
 	}
 
 	if changeCount > 7 {
-		r.ReceivedCode = code
-		r.ReceivedBitLength = (changeCount - 1) / 2
-		r.ReceivedPulseLength = delay
-		r.ReceivedProtocol = protocol
+		r.receiveResult <- ReceiveResult{
+			Code:        code,
+			BitLength:   (changeCount - 1) / 2,
+			PulseLength: delay,
+			Protocol:    protocol,
+		}
 	}
 
 	return true
