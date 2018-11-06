@@ -1,3 +1,17 @@
+// The rfsniff command can be used send out codes to remote controlled outlets.
+//
+// Mandatory arguments:
+//
+//   <code> // The code to send out
+//
+// Available command line flags:
+//
+//  -gpio-pin uint
+//        gpio pin to transmit on (default 17)
+//  -protocol int
+//        transmission protocol (default 1)
+//  -pulse-length uint
+//        pulse length (default 189)
 package main
 
 import (

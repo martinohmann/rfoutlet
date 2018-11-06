@@ -1,3 +1,12 @@
+// The rfsniff command can be used to sniff codes sent out by remotes for
+// remote controlled outlet. Start the command and press the buttons on
+// the remote. You should see the received code, pulse length, bit length
+// and remote protocol in the terminal.
+//
+// Available command line flags:
+//
+//  -gpio-pin uint
+//        gpio pin to sniff on (default 27)
 package main
 
 import (

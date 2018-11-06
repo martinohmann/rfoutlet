@@ -1,9 +1,5 @@
 package gpio
 
-// Most of the receiver code is ported from the rc-switch c++ implementation to
-// go. Check out the rc-switch repository at https://github.com/sui77/rc-switch
-// for the original implementation.
-
 import (
 	"time"
 
@@ -105,7 +101,7 @@ func (r *Receiver) handleEvent() {
 			r.repeatCount++
 
 			if r.repeatCount == 2 {
-				for i := 1; i <= len(protocols); i++ {
+				for i := 1; i <= len(Protocols); i++ {
 					if r.receiveProtocol(i) {
 						break
 					}
@@ -130,21 +126,21 @@ func (r *Receiver) handleEvent() {
 
 // receiveProtocol tries to receive a code using the provided protocol
 func (r *Receiver) receiveProtocol(protocol int) bool {
-	p := protocols[protocol-1]
+	p := Protocols[protocol-1]
 
 	var code uint64
-	var delay int64 = r.timings[0] / int64(p.sync.low)
+	var delay int64 = r.timings[0] / int64(p.Sync.Low)
 	var delayTolerance int64 = delay * receiveTolerance / 100
 	var i uint = 1
 
 	for ; i < r.changeCount-1; i += 2 {
 		code <<= 1
 
-		if diff(r.timings[i], delay*int64(p.zero.high)) < delayTolerance &&
-			diff(r.timings[i+1], delay*int64(p.zero.low)) < delayTolerance {
+		if diff(r.timings[i], delay*int64(p.Zero.High)) < delayTolerance &&
+			diff(r.timings[i+1], delay*int64(p.Zero.Low)) < delayTolerance {
 			// zero
-		} else if diff(r.timings[i], delay*int64(p.one.high)) < delayTolerance &&
-			diff(r.timings[i+1], delay*int64(p.one.low)) < delayTolerance {
+		} else if diff(r.timings[i], delay*int64(p.One.High)) < delayTolerance &&
+			diff(r.timings[i+1], delay*int64(p.One.Low)) < delayTolerance {
 			code |= 1
 		} else {
 			return false

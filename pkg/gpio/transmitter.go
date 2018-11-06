@@ -1,9 +1,5 @@
 package gpio
 
-// Most of the transmitter code is ported from the rc-switch c++ implementation to
-// go. Check out the rc-switch repository at https://github.com/sui77/rc-switch
-// for the original implementation.
-
 import (
 	"fmt"
 	"os"
@@ -26,7 +22,7 @@ const (
 
 type transmission struct {
 	code        uint64
-	protocol    protocol
+	protocol    Protocol
 	pulseLength uint
 }
 
@@ -37,7 +33,7 @@ type CodeTransmitter interface {
 	Close() error
 }
 
-// NativeTransmitter type definition
+// NativeTransmitter type definition.
 type NativeTransmitter struct {
 	gpioPin      gpio.Pin
 	transmission chan transmission
@@ -45,7 +41,7 @@ type NativeTransmitter struct {
 	done         chan bool
 }
 
-// NewNativeTransmitter create a native transmitter on the gpio pin
+// NewNativeTransmitter create a native transmitter on the gpio pin.
 func NewNativeTransmitter(gpioPin uint) (*NativeTransmitter, error) {
 	t := &NativeTransmitter{
 		gpioPin:      gpio.NewOutput(gpioPin, false),
@@ -59,15 +55,20 @@ func NewNativeTransmitter(gpioPin uint) (*NativeTransmitter, error) {
 	return t, nil
 }
 
-// Transmit transmits a code using given protocol and pulse length
+// Transmit transmits a code using given protocol and pulse length. It will
+// return an error if the provided protocol is does not exist.
+//
+// This method returns immediately. The code is transmitted in the background.
+// If you need to ensure that a code has been fully transmitted, call Wait()
+// after calling Transmit().
 func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength uint) error {
-	if protocol < 1 || protocol > len(protocols) {
+	if protocol < 1 || protocol > len(Protocols) {
 		return fmt.Errorf("Protocol %d does not exist", protocol)
 	}
 
 	trans := transmission{
 		code:        code,
-		protocol:    protocols[protocol-1],
+		protocol:    Protocols[protocol-1],
 		pulseLength: pulseLength,
 	}
 
@@ -79,17 +80,17 @@ func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength uint
 	return nil
 }
 
-// Transmit transmits a code using given protocol and pulse length
+// transmit performs the acutal transmission of the remote control code.
 func (t *NativeTransmitter) transmit(trans transmission) {
 	for retry := 0; retry < numRetries; retry++ {
 		for j := bitLength - 1; j >= 0; j-- {
 			if trans.code&(1<<uint64(j)) > 0 {
-				t.send(trans.protocol.one, trans.pulseLength)
+				t.send(trans.protocol.One, trans.pulseLength)
 			} else {
-				t.send(trans.protocol.zero, trans.pulseLength)
+				t.send(trans.protocol.Zero, trans.pulseLength)
 			}
 		}
-		t.send(trans.protocol.sync, trans.pulseLength)
+		t.send(trans.protocol.Sync, trans.pulseLength)
 	}
 
 	select {
@@ -104,7 +105,7 @@ func (t *NativeTransmitter) transmit(trans transmission) {
 	time.Sleep(time.Millisecond * 200)
 }
 
-// Close triggers rpio cleanup
+// Close stops started goroutines and closes the gpio pin
 func (t *NativeTransmitter) Close() error {
 	t.done <- true
 	t.gpioPin.Close()
@@ -112,11 +113,12 @@ func (t *NativeTransmitter) Close() error {
 	return nil
 }
 
-// Transmitted blocks until code is transmitted
+// Wait blocks until a code is fully transmitted.
 func (t *NativeTransmitter) Wait() {
 	<-t.transmitted
 }
 
+// watch listens on a channel and processes incoming transmissions.
 func (t *NativeTransmitter) watch() {
 	for {
 		select {
@@ -129,15 +131,15 @@ func (t *NativeTransmitter) watch() {
 	}
 }
 
-// transmit sends a sequence of high and low pulses on the gpio pin
-func (t *NativeTransmitter) send(pulses highLow, pulseLength uint) {
+// send sends a sequence of high and low pulses on the gpio pin.
+func (t *NativeTransmitter) send(pulses HighLow, pulseLength uint) {
 	t.gpioPin.High()
-	time.Sleep(time.Microsecond * time.Duration(pulseLength*pulses.high))
+	time.Sleep(time.Microsecond * time.Duration(pulseLength*pulses.High))
 	t.gpioPin.Low()
-	time.Sleep(time.Microsecond * time.Duration(pulseLength*pulses.low))
+	time.Sleep(time.Microsecond * time.Duration(pulseLength*pulses.Low))
 }
 
-// NullTransmitter type definition
+// NullTransmitter type definition.
 type NullTransmitter struct{}
 
 // NewNullTransmitter create a transmitter that does nothing except logging the
@@ -149,17 +151,17 @@ func NewNullTransmitter() (*NullTransmitter, error) {
 	return t, nil
 }
 
-// Transmit transmits the given code via the configured gpio pin
+// Transmit does nothing.
 func (t *NullTransmitter) Transmit(code uint64, protocol int, pulseLength uint) error {
 	return nil
 }
 
-// Close performs cleanup
+// Close does nothing.
 func (t *NullTransmitter) Close() error {
 	return nil
 }
 
-// Transmitted blocks until code is transmitted
+// Wait does nothing.
 func (t *NullTransmitter) Wait() {}
 
 // NewTransmitter creates a NativeTransmitter when /dev/gpiomem is available,

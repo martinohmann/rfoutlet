@@ -1,3 +1,14 @@
+// The rfoutlet command starts a server which serves the frontend and api for
+// controlling outlets via web interface.
+//
+// Available command line flags:
+//
+//  -config string
+//        config filename (default "/etc/rfoutlet/config.yml")
+//  -gpio-pin uint
+//        gpio pin to transmit on (default 17)
+//  -listen-address string
+//        listen address (default "0.0.0.0:3333")
 package main
 
 import (

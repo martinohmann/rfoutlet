@@ -1,20 +1,22 @@
 package gpio
 
-type highLow struct {
-	high, low uint
+// HighLow type definition
+type HighLow struct {
+	High, Low uint
 }
 
-type protocol struct {
-	pulseLength     uint
-	sync, zero, one highLow
+// Protocol type definition
+type Protocol struct {
+	PulseLength     uint
+	Sync, Zero, One HighLow
 }
 
-var (
-	protocols = []protocol{
-		protocol{350, highLow{1, 31}, highLow{1, 3}, highLow{3, 1}},
-		protocol{650, highLow{1, 10}, highLow{1, 2}, highLow{2, 1}},
-		protocol{100, highLow{30, 71}, highLow{4, 11}, highLow{9, 6}},
-		protocol{380, highLow{1, 6}, highLow{1, 3}, highLow{3, 1}},
-		protocol{500, highLow{6, 14}, highLow{1, 2}, highLow{2, 1}},
-	}
-)
+// Protocols defines known remote control protocols. These are exported to give
+// users the ability to add more protocols if needed.
+var Protocols = []Protocol{
+	Protocol{350, HighLow{1, 31}, HighLow{1, 3}, HighLow{3, 1}},
+	Protocol{650, HighLow{1, 10}, HighLow{1, 2}, HighLow{2, 1}},
+	Protocol{100, HighLow{30, 71}, HighLow{4, 11}, HighLow{9, 6}},
+	Protocol{380, HighLow{1, 6}, HighLow{1, 3}, HighLow{3, 1}},
+	Protocol{500, HighLow{6, 14}, HighLow{1, 2}, HighLow{2, 1}},
+}
