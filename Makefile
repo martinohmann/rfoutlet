@@ -31,6 +31,10 @@ build-app: ## build node app
 test: ## run tests
 	go test $$(go list ./... | grep -v /vendor/)
 
+.PHONY: test-integration
+test-integration: ## run integration tests
+	go test -tags=integration $$(go list ./... | grep -v /vendor/)
+
 .PHONY: coverage
 coverage: ## generate code coverage
 	scripts/coverage

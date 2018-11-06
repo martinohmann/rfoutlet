@@ -28,24 +28,28 @@ type CodeReceiver interface {
 	Close() error
 }
 
-// Receiver type definition
-type Receiver struct {
+type Watcher interface {
+	Watch() (uint, uint)
+	AddPin(uint)
+	Close()
+}
+
+// NativeReceiver type definition
+type NativeReceiver struct {
 	gpioPin     uint
 	lastEvent   int64
 	changeCount uint
 	repeatCount uint
 	timings     [maxChanges]int64
 
-	watcher *gpio.Watcher
+	watcher Watcher
 	done    chan bool
 	result  chan ReceiveResult
 }
 
-// NewReceiver create a new receiver on the gpio pin
-func NewReceiver(gpioPin uint) *Receiver {
-	watcher := gpio.NewWatcher()
-
-	r := &Receiver{
+// NewNativeReceiver create a new receiver on the gpio pin using watcher
+func NewNativeReceiver(gpioPin uint, watcher Watcher) *NativeReceiver {
+	r := &NativeReceiver{
 		gpioPin: gpioPin,
 		watcher: watcher,
 		done:    make(chan bool, 1),
@@ -59,7 +63,7 @@ func NewReceiver(gpioPin uint) *Receiver {
 	return r
 }
 
-func (r *Receiver) watch() {
+func (r *NativeReceiver) watch() {
 	var lastVal uint
 
 	for {
@@ -80,19 +84,19 @@ func (r *Receiver) watch() {
 }
 
 // Receive blocks until there is a result on the receive channel
-func (r *Receiver) Receive() <-chan ReceiveResult {
+func (r *NativeReceiver) Receive() <-chan ReceiveResult {
 	return r.result
 }
 
 // Close stops the watcher and receiver goroutines and perform cleanup
-func (r *Receiver) Close() error {
+func (r *NativeReceiver) Close() error {
 	r.done <- true
 	r.watcher.Close()
 
 	return nil
 }
 
-func (r *Receiver) handleEvent() {
+func (r *NativeReceiver) handleEvent() {
 	event := time.Now().UnixNano() / int64(time.Microsecond)
 	duration := event - r.lastEvent
 
@@ -125,7 +129,7 @@ func (r *Receiver) handleEvent() {
 }
 
 // receiveProtocol tries to receive a code using the provided protocol
-func (r *Receiver) receiveProtocol(protocol int) bool {
+func (r *NativeReceiver) receiveProtocol(protocol int) bool {
 	p := Protocols[protocol-1]
 
 	var code uint64
@@ -162,6 +166,13 @@ func (r *Receiver) receiveProtocol(protocol int) bool {
 	}
 
 	return true
+}
+
+// NewReceiver create a new receiver on the gpio pin
+func NewReceiver(gpioPin uint) CodeReceiver {
+	w := gpio.NewWatcher()
+
+	return NewNativeReceiver(gpioPin, w)
 }
 
 func diff(a, b int64) int64 {

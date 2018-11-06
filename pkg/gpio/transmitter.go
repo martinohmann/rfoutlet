@@ -14,10 +14,13 @@ const (
 	DefaultProtocol    int  = 1
 	DefaultPulseLength uint = 189
 
-	numRetries int = 10
-	bitLength  int = 24
-
 	transmissionChanLen = 32
+
+	bitLength int = 24
+)
+
+var (
+	TransmitRetries int = 10
 )
 
 type transmission struct {
@@ -33,18 +36,25 @@ type CodeTransmitter interface {
 	Close() error
 }
 
+// Pin defines an interface for a gpio pin
+type Pin interface {
+	High() error
+	Low() error
+	Close()
+}
+
 // NativeTransmitter type definition.
 type NativeTransmitter struct {
-	gpioPin      gpio.Pin
+	gpioPin      Pin
 	transmission chan transmission
 	transmitted  chan bool
 	done         chan bool
 }
 
 // NewNativeTransmitter create a native transmitter on the gpio pin.
-func NewNativeTransmitter(gpioPin uint) (*NativeTransmitter, error) {
+func NewNativeTransmitter(gpioPin Pin) (*NativeTransmitter, error) {
 	t := &NativeTransmitter{
-		gpioPin:      gpio.NewOutput(gpioPin, false),
+		gpioPin:      gpioPin,
 		transmission: make(chan transmission, transmissionChanLen),
 		transmitted:  make(chan bool, transmissionChanLen),
 		done:         make(chan bool, 1),
@@ -82,7 +92,7 @@ func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength uint
 
 // transmit performs the acutal transmission of the remote control code.
 func (t *NativeTransmitter) transmit(trans transmission) {
-	for retry := 0; retry < numRetries; retry++ {
+	for retry := 0; retry < TransmitRetries; retry++ {
 		for j := bitLength - 1; j >= 0; j-- {
 			if trans.code&(1<<uint64(j)) > 0 {
 				t.send(trans.protocol.One, trans.pulseLength)
@@ -171,5 +181,7 @@ func NewTransmitter(gpioPin uint) (CodeTransmitter, error) {
 		return NewNullTransmitter()
 	}
 
-	return NewNativeTransmitter(gpioPin)
+	pin := gpio.NewOutput(gpioPin, false)
+
+	return NewNativeTransmitter(pin)
 }
