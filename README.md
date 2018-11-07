@@ -101,7 +101,7 @@ reference.
 
 ### `rfsniff` command
 
-This command listens on a gpio pin and tries to sniff codes sent out by 443 Mhz
+This command listens on a gpio pin and tries to sniff codes sent out by 433 Mhz
 remote controls. It will print the received code, protocol, pulse length and
 bit length to stdout.
 
