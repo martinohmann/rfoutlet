@@ -9,9 +9,13 @@ import (
 )
 
 const (
-	// Outlet states
+	// StateUnknown defines an unknown outlet state
 	StateUnknown = iota
+
+	// StateOn defines an outlet that is on
 	StateOn
+
+	// StateOff defines an outlet that is off
 	StateOff
 )
 

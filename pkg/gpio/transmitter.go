@@ -18,7 +18,7 @@ const (
 	// DefaultProtocol defines the default rf protocol
 	DefaultProtocol int = 1
 
-	// DefaultProtocol defines the default pulse length
+	// DefaultPulseLength defines the default pulse length
 	DefaultPulseLength uint = 189
 
 	transmissionChanLen = 32
