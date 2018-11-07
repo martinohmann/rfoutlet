@@ -7,10 +7,10 @@ project to golang.
 
 TODO
 
+<img width="200" src="assets/screenshot.jpg">
+
 Contents
 --------
-
-<img align="right" width="159px" src="assets/screenshot.jpg">
 
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
