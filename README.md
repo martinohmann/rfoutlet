@@ -2,6 +2,7 @@ rfoutlet
 ========
 
 [![Build Status](https://travis-ci.org/martinohmann/rfoutlet.svg)](https://travis-ci.org/martinohmann/rfoutlet)
+[![Go Report Card](https://goreportcard.com/badge/github.com/martinohmann/rfoutlet)](https://goreportcard.com/report/github.com/martinohmann/rfoutlet)
 
 Outlet control via web interface for Raspberry PI 2/3. The transmitter and
 receiver logic has been ported from the great
