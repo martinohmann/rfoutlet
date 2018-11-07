@@ -10,6 +10,8 @@ TODO
 Contents
 --------
 
+<img align="right" width="159px" src="assets/screenshot.jpg">
+
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Commands](#commands)
