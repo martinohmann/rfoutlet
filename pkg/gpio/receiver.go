@@ -28,6 +28,7 @@ type CodeReceiver interface {
 	Close() error
 }
 
+// Watcher defines the interface for a gpio pin watcher
 type Watcher interface {
 	Watch() (uint, uint)
 	AddPin(uint)

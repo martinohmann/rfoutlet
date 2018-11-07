@@ -9,19 +9,26 @@ import (
 )
 
 const (
+	// DefaultTransmitPin defines the default gpio pin for transmitting rf codes
 	DefaultTransmitPin uint = 17
-	DefaultReceivePin  uint = 27
-	DefaultProtocol    int  = 1
+
+	// DefaultReceivePin defines the default gpio pin for receiving rf codes
+	DefaultReceivePin uint = 27
+
+	// DefaultProtocol defines the default rf protocol
+	DefaultProtocol int = 1
+
+	// DefaultProtocol defines the default pulse length
 	DefaultPulseLength uint = 189
 
 	transmissionChanLen = 32
-
-	bitLength int = 24
+	bitLength           = 24
 )
 
-var (
-	TransmitRetries int = 10
-)
+// TransmitRetries defines how many times a code should be transmitted in a
+// row. The higher the value, the more likely it is that an outlet actually
+// received the code.
+var TransmitRetries int = 10
 
 type transmission struct {
 	code        uint64

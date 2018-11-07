@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	// Outlet states
 	StateUnknown = iota
 	StateOn
 	StateOff
