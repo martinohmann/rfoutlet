@@ -12,17 +12,6 @@ type Config struct {
 	OutletGroups []*OutletGroup `yaml:"outlet_groups" json:"outlet_groups"`
 }
 
-// Print prints the current config values
-func (c *Config) Print() {
-	for _, og := range c.OutletGroups {
-		fmt.Printf("%s\n", og)
-
-		for _, o := range og.Outlets {
-			fmt.Printf("  %s\n", o)
-		}
-	}
-}
-
 // OutletGroup returns the outlet group at given offset in the config
 func (c *Config) OutletGroup(offset int) (*OutletGroup, error) {
 	if offset >= 0 && len(c.OutletGroups) > offset {
