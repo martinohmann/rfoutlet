@@ -8,6 +8,7 @@ matrix:
     - go: 1.x
       env: LATEST=true
     - go: tip
+      env: TAGS=integration
   allow_failures:
     - go: tip
 install:
