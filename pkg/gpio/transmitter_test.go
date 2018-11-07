@@ -1,8 +1,8 @@
 package gpio_test
 
 import (
+	"bytes"
 	"errors"
-	"strings"
 	"testing"
 
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
@@ -10,7 +10,7 @@ import (
 )
 
 type testPin struct {
-	sequence strings.Builder
+	sequence bytes.Buffer
 	closed   bool
 }
 
