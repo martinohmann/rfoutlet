@@ -167,7 +167,7 @@ License
 The source code of this is released under the MIT License. See the bundled LICENSE
 file for details.
 
-[![Creative Commons License](http://creativecommons.org/licenses/by-nc/4.0/)](https://i.creativecommons.org/l/by-nc/4.0/80x15.png)
+[![Creative Commons License](https://i.creativecommons.org/l/by-nc/4.0/80x15.png)](http://creativecommons.org/licenses/by-nc/4.0/)
 
 The images belonging to this project are licensed under a [Creative Commons
 Attribution-NonCommercial 4.0 International
