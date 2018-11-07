@@ -1,6 +1,8 @@
 rfoutlet
 ========
 
+[![Build Status](https://travis-ci.org/martinohmann/rfoutlet.svg)](https://travis-ci.org/martinohmann/rfoutlet)
+
 Outlet control via web interface for Raspberry PI 2/3. The transmitter and
 receiver logic has been ported from the great
 [rc-switch](https://github.com/sui77/rc-switch) C++ project to golang.
@@ -43,7 +45,7 @@ and required software.
 
 - I use Arch Linux on the Raspberry PI, but Raspbian should also work
 - `node` and `yarn` executables (tested with `node v10.11.0+`)
-- golang (tested with `go v1.11+`)
+- golang v1.9+ (tested with `go v1.11+`)
 - `make`
 
 Older software versions may also work, but I did not test that.
