@@ -29,7 +29,7 @@ build-app: ## build node app
 
 .PHONY: test
 test: ## run tests
-	go test -tags="$(TAGS)" -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v /vendor/)
+	go test -tags="$(TAGS)" $$(go list ./... | grep -v /vendor/)
 
 .PHONY: vet
 vet: ## run go vet
