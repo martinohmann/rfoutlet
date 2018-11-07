@@ -27,6 +27,9 @@ Contents
 Prerequisites
 -------------
 
+See the [Raspberry PI Setup](#raspberry-pi-setup) section for setup of hardware
+and required software.
+
 ### Hardware
 
 - Raspberry PI 2 or 3
@@ -37,8 +40,6 @@ Prerequisites
 - Power supply
 - Wiring
 - Breadboard (optional)
-
-See the [Raspberry PI Setup](#raspberry-pi-setup) section for the hardware setup.
 
 ### Software
 
@@ -121,6 +122,39 @@ sudo rftransmit -gpio-pin 17 -protocol 1 -pulse-length 189 123
 
 Raspberry PI Setup
 ------------------
+
+### Install required software
+
+On Arch Linux the following commands should be sufficient to install the
+required software:
+
+```sh
+sudo pacman -Sy go nodejs npm make
+sudo npm -g install yarn
+```
+
+On Raspbian the following should do (untested):
+
+```sh
+wget https://storage.googleapis.com/golang/go1.11.1.linux-armv6l.tar.gz
+sudo tar -C /usr/local -xvf go1.11.1.linux-armv6l.tar.gz
+rm go1.11.1.linux-armv6l.tar.gz
+curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+sudo apt-get install -y build-essential nodejs
+sudo npm -g install yarn
+```
+
+Set up `$GOPATH` afterwards:
+
+```sh
+cat >> ~/.bashrc << 'EOF'
+export GOPATH=$HOME/go
+export PATH=/usr/local/go/bin:$PATH:$GOPATH/bin
+EOF
+source ~/.bashrc
+```
+
+### Wiring transmitter and receiver
 
 The wiring of transmitter and receiver is straight forward and can be best
 described using images:
