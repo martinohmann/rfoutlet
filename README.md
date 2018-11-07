@@ -1,11 +1,9 @@
 rfoutlet
 ========
 
-Outlet control for Raspberry PI 2/3. The transmitter and receiver logic has
-been ported from the great [rc-switch](https://github.com/sui77/rc-switch) C++
-project to golang.
-
-TODO
+Outlet control via web interface for Raspberry PI 2/3. The transmitter and
+receiver logic has been ported from the great
+[rc-switch](https://github.com/sui77/rc-switch) C++ project to golang.
 
 Screenshot                           | Raspberry PI Setup
 :-----------------------------------:|:--------------------------------------:
