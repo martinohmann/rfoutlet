@@ -7,7 +7,9 @@ project to golang.
 
 TODO
 
-<img width="200" src="assets/screenshot.jpg">
+Screenshot                           | Raspberry PI Setup
+:-----------------------------------:|:--------------------------------------:
+![Screenshot](assets/screenshot.jpg) | ![Raspberry PI Setup](assets/setup.jpg)
 
 Contents
 --------
@@ -120,7 +122,12 @@ sudo rftransmit -gpio-pin 17 -protocol 1 -pulse-length 189 123
 Raspberry PI Setup
 ------------------
 
-TODO
+The wiring of transmitter and receiver is straight forward and can be best
+described using images:
+
+Transmitter                            | Receiver
+:-------------------------------------:|:-------------------------------:
+![Transmitter](assets/transmitter.jpg) | ![Receiver](assets/receiver.jpg)
 
 Outlets
 -------
