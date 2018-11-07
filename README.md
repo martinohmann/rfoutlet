@@ -156,12 +156,22 @@ Todo
 - [x] make transmitter/receiver code available as library below `pkg/`
 - [ ] persist outlet state across server restarts
 - [ ] use receiver to detect outlet state changes (e.g. via remote control)?
-- [ ] time switch: switch outlets on/off using user defined rules
+- [ ] time switch: switch outlets on/off using user defined rules (e.g. fixed
+  time or relative)
+- [ ] use web sockets for communication to be able to push outlet state changes
+  to multiple clients
 
 License
 -------
 
-rfoutlet is released under the MIT License. See the bundled LICENSE file for details.
+The source code of this is released under the MIT License. See the bundled LICENSE
+file for details.
+
+[![Creative Commons License](http://creativecommons.org/licenses/by-nc/4.0/)](https://i.creativecommons.org/l/by-nc/4.0/80x15.png)
+
+The images belonging to this project are licensed under a [Creative Commons
+Attribution-NonCommercial 4.0 International
+License](http://creativecommons.org/licenses/by-nc/4.0/).
 
 Resources
 ---------
