@@ -10,16 +10,16 @@ import (
 )
 
 const (
-	ActionOn     = "on"
-	ActionOff    = "off"
-	ActionToggle = "toggle"
+	actionOn     = "on"
+	actionOff    = "off"
+	actionToggle = "toggle"
 )
 
 // APIHandlerFunc function type definition
 type APIHandlerFunc func(http.ResponseWriter, *http.Request, string, int)
 
 var (
-	validActions = []string{ActionOn, ActionOff, ActionToggle}
+	validActions = []string{actionOn, actionOff, actionToggle}
 	logger       *log.Logger
 )
 
@@ -113,11 +113,11 @@ func handleSwitchRequest(w http.ResponseWriter, s outlet.Switcher, t gpio.CodeTr
 	var err error
 
 	switch action {
-	case ActionOn:
+	case actionOn:
 		err = s.SwitchOn(t)
-	case ActionOff:
+	case actionOff:
 		err = s.SwitchOff(t)
-	case ActionToggle:
+	case actionToggle:
 		err = s.ToggleState(t)
 	}
 
