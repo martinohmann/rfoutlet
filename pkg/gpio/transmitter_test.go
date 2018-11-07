@@ -74,3 +74,16 @@ func TestTransmitterClose(t *testing.T) {
 
 	assert.True(t, pin.closed)
 }
+
+func TestNullTransmitInvalidProtocol(t *testing.T) {
+	transmitter, err := gpio.NewNullTransmitter()
+	defer transmitter.Close()
+
+	assert.Nil(t, err)
+
+	err = transmitter.Transmit(0x1, 999, 190)
+
+	if assert.Error(t, err) {
+		assert.Equal(t, errors.New("Protocol 999 does not exist"), err)
+	}
+}

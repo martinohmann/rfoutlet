@@ -170,6 +170,10 @@ func NewNullTransmitter() (*NullTransmitter, error) {
 
 // Transmit does nothing.
 func (t *NullTransmitter) Transmit(code uint64, protocol int, pulseLength uint) error {
+	if protocol < 1 || protocol > len(Protocols) {
+		return fmt.Errorf("Protocol %d does not exist", protocol)
+	}
+
 	return nil
 }
 

@@ -22,6 +22,7 @@ var (
 				Outlets: []*outlet.Outlet{
 					&outlet.Outlet{
 						Identifier: "bar",
+						Protocol:   1,
 					},
 				},
 			},
@@ -41,7 +42,7 @@ func TestStatusRequest(t *testing.T) {
 	a.HandleStatusRequest(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, `[{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":0,"code_on":0,"code_off":0,"state":0}]}]`, rr.Body.String())
+	assert.Equal(t, `[{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":0}]}]`, rr.Body.String())
 }
 
 func TestValidateRequest(t *testing.T) {
@@ -129,23 +130,30 @@ func TestOutletRequest(t *testing.T) {
 		},
 		{
 			code:     http.StatusBadRequest,
-			groupId:  1,
+			groupId:  0,
 			postForm: url.Values{"outlet_id": []string{"2"}},
-			body:     `{"error":"invalid offset 1"}`,
+			body:     `{"error":"invalid offset 2"}`,
 		},
 		{
 			code:     http.StatusOK,
 			groupId:  0,
 			action:   "on",
 			postForm: url.Values{"outlet_id": []string{"0"}},
-			body:     `{"identifier":"bar","pulse_length":0,"protocol":0,"code_on":0,"code_off":0,"state":1}`,
+			body:     `{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}`,
 		},
 		{
 			code:     http.StatusOK,
 			groupId:  0,
 			action:   "off",
 			postForm: url.Values{"outlet_id": []string{"0"}},
-			body:     `{"identifier":"bar","pulse_length":0,"protocol":0,"code_on":0,"code_off":0,"state":2}`,
+			body:     `{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":2}`,
+		},
+		{
+			code:     http.StatusOK,
+			groupId:  0,
+			action:   "toggle",
+			postForm: url.Values{"outlet_id": []string{"0"}},
+			body:     `{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}`,
 		},
 	}
 
@@ -185,13 +193,13 @@ func TestOutletGroupRequest(t *testing.T) {
 			code:    http.StatusOK,
 			groupId: 0,
 			action:  "on",
-			body:    `{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":0,"code_on":0,"code_off":0,"state":1}]}`,
+			body:    `{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}]}`,
 		},
 		{
 			code:    http.StatusOK,
 			groupId: 0,
 			action:  "off",
-			body:    `{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":0,"code_on":0,"code_off":0,"state":2}]}`,
+			body:    `{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":2}]}`,
 		},
 	}
 

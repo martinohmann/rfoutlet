@@ -22,7 +22,7 @@ func TestNewOutlet(t *testing.T) {
 }
 
 func TestOutletSwitchOn(t *testing.T) {
-	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown}
+	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown, Protocol: 1}
 
 	err := o.SwitchOn(transmitter)
 
@@ -31,7 +31,7 @@ func TestOutletSwitchOn(t *testing.T) {
 }
 
 func TestOutletSwitchOff(t *testing.T) {
-	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown}
+	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown, Protocol: 1}
 
 	err := o.SwitchOff(transmitter)
 
@@ -40,7 +40,7 @@ func TestOutletSwitchOff(t *testing.T) {
 }
 
 func TestOutletToggleState(t *testing.T) {
-	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown}
+	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown, Protocol: 1}
 
 	err := o.ToggleState(transmitter)
 
@@ -62,4 +62,18 @@ func TestUnmarshalDefaults(t *testing.T) {
 	assert.Equal(t, outlet.StateUnknown, o.State)
 	assert.Equal(t, gpio.DefaultPulseLength, o.PulseLength)
 	assert.Equal(t, gpio.DefaultProtocol, o.Protocol)
+}
+
+func TestUnmarshalError(t *testing.T) {
+	o := &outlet.Outlet{}
+
+	err := yaml.Unmarshal([]byte("[]"), o)
+
+	assert.NotNil(t, err)
+}
+
+func TestOutletString(t *testing.T) {
+	o := &outlet.Outlet{Identifier: "foo", PulseLength: 123, CodeOn: 456, CodeOff: 789, Protocol: 5}
+
+	assert.Equal(t, `Outlet{Identifier: "foo", PulseLength: 123, Protocol: 5, CodeOn: 456, CodeOff: 789, State: 0}`, o.String())
 }

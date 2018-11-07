@@ -24,7 +24,7 @@ func TestAddOutlet(t *testing.T) {
 }
 
 func TestOutlet(t *testing.T) {
-	o := &outlet.Outlet{}
+	o := &outlet.Outlet{Protocol: 1}
 
 	og := &outlet.OutletGroup{
 		Outlets: []*outlet.Outlet{o},
@@ -42,7 +42,7 @@ func TestOutlet(t *testing.T) {
 }
 
 func TestOutputGroupSwitchOn(t *testing.T) {
-	o := &outlet.Outlet{State: outlet.StateOff}
+	o := &outlet.Outlet{State: outlet.StateOff, Protocol: 1}
 
 	og := &outlet.OutletGroup{
 		Outlets: []*outlet.Outlet{o},
@@ -55,7 +55,7 @@ func TestOutputGroupSwitchOn(t *testing.T) {
 }
 
 func TestOutputGroupSwitchOff(t *testing.T) {
-	o := &outlet.Outlet{State: outlet.StateOn}
+	o := &outlet.Outlet{State: outlet.StateOn, Protocol: 1}
 
 	og := &outlet.OutletGroup{
 		Outlets: []*outlet.Outlet{o},
@@ -68,7 +68,7 @@ func TestOutputGroupSwitchOff(t *testing.T) {
 }
 
 func TestOutputGroupToggleState(t *testing.T) {
-	o := &outlet.Outlet{State: outlet.StateOff}
+	o := &outlet.Outlet{State: outlet.StateOff, Protocol: 1}
 
 	og := &outlet.OutletGroup{
 		Outlets: []*outlet.Outlet{o},
@@ -83,4 +83,22 @@ func TestOutputGroupToggleState(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, outlet.StateOff, o.State)
+}
+
+func TestOutputGroupToggleStateInvalidOutletProtocol(t *testing.T) {
+	o := &outlet.Outlet{State: outlet.StateOff, Protocol: 9999}
+
+	og := &outlet.OutletGroup{
+		Outlets: []*outlet.Outlet{o},
+	}
+
+	err := og.ToggleState(transmitter)
+
+	assert.NotNil(t, err)
+}
+
+func TestOutletGroupString(t *testing.T) {
+	og := &outlet.OutletGroup{Identifier: "foo"}
+
+	assert.Equal(t, `OutletGroup{Identifier: "foo"}`, og.String())
 }
