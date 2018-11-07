@@ -86,7 +86,9 @@ This command starts a server which listens on `0.0.0.0:3333` by default.
 By default it
 looks for its configuration file at `/etc/rfoutlet/config.yml`. Check
 [dist/config.yml](dist/config.yml) for an example config file with all
-available config values.
+available config values. Use the `rfsniff` command for reading the on/off
+codes, protocol and pulse lengths for your outlets to put into the
+configuration file.
 
 Start the server:
 
@@ -103,7 +105,7 @@ reference.
 
 This command listens on a gpio pin and tries to sniff codes sent out by 433 Mhz
 remote controls. It will print the received code, protocol, pulse length and
-bit length to stdout.
+bit length to stdout when you press the on/off buttons on your remote.
 
 ```sh
 sudo rfsniff -gpio-pin 27
