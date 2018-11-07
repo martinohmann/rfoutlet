@@ -129,6 +129,10 @@ Transmitter                            | Receiver
 :-------------------------------------:|:-------------------------------:
 ![Transmitter](assets/transmitter.jpg) | ![Receiver](assets/receiver.jpg)
 
+To increase the range of the transmitter I use a 25cm wire as antenna. I just
+twisted it with a pair of pliers to hold it in place, soldering is optional.
+This covers my whole appartment (105sqm). YMMV.
+
 Outlets
 -------
 
