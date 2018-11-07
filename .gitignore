@@ -1,4 +1,5 @@
 /.cover
+/coverage.txt
 /rfoutlet
 /rfsniff
 /rftransmit
