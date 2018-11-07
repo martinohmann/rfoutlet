@@ -35,6 +35,10 @@ test: ## run tests
 test-integration: ## run integration tests
 	go test -tags=integration $$(go list ./... | grep -v /vendor/)
 
+.PHONY: vet
+vet: ## run go vet
+	go vet $$(go list ./... | grep -v /vendor/)
+
 .PHONY: coverage
 coverage: ## generate code coverage
 	scripts/coverage
