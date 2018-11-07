@@ -13,6 +13,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
 
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
@@ -32,11 +33,20 @@ func init() {
 func main() {
 	flag.Parse()
 
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+
 	receiver := gpio.NewReceiver(*gpioPin)
 	defer receiver.Close()
 
-	for res := range receiver.Receive() {
-		fmt.Printf("received code=%d pulseLength=%d bitLength=%d protocol=%d\n",
-			res.Code, res.PulseLength, res.BitLength, res.Protocol)
+	for {
+		select {
+		case res := <-receiver.Receive():
+			fmt.Printf("received code=%d pulseLength=%d bitLength=%d protocol=%d\n",
+				res.Code, res.PulseLength, res.BitLength, res.Protocol)
+		case <-interrupt:
+			fmt.Println("received interrupt")
+			return
+		}
 	}
 }
