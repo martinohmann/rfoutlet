@@ -1,5 +1,5 @@
-hash: df244fab5aa6a0e9a651158888da4813fdeab7c3ee5d795cc1f9b21e77c6604c
-updated: 2018-11-07T17:37:18.454164159+01:00
+hash: e8eea3a5850eaa456b4f7eb0d2af03c11197f29ed08c590eb07a9669414786da
+updated: 2018-11-08T20:11:28.601057594+01:00
 imports:
 - name: github.com/brian-armstrong/gpio
   version: 3846dfc1984fa6404f927b6a332452c9990a2d6c
@@ -19,10 +19,17 @@ imports:
   version: c605e284fe17294bda444b34710735b29d1a9d90
 - name: github.com/spf13/afero
   version: d40851caa0d747393da1ffb28f7f9d8b4eeffebd
+  subpackages:
+  - mem
 - name: github.com/stretchr/testify
   version: f35b8ab0b5a2cef36673838d662e249dd9c94686
   subpackages:
   - assert
+- name: golang.org/x/text
+  version: f21a4dfb5e38f5895301dc265a8def02365cc3d0
+  subpackages:
+  - transform
+  - unicode/norm
 - name: gopkg.in/yaml.v2
   version: 1be3d31502d6eabc0dd7ce5b0daab022e14a5538
 testImports:

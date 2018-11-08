@@ -9,3 +9,5 @@ import:
 - package: github.com/Flaque/filet
 - package: github.com/spf13/afero
   version: ^1.1.2
+- package: golang.org/x/text
+  version: ^0.3.0
