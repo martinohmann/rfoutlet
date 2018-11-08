@@ -5,3 +5,4 @@
 /rftransmit
 /vendor
 /config.yml
+*-packr.go
