@@ -1,12 +1,36 @@
-hash: 1e3958961f0146157241a177193b1d03184c5a267f21613d591217f660dcc6c1
-updated: 2018-11-03T13:28:04.203431446+01:00
+hash: df244fab5aa6a0e9a651158888da4813fdeab7c3ee5d795cc1f9b21e77c6604c
+updated: 2018-11-07T17:37:18.454164159+01:00
 imports:
 - name: github.com/brian-armstrong/gpio
   version: 3846dfc1984fa6404f927b6a332452c9990a2d6c
+- name: github.com/Flaque/filet
+  version: dbf95344df50497dba92c62da869a873be2968e9
+- name: github.com/gobuffalo/envy
+  version: e0b181c424e7ca1a36f6f2db4bdfd25ef3421e77
+- name: github.com/gobuffalo/packd
+  version: c8273487026482b912d61bdbffd54705e96d1e8e
 - name: github.com/gobuffalo/packr
   version: 6b12e1c51b1a3691c784c1b42ac72358009723fd
+- name: github.com/joho/godotenv
+  version: c0b86d615e06d6fa5f869364d68f774ba49a86e3
+- name: github.com/markbates/oncer
+  version: 05fccaae8fc423476d98fd4c3e4699ba0fbbde48
+- name: github.com/pkg/errors
+  version: c605e284fe17294bda444b34710735b29d1a9d90
+- name: github.com/spf13/afero
+  version: d40851caa0d747393da1ffb28f7f9d8b4eeffebd
 - name: github.com/stretchr/testify
   version: f35b8ab0b5a2cef36673838d662e249dd9c94686
+  subpackages:
+  - assert
 - name: gopkg.in/yaml.v2
   version: 1be3d31502d6eabc0dd7ce5b0daab022e14a5538
-testImports: []
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib

@@ -32,6 +32,7 @@ const (
 
 var (
 	configFilename = flag.String("config", defaultConfigFilename, "config filename")
+	stateFilename  = flag.String("state-file", "", "state filename")
 	listenAddress  = flag.String("listen-address", defaultListenAddress, "listen address")
 	gpioPin        = flag.Uint("gpio-pin", gpio.DefaultTransmitPin, "gpio pin to transmit on")
 	usage          = func() {
@@ -47,7 +48,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	outletConfig, err := outlet.ReadConfig(*configFilename)
+	config, err := outlet.ReadConfig(*configFilename)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -61,11 +62,18 @@ func main() {
 
 	defer transmitter.Close()
 
-	box := packr.NewBox(webDir)
-
-	api := api.New(outletConfig, transmitter)
+	stateManager := createStateManager()
+	control := outlet.NewControl(config, stateManager, transmitter)
 
 	logger := log.New(os.Stdout, "http: ", log.LstdFlags|log.Lshortfile)
+
+	if err := control.RestoreState(); err != nil {
+		fmt.Printf("error while restoring state: %s\n", err)
+	}
+
+	box := packr.NewBox(webDir)
+
+	api := api.New(control)
 
 	router := http.NewServeMux()
 
@@ -102,4 +110,18 @@ func cors(origin string) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func createStateManager() outlet.StateManager {
+	if *stateFilename != "" {
+		stateFile, err := os.OpenFile(*stateFilename, os.O_RDWR|os.O_CREATE, 0600)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		return outlet.NewStateManager(stateFile)
+	}
+
+	return outlet.NewNullStateManager()
 }

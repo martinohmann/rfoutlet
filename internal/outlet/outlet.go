@@ -8,17 +8,6 @@ import (
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
 
-const (
-	// StateUnknown defines an unknown outlet state
-	StateUnknown = iota
-
-	// StateOn defines an outlet that is on
-	StateOn
-
-	// StateOff defines an outlet that is off
-	StateOff
-)
-
 var logger *log.Logger
 
 func init() {
@@ -39,7 +28,7 @@ type Outlet struct {
 	Protocol    int    `yaml:"protocol" json:"protocol"`
 	CodeOn      uint64 `yaml:"code_on" json:"code_on"`
 	CodeOff     uint64 `yaml:"code_off" json:"code_off"`
-	State       int    `yaml:"state" json:"state"`
+	State       State  `yaml:"state" json:"state"`
 }
 
 // NewOutlet creates a new outlet

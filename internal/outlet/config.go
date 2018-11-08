@@ -1,7 +1,6 @@
 package outlet
 
 import (
-	"fmt"
 	"io/ioutil"
 
 	yaml "gopkg.in/yaml.v2"
@@ -10,15 +9,6 @@ import (
 // Config type definition
 type Config struct {
 	OutletGroups []*OutletGroup `yaml:"outlet_groups" json:"outlet_groups"`
-}
-
-// OutletGroup returns the outlet group at given offset in the config
-func (c *Config) OutletGroup(offset int) (*OutletGroup, error) {
-	if offset >= 0 && len(c.OutletGroups) > offset {
-		return c.OutletGroups[offset], nil
-	}
-
-	return nil, fmt.Errorf("invalid offset %d", offset)
 }
 
 // ReadConfig reads the outlet config from a yaml file

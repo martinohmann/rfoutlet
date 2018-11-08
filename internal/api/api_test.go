@@ -15,6 +15,7 @@ import (
 
 var (
 	transmitter, _ = gpio.NewNullTransmitter()
+	sm             = outlet.NewNullStateManager()
 	config         = &outlet.Config{
 		OutletGroups: []*outlet.OutletGroup{
 			&outlet.OutletGroup{
@@ -30,8 +31,12 @@ var (
 	}
 )
 
+func createControl() *outlet.Control {
+	return outlet.NewControl(config, sm, transmitter)
+}
+
 func TestStatusRequest(t *testing.T) {
-	a := api.New(config, transmitter)
+	a := api.New(createControl())
 	rr := httptest.NewRecorder()
 
 	req, err := http.NewRequest("GET", "/api/status", nil)
@@ -46,7 +51,7 @@ func TestStatusRequest(t *testing.T) {
 }
 
 func TestValidateRequest(t *testing.T) {
-	a := api.New(config, transmitter)
+	a := api.New(createControl())
 	f := a.ValidateRequest(func(w http.ResponseWriter, r *http.Request, action string, groupId int) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
@@ -110,7 +115,7 @@ func TestValidateRequest(t *testing.T) {
 }
 
 func TestOutletRequest(t *testing.T) {
-	a := api.New(config, transmitter)
+	a := api.New(createControl())
 
 	tests := []struct {
 		action   string
@@ -124,15 +129,16 @@ func TestOutletRequest(t *testing.T) {
 			body: `{"error":"outlet_id field missing"}`,
 		},
 		{
-			code:    http.StatusBadRequest,
-			groupId: 1,
-			body:    `{"error":"invalid offset 1"}`,
+			code:     http.StatusBadRequest,
+			postForm: url.Values{"outlet_id": []string{"2"}},
+			groupId:  1,
+			body:     `{"error":"invalid outlet group offset 1"}`,
 		},
 		{
 			code:     http.StatusBadRequest,
 			groupId:  0,
 			postForm: url.Values{"outlet_id": []string{"2"}},
-			body:     `{"error":"invalid offset 2"}`,
+			body:     `{"error":"invalid outlet offset 2 in group 0"}`,
 		},
 		{
 			code:     http.StatusOK,
@@ -175,7 +181,7 @@ func TestOutletRequest(t *testing.T) {
 }
 
 func TestOutletGroupRequest(t *testing.T) {
-	a := api.New(config, transmitter)
+	a := api.New(createControl())
 
 	tests := []struct {
 		action   string
@@ -187,7 +193,7 @@ func TestOutletGroupRequest(t *testing.T) {
 		{
 			code:    http.StatusBadRequest,
 			groupId: 1,
-			body:    `{"error":"invalid offset 1"}`,
+			body:    `{"error":"invalid outlet group offset 1"}`,
 		},
 		{
 			code:    http.StatusOK,
