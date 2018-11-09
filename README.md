@@ -22,6 +22,7 @@ Contents
 - [Commands](#commands)
 - [Raspberry PI Setup](#raspberry-pi-setup)
 - [Outlets](#outlets)
+- [Running rfoutlet as systemd service](#running-rfoutlet-as-systemd-service)
 - [Development / Testing](#development-testing)
 - [Todo](#todo)
 - [License](#license)
@@ -187,6 +188,12 @@ I achieved good results with the following remote controlled outlets:
 - [Brennenstuhl RCS 1000 N Comfort](https://www.amazon.de/gp/product/B001AX8QUM/ref=oh_aui_detailpage_o00_s00?ie=UTF8&psc=1)
 
 Please let me know about others that work well too, so I can extend the list here.
+
+Running rfoutlet as systemd service
+-----------------------------------
+
+See [example/systemd/rfoutlet.service](example/systemd/rfoutlet.service) for an
+example systemd service file.
 
 Development / Testing
 ---------------------
