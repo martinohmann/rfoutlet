@@ -27,19 +27,25 @@ type stateInfo struct {
 	SwitchState State `json:"state"`
 }
 
+// Statemanager defines the interface for an outlet state manager
 type StateManager interface {
 	SaveState(*Control) error
 	RestoreState(*Control) error
+	Close() error
 }
 
+// FileStateManager type definition
 type FileStateManager struct {
 	f afero.File
 }
 
+// NewStateManager create a new state manager that persists state in the given
+// state file.
 func NewStateManager(stateFile afero.File) *FileStateManager {
 	return &FileStateManager{f: stateFile}
 }
 
+// RestoreState restores the last outlet state
 func (m *FileStateManager) RestoreState(control *Control) error {
 	m.f.Seek(0, 0)
 
@@ -61,6 +67,7 @@ func (m *FileStateManager) RestoreState(control *Control) error {
 	return m.restoreState(control, stateInfos)
 }
 
+// SaveState saves the state of all outlets
 func (m *FileStateManager) SaveState(control *Control) error {
 	stateInfos := make([]stateInfo, 0)
 
@@ -77,6 +84,15 @@ func (m *FileStateManager) SaveState(control *Control) error {
 	}
 
 	return m.saveState(stateInfos)
+}
+
+// Close syncs the state file to disk and closes it
+func (m *FileStateManager) Close() error {
+	if err := m.f.Sync(); err != nil {
+		return err
+	}
+
+	return m.f.Close()
 }
 
 func (m *FileStateManager) restoreState(control *Control, stateInfos []stateInfo) error {
@@ -103,8 +119,17 @@ func (m *FileStateManager) saveState(stateInfos []stateInfo) error {
 	return m.f.Sync()
 }
 
+// NullStateManager type definition
 type NullStateManager struct{}
 
-func NewNullStateManager() *NullStateManager                    { return &NullStateManager{} }
+// NewNullStateManager create a new state manager that just does nothing
+func NewNullStateManager() *NullStateManager { return &NullStateManager{} }
+
+// RestoreState does nothing
 func (m *NullStateManager) RestoreState(control *Control) error { return nil }
-func (m *NullStateManager) SaveState(control *Control) error    { return nil }
+
+// SaveState does nothing
+func (m *NullStateManager) SaveState(control *Control) error { return nil }
+
+// Close does nothing
+func (m *NullStateManager) Close() error { return nil }

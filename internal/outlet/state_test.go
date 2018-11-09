@@ -44,6 +44,8 @@ func TestSaveStateOverwriteFile(t *testing.T) {
 
 func testSaveState(t *testing.T, f afero.File, config *outlet.Config) {
 	sm := outlet.NewStateManager(f)
+	defer sm.Close()
+
 	c := outlet.NewControl(config, sm, transmitter)
 
 	err := c.SaveState()
@@ -136,7 +138,10 @@ func TestRestoreState(t *testing.T) {
 	for _, tt := range tests {
 		f := filet.TmpFile(t, "/tmp", tt.fileContents)
 		config := tt.configProvider()
+
 		sm := outlet.NewStateManager(f)
+		defer sm.Close()
+
 		c := outlet.NewControl(config, sm, transmitter)
 
 		err := c.RestoreState()

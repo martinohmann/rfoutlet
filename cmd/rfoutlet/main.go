@@ -62,7 +62,22 @@ func main() {
 
 	defer transmitter.Close()
 
-	stateManager := createStateManager()
+	var stateManager outlet.StateManager
+
+	if *stateFilename != "" {
+		stateFile, err := os.OpenFile(*stateFilename, os.O_RDWR|os.O_CREATE, 0600)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		stateManager = outlet.NewStateManager(stateFile)
+	} else {
+		stateManager = outlet.NewNullStateManager()
+	}
+
+	defer stateManager.Close()
+
 	control := outlet.NewControl(config, stateManager, transmitter)
 
 	logger := log.New(os.Stdout, "http: ", log.LstdFlags|log.Lshortfile)
@@ -110,18 +125,4 @@ func cors(origin string) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
-}
-
-func createStateManager() outlet.StateManager {
-	if *stateFilename != "" {
-		stateFile, err := os.OpenFile(*stateFilename, os.O_RDWR|os.O_CREATE, 0600)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		return outlet.NewStateManager(stateFile)
-	}
-
-	return outlet.NewNullStateManager()
 }

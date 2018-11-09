@@ -8,14 +8,14 @@ import (
 
 // Control type definition
 type Control struct {
-	config      *Config
-	sm          StateManager
-	transmitter gpio.CodeTransmitter
+	config       *Config
+	stateManager StateManager
+	transmitter  gpio.CodeTransmitter
 }
 
 // NewControl create a new outlet control
 func NewControl(config *Config, stateManager StateManager, transmitter gpio.CodeTransmitter) *Control {
-	return &Control{config: config, sm: stateManager, transmitter: transmitter}
+	return &Control{config: config, stateManager: stateManager, transmitter: transmitter}
 }
 
 // OuletGroups returns all known outlet groups
@@ -48,12 +48,12 @@ func (c *Control) Outlet(groupId int, offset int) (*Outlet, error) {
 
 // RestoreState restores the outlet state
 func (c *Control) RestoreState() error {
-	return c.sm.RestoreState(c)
+	return c.stateManager.RestoreState(c)
 }
 
 // SaveState saves the outlet state
 func (c *Control) SaveState() error {
-	return c.sm.SaveState(c)
+	return c.stateManager.SaveState(c)
 }
 
 // SwitchOn switches switch on
