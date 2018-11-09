@@ -39,6 +39,13 @@ builds:
       - arm
     goarm:
       - 7
+release:
+  github:
+    owner: martinohmann
+    name: rfoutlet
+archive:
+  files:
+  - none*
 checksum:
   name_template: 'checksums.txt'
 changelog:
