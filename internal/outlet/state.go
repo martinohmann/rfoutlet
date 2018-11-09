@@ -27,7 +27,7 @@ type stateInfo struct {
 	SwitchState State `json:"state"`
 }
 
-// Statemanager defines the interface for an outlet state manager
+// StateManager defines the interface for an outlet state manager
 type StateManager interface {
 	SaveState(*Control) error
 	RestoreState(*Control) error

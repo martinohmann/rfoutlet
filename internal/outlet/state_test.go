@@ -12,15 +12,15 @@ import (
 
 var stateTestConfig = &outlet.Config{
 	OutletGroups: []*outlet.OutletGroup{
-		&outlet.OutletGroup{
+		{
 			Outlets: []*outlet.Outlet{
-				&outlet.Outlet{State: 2},
+				{State: 2},
 			},
 		},
-		&outlet.OutletGroup{
+		{
 			Outlets: []*outlet.Outlet{
-				&outlet.Outlet{State: 1},
-				&outlet.Outlet{State: 0},
+				{State: 1},
+				{State: 0},
 			},
 		},
 	},
@@ -73,15 +73,15 @@ func TestRestoreState(t *testing.T) {
 			configProvider: func() *outlet.Config {
 				return &outlet.Config{
 					OutletGroups: []*outlet.OutletGroup{
-						&outlet.OutletGroup{
+						{
 							Outlets: []*outlet.Outlet{
-								&outlet.Outlet{},
+								{},
 							},
 						},
-						&outlet.OutletGroup{
+						{
 							Outlets: []*outlet.Outlet{
-								&outlet.Outlet{},
-								&outlet.Outlet{},
+								{},
+								{},
 							},
 						},
 					},
@@ -106,9 +106,9 @@ func TestRestoreState(t *testing.T) {
 			configProvider: func() *outlet.Config {
 				return &outlet.Config{
 					OutletGroups: []*outlet.OutletGroup{
-						&outlet.OutletGroup{
+						{
 							Outlets: []*outlet.Outlet{
-								&outlet.Outlet{},
+								{},
 							},
 						},
 					},

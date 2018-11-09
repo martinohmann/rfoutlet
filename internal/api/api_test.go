@@ -18,10 +18,10 @@ var (
 	sm             = outlet.NewNullStateManager()
 	config         = &outlet.Config{
 		OutletGroups: []*outlet.OutletGroup{
-			&outlet.OutletGroup{
+			{
 				Identifier: "foo",
 				Outlets: []*outlet.Outlet{
-					&outlet.Outlet{
+					{
 						Identifier: "bar",
 						Protocol:   1,
 					},

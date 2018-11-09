@@ -18,7 +18,7 @@ func NewControl(config *Config, stateManager StateManager, transmitter gpio.Code
 	return &Control{config: config, stateManager: stateManager, transmitter: transmitter}
 }
 
-// OuletGroups returns all known outlet groups
+// OutletGroups returns all known outlet groups
 func (c *Control) OutletGroups() []*OutletGroup {
 	return c.config.OutletGroups
 }
