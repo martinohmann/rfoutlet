@@ -48,7 +48,7 @@ and required software.
 
 - I use Arch Linux on the Raspberry PI, but Raspbian should also work
 - `node` and `yarn` executables (tested with `node v10.11.0+`)
-- golang v1.9+ (tested with `go v1.11+`)
+- golang v1.11+
 - `make`
 
 Older software versions may also work, but I did not test that.
