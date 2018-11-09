@@ -4,11 +4,10 @@ go: 1.11.x
 env:
   - GO111MODULE=on
 install:
-  - make deps deps-app
+  - make deps
 script:
   - make vet
   - make coverage
-  - make build-app
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 deploy:

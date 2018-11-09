@@ -12,7 +12,7 @@ builds:
     goarm:
       - 7
     hooks:
-      pre: packr
+      pre: make app pack-app
       post: packr clean
   - main: ./cmd/rfsniff/main.go
     binary: rfsniff
