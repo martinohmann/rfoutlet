@@ -104,6 +104,12 @@ transmission of the rf codes. A different pin can be use by providing the
 `-gpio-pin` flag. Check out the [Raspberry Pi pinouts](https://pinout.xyz/) for
 reference.
 
+If you want the outlet switch states to be persisted, pass the `-state-file` flag, e.g:
+
+```
+sudo rfoutlet -state-file /var/lib/rfoutlet/state.json
+```
+
 ### `rfsniff` command
 
 This command listens on a gpio pin and tries to sniff codes sent out by 433 Mhz
@@ -197,7 +203,7 @@ Todo
 - [x] implement code transmitter (see [`cmd/rftransmit`](cmd/rftransmit))
 - [x] implement code receiver (see [`cmd/rfsniff`](cmd/rfsniff))
 - [x] make transmitter/receiver code available as library below `pkg/`
-- [ ] persist outlet state across server restarts
+- [x] persist outlet state across server restarts
 - [ ] use receiver to detect outlet state changes (e.g. via remote control)?
 - [ ] time switch: switch outlets on/off using user defined rules (e.g. fixed
   time or relative)
