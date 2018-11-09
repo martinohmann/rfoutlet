@@ -10,8 +10,7 @@ all: deps deps-app build-app build ## install dependencies and build everything
 .PHONY: deps
 deps: ## install go deps
 	go get -u github.com/gobuffalo/packr/packr
-	go get -u github.com/Masterminds/glide
-	glide install
+	go mod vendor
 
 .PHONY: deps-app
 deps-app: ## install node deps
