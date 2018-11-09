@@ -1,7 +1,4 @@
 ---
-before:
-  hooks:
-    - make deps
 builds:
   - main: ./cmd/rfoutlet/main.go
     binary: rfoutlet
