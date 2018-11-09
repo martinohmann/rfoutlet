@@ -88,7 +88,7 @@ This command starts a server which listens on `0.0.0.0:3333` by default.
 
 By default it
 looks for its configuration file at `/etc/rfoutlet/config.yml`. Check
-[dist/config.yml](dist/config.yml) for an example config file with all
+[example/config.yml](example/config.yml) for an example config file with all
 available config values. Use the `rfsniff` command for reading the on/off
 codes, protocol and pulse lengths for your outlets to put into the
 configuration file.
