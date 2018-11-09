@@ -1,5 +1,7 @@
 language: go
 sudo: false
+env:
+  - GO111MODULE=on
 matrix:
   include:
     - go: 1.11.x
@@ -13,6 +15,6 @@ install:
   - make deps
 script:
   - make vet
-  - make coverage
+  - if [ -z $TAGS ]; then make coverage; else make test; done
 after_success:
   - bash <(curl -s https://codecov.io/bash)
