@@ -1,22 +1,24 @@
 package api_test
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/martinohmann/rfoutlet/internal/api"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	transmitter, _ = gpio.NewNullTransmitter()
-	sm             = outlet.NewNullStateManager()
-	config         = &outlet.Config{
+func createControl() *outlet.Control {
+	t, _ := gpio.NewNullTransmitter()
+	sm := outlet.NewNullStateManager()
+	c := &outlet.Config{
 		OutletGroups: []*outlet.OutletGroup{
 			{
 				Identifier: "foo",
@@ -25,155 +27,125 @@ var (
 						Identifier: "bar",
 						Protocol:   1,
 					},
+					{
+						Identifier: "baz",
+						Protocol:   1,
+						State:      outlet.StateOn,
+					},
 				},
 			},
 		},
 	}
-)
-
-func createControl() *outlet.Control {
-	return outlet.NewControl(config, sm, transmitter)
+	return outlet.NewControl(c, sm, t)
 }
 
-func TestStatusRequest(t *testing.T) {
+func TestInvalidJson(t *testing.T) {
 	a := api.New(createControl())
-	rr := httptest.NewRecorder()
-
-	req, err := http.NewRequest("GET", "/api/status", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	a.HandleStatusRequest(rr, req)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, `[{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":0}]}]`, rr.Body.String())
-}
-
-func TestValidateRequest(t *testing.T) {
-	a := api.New(createControl())
-	f := a.ValidateRequest(func(w http.ResponseWriter, r *http.Request, action string, groupId int) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
-	})
 
 	tests := []struct {
-		method   string
-		action   string
-		code     int
-		body     string
-		postForm url.Values
+		handler      gin.HandlerFunc
+		givenBody    string
+		expectedBody string
 	}{
 		{
-			method: "GET",
-			code:   http.StatusMethodNotAllowed,
-			body:   `{"error":"Method Not Allowed"}`,
+			handler:      a.OutletRequestHandler,
+			expectedBody: `{"error":"EOF"}`,
 		},
 		{
-			method: "POST",
-			action: "foo",
-			code:   http.StatusBadRequest,
-			body:   `{"error":"foo is not a valid action"}`,
+			handler:      a.OutletGroupRequestHandler,
+			expectedBody: `{"error":"EOF"}`,
 		},
 		{
-			method: "POST",
-			action: "on",
-			code:   http.StatusBadRequest,
-			body:   `{"error":"group_id field missing"}`,
+			handler:      a.OutletGroupRequestHandler,
+			givenBody:    `{foo`,
+			expectedBody: `{"error":"invalid character 'f' looking for beginning of object key string"}`,
 		},
 		{
-			method:   "POST",
-			action:   "on",
-			code:     http.StatusBadRequest,
-			postForm: url.Values{"group_id": []string{"foo"}},
-			body:     `{"error":"strconv.Atoi: parsing \"foo\": invalid syntax"}`,
+			handler:      a.OutletRequestHandler,
+			givenBody:    `[{}]`,
+			expectedBody: `{"error":"json: cannot unmarshal array into Go value of type api.OutletRequest"}`,
 		},
 		{
-			method:   "POST",
-			action:   "off",
-			code:     http.StatusOK,
-			postForm: url.Values{"group_id": []string{"0"}},
-			body:     `ok`,
+			handler:      a.OutletGroupRequestHandler,
+			givenBody:    `[]`,
+			expectedBody: `{"error":"json: cannot unmarshal array into Go value of type api.OutletGroupRequest"}`,
 		},
 	}
 
 	for _, tt := range tests {
+		r := gin.New()
+		r.POST("/", tt.handler)
+
 		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(tt.givenBody)))
 
-		req, err := http.NewRequest(tt.method, fmt.Sprintf("/api/outlet/%s", tt.action), nil)
-		if err != nil {
-			t.Fatal(err)
-		}
+		r.ServeHTTP(rr, req)
 
-		req.PostForm = tt.postForm
-
-		f(rr, req)
-
-		assert.Equal(t, tt.code, rr.Code)
-		assert.Equal(t, tt.body, rr.Body.String())
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+		assert.Equal(t, tt.expectedBody, rr.Body.String())
 	}
 }
 
 func TestOutletRequest(t *testing.T) {
-	a := api.New(createControl())
-
 	tests := []struct {
 		action   string
 		groupId  int
 		code     int
 		body     string
 		postForm url.Values
+		data     api.OutletRequest
 	}{
 		{
 			code: http.StatusBadRequest,
-			body: `{"error":"outlet_id field missing"}`,
+			body: `{"error":"invalid action \"\""}`,
 		},
 		{
-			code:     http.StatusBadRequest,
-			postForm: url.Values{"outlet_id": []string{"2"}},
-			groupId:  1,
-			body:     `{"error":"invalid outlet group offset 1"}`,
+			code: http.StatusBadRequest,
+			data: api.OutletRequest{
+				GroupId:  1,
+				OutletId: 2,
+			},
+			body: `{"error":"invalid outlet group offset 1"}`,
 		},
 		{
-			code:     http.StatusBadRequest,
-			groupId:  0,
-			postForm: url.Values{"outlet_id": []string{"2"}},
-			body:     `{"error":"invalid outlet offset 2 in group 0"}`,
+			code: http.StatusBadRequest,
+			data: api.OutletRequest{
+				GroupId:  0,
+				OutletId: 2,
+			},
+			body: `{"error":"invalid outlet offset 2 in group 0"}`,
 		},
 		{
-			code:     http.StatusOK,
-			groupId:  0,
-			action:   "on",
-			postForm: url.Values{"outlet_id": []string{"0"}},
-			body:     `{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}`,
+			code: http.StatusOK,
+			data: api.OutletRequest{
+				GroupId:  0,
+				OutletId: 0,
+				Action:   "on",
+			},
+			body: `{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}`,
 		},
 		{
-			code:     http.StatusOK,
-			groupId:  0,
-			action:   "off",
-			postForm: url.Values{"outlet_id": []string{"0"}},
-			body:     `{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":2}`,
-		},
-		{
-			code:     http.StatusOK,
-			groupId:  0,
-			action:   "toggle",
-			postForm: url.Values{"outlet_id": []string{"0"}},
-			body:     `{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}`,
+			code: http.StatusOK,
+			data: api.OutletRequest{
+				GroupId:  0,
+				OutletId: 0,
+				Action:   "toggle",
+			},
+			body: `{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}`,
 		},
 	}
 
 	for _, tt := range tests {
+		a := api.New(createControl())
+
+		r := gin.New()
+		r.POST("/api/outlet", a.OutletRequestHandler)
+
 		rr := httptest.NewRecorder()
+		json, _ := json.Marshal(tt.data)
+		req, _ := http.NewRequest("POST", "/api/outlet", bytes.NewBuffer(json))
 
-		req, err := http.NewRequest("POST", fmt.Sprintf("/api/outlet/%s", tt.action), nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		req.PostForm = tt.postForm
-
-		a.HandleOutletRequest(rr, req, tt.action, tt.groupId)
+		r.ServeHTTP(rr, req)
 
 		assert.Equal(t, tt.code, rr.Code)
 		assert.Equal(t, tt.body, rr.Body.String())
@@ -181,47 +153,72 @@ func TestOutletRequest(t *testing.T) {
 }
 
 func TestOutletGroupRequest(t *testing.T) {
-	a := api.New(createControl())
-
 	tests := []struct {
-		action   string
-		groupId  int
-		code     int
-		body     string
-		postForm url.Values
+		code int
+		body string
+		data api.OutletGroupRequest
 	}{
 		{
-			code:    http.StatusBadRequest,
-			groupId: 1,
-			body:    `{"error":"invalid outlet group offset 1"}`,
+			code: http.StatusBadRequest,
+			data: api.OutletGroupRequest{
+				GroupId: 1,
+			},
+			body: `{"error":"invalid outlet group offset 1"}`,
 		},
 		{
-			code:    http.StatusOK,
-			groupId: 0,
-			action:  "on",
-			body:    `{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}]}`,
+			code: http.StatusOK,
+			data: api.OutletGroupRequest{
+				GroupId: 0,
+				Action:  "on",
+			},
+			body: `{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1},{"identifier":"baz","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}]}`,
 		},
 		{
-			code:    http.StatusOK,
-			groupId: 0,
-			action:  "off",
-			body:    `{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":2}]}`,
+			code: http.StatusOK,
+			data: api.OutletGroupRequest{
+				GroupId: 0,
+				Action:  "off",
+			},
+			body: `{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":2},{"identifier":"baz","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":2}]}`,
+		},
+		{
+			code: http.StatusBadRequest,
+			data: api.OutletGroupRequest{
+				GroupId: 0,
+				Action:  "foo",
+			},
+			body: `{"error":"invalid action \"foo\""}`,
 		},
 	}
 
 	for _, tt := range tests {
+		a := api.New(createControl())
+
+		r := gin.New()
+		r.POST("/api/outlet_group", a.OutletGroupRequestHandler)
+
 		rr := httptest.NewRecorder()
+		json, _ := json.Marshal(tt.data)
+		req, _ := http.NewRequest("POST", "/api/outlet_group", bytes.NewBuffer(json))
 
-		req, err := http.NewRequest("POST", fmt.Sprintf("/api/outlet_group/%s", tt.action), nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		req.PostForm = tt.postForm
-
-		a.HandleOutletGroupRequest(rr, req, tt.action, tt.groupId)
+		r.ServeHTTP(rr, req)
 
 		assert.Equal(t, tt.code, rr.Code)
 		assert.Equal(t, tt.body, rr.Body.String())
 	}
+}
+
+func TestStatusRequestHandler(t *testing.T) {
+	a := api.New(createControl())
+
+	r := gin.New()
+	r.POST("/api/status", a.StatusRequestHandler)
+
+	rr := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/status", nil)
+
+	r.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, `[{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":0},{"identifier":"baz","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}]}]`, rr.Body.String())
 }

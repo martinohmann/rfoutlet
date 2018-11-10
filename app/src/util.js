@@ -1,17 +1,13 @@
 import { api } from './config';
 
 export function makeApiRequest(requestUri, data, success) {
-  let formData = new FormData();
-
-  for (var key in data) {
-    if (data.hasOwnProperty(key)) {
-      formData.append(key, data[key]);
-    }
-  }
-
   fetch(api.baseUri + requestUri, {
     method: "POST",
-    body: formData,
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
   }).then(response => {
     return response.json();
   }).then(result => {

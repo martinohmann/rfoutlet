@@ -1,10 +1,10 @@
 package api
 
 import (
-	"log"
+	"fmt"
 	"net/http"
-	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 )
 
@@ -14,21 +14,22 @@ const (
 	actionToggle = "toggle"
 )
 
-// APIHandlerFunc function type definition
-type APIHandlerFunc func(http.ResponseWriter, *http.Request, string, int)
-
-var (
-	validActions = []string{actionOn, actionOff, actionToggle}
-	logger       *log.Logger
-)
-
-func init() {
-	logger = log.New(os.Stdout, "api: ", log.LstdFlags|log.Lshortfile)
-}
-
 // API type definition
 type API struct {
 	control *outlet.Control
+}
+
+// OutletGroup type definition
+type OutletRequest struct {
+	GroupId  int    `json:"group_id"`
+	OutletId int    `json:"outlet_id"`
+	Action   string `json:"action"`
+}
+
+// OutletGroupRequest type definition
+type OutletGroupRequest struct {
+	GroupId int    `json:"group_id"`
+	Action  string `json:"action"`
 }
 
 // New create a new API
@@ -36,69 +37,52 @@ func New(control *outlet.Control) *API {
 	return &API{control: control}
 }
 
-// ValidateRequest ensures that a request is not malformed. If valid, the
-// request is passed to the handler func, an error is returned otherwise
-func (a *API) ValidateRequest(f APIHandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			renderJSONError(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-			return
-		}
-
-		action, err := parseAction(r)
-		if err != nil {
-			renderJSONError(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		groupId, err := parseIntField(r, "group_id")
-		if err != nil {
-			renderJSONError(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		f(w, r, action, groupId)
-	})
-}
-
-// HandleStatusRequest returns the outlet groups with the status of all
+// StatusRequestHandler returns the outlet groups with the status of all
 // contained outlets
-func (a *API) HandleStatusRequest(w http.ResponseWriter, r *http.Request) {
-	renderJSON(w, a.control.OutletGroups(), http.StatusOK)
+func (a *API) StatusRequestHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, a.control.OutletGroups())
 }
 
-// HandleOutletGroupRequest performs actions on the outlet group identified by
+// OutletGroupRequestHandler performs actions on the outlet group identified by
 // groupId
-func (a *API) HandleOutletGroupRequest(w http.ResponseWriter, r *http.Request, action string, groupId int) {
-	outletGroup, err := a.control.OutletGroup(groupId)
-	if err != nil {
-		renderJSONError(w, err.Error(), http.StatusBadRequest)
+func (a *API) OutletGroupRequestHandler(c *gin.Context) {
+	var data OutletGroupRequest
+
+	if err := c.ShouldBindJSON(&data); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	a.handleSwitchRequest(w, outletGroup, action)
+	outletGroup, err := a.control.OutletGroup(data.GroupId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	a.handleSwitchRequest(c, outletGroup, data.Action)
 }
 
-// HandleOutletRequest performs actions on the outlet identified by groupId and outletId
-func (a *API) HandleOutletRequest(w http.ResponseWriter, r *http.Request, action string, groupId int) {
-	outletId, err := parseIntField(r, "outlet_id")
-	if err != nil {
-		renderJSONError(w, err.Error(), http.StatusBadRequest)
+// OutletRequestHandler performs actions on the outlet identified by groupId and outletId
+func (a *API) OutletRequestHandler(c *gin.Context) {
+	var data OutletRequest
+
+	if err := c.ShouldBindJSON(&data); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	outlet, err := a.control.Outlet(groupId, outletId)
+	outlet, err := a.control.Outlet(data.GroupId, data.OutletId)
 	if err != nil {
-		renderJSONError(w, err.Error(), http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	a.handleSwitchRequest(w, outlet, action)
+	a.handleSwitchRequest(c, outlet, data.Action)
 }
 
 // handleSwitchRequest performs actions on a given switcher and returns the new
 // state
-func (a *API) handleSwitchRequest(w http.ResponseWriter, s outlet.Switcher, action string) {
+func (a *API) handleSwitchRequest(c *gin.Context, s outlet.Switcher, action string) {
 	var err error
 
 	switch action {
@@ -108,12 +92,15 @@ func (a *API) handleSwitchRequest(w http.ResponseWriter, s outlet.Switcher, acti
 		err = a.control.SwitchOff(s)
 	case actionToggle:
 		err = a.control.ToggleState(s)
-	}
-
-	if err != nil {
-		renderJSONError(w, err.Error(), http.StatusInternalServerError)
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid action %q", action)})
 		return
 	}
 
-	renderJSON(w, s, http.StatusOK)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, s)
 }

@@ -27,9 +27,12 @@ class OutletGroup extends React.Component {
   }
 
   handleButtonClick(action) {
-    let data = { group_id: this.props.groupId };
+    let data = {
+      action: action,
+      group_id: this.props.groupId
+    };
 
-    makeApiRequest(`/outlet_group/${action}`, data, result => {
+    makeApiRequest(`/outlet_group`, data, result => {
       result.outlets.map((outlet, id) => {
         if (undefined !== this.state.outlets[id]) {
           this.state.outlets[id].setState({

@@ -24,9 +24,13 @@ class Outlet extends React.Component {
   }
 
   handleToggle(event, isEnabled) {
-    let data = { group_id: this.props.groupId, outlet_id: this.props.outletId };
+    let data = {
+      action: 'toggle',
+      group_id: this.props.groupId,
+      outlet_id: this.props.outletId
+    };
 
-    makeApiRequest('/outlet/toggle', data, outlet => {
+    makeApiRequest('/outlet', data, outlet => {
       this.setState({ isEnabled: isOutletEnabled(outlet) });
     });
   }

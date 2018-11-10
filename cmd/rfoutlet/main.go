@@ -14,14 +14,20 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/packr"
 	"github.com/martinohmann/rfoutlet/internal/api"
+	"github.com/martinohmann/rfoutlet/internal/handler"
+	"github.com/martinohmann/rfoutlet/internal/middleware"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
@@ -82,49 +88,51 @@ func main() {
 
 	control := outlet.NewControl(config, stateManager, transmitter)
 
-	logger := log.New(os.Stdout, "http: ", log.LstdFlags|log.Lshortfile)
-
 	if err := control.RestoreState(); err != nil {
-		fmt.Printf("error while restoring state: %s\n", err)
+		log.Printf("error while restoring state: %s\n", err)
 	}
-
-	box := packr.NewBox(webDir)
 
 	api := api.New(control)
 
-	router := http.NewServeMux()
+	router := gin.Default()
 
-	router.Handle("/", http.FileServer(box))
-	router.HandleFunc("/api/status", api.HandleStatusRequest)
-	router.HandleFunc("/api/outlet_group/", api.ValidateRequest(api.HandleOutletGroupRequest))
-	router.HandleFunc("/api/outlet/", api.ValidateRequest(api.HandleOutletRequest))
+	router.GET("/", middleware.Redirect("/app"))
+	router.GET("/healthz", handler.Healthz)
+	router.StaticFS("/app", packr.NewBox(webDir))
 
-	server := &http.Server{
-		Addr:    *listenAddress,
-		Handler: cors("*")(logging(logger)(router)),
-	}
+	apiRoutes := router.Group("/api")
+	apiRoutes.Use(middleware.Cors("*"))
+	apiRoutes.POST("/status", api.StatusRequestHandler)
+	apiRoutes.POST("/outlet_group", api.OutletGroupRequestHandler)
+	apiRoutes.POST("/outlet", api.OutletRequestHandler)
 
-	logger.Printf("Listening on %s\n", *listenAddress)
-
-	server.ListenAndServe()
+	listenAndServe(router, *listenAddress)
 }
 
-func logging(logger *log.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			defer func() {
-				logger.Println(r.Method, r.URL.Path, r.RemoteAddr, r.UserAgent())
-			}()
-			next.ServeHTTP(w, r)
-		})
+func listenAndServe(handler http.Handler, addr string) {
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: handler,
 	}
-}
 
-func cors(origin string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			next.ServeHTTP(w, r)
-		})
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Listen: %s\n", err)
+		}
+	}()
+
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+
+	log.Println("Shutdown Server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server Shutdown:", err)
 	}
+
+	log.Println("Server exiting")
 }
