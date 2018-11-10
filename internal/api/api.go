@@ -19,7 +19,7 @@ type API struct {
 	control *outlet.Control
 }
 
-// OutletGroup type definition
+// OutletRequest type definition
 type OutletRequest struct {
 	GroupId  int    `json:"group_id"`
 	OutletId int    `json:"outlet_id"`
