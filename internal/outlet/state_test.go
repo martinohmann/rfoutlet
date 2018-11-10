@@ -6,7 +6,6 @@ import (
 
 	"github.com/Flaque/filet"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,37 +25,72 @@ var stateTestConfig = &outlet.Config{
 	},
 }
 
-func TestSaveStateEmptyFile(t *testing.T) {
+func TestSaveState(t *testing.T) {
 	defer filet.CleanUp(t)
 
-	f := filet.TmpFile(t, "/tmp", "")
+	tests := []struct {
+		config   *outlet.Config
+		expected string
+	}{
+		{
+			config:   &outlet.Config{},
+			expected: "[]\n",
+		},
+		{
+			config: &outlet.Config{
+				OutletGroups: []*outlet.OutletGroup{},
+			},
+			expected: "[]\n",
+		},
+		{
+			config: &outlet.Config{
+				OutletGroups: []*outlet.OutletGroup{
+					{
+						Outlets: []*outlet.Outlet{
+							{State: 1},
+						},
+					},
+				},
+			},
+			expected: "[{\"outlet\":0,\"group\":0,\"state\":1}]\n",
+		},
+		{
+			config: &outlet.Config{
+				OutletGroups: []*outlet.OutletGroup{
+					{
+						Outlets: []*outlet.Outlet{
+							{State: 2},
+						},
+					},
+					{
+						Outlets: []*outlet.Outlet{
+							{State: 1},
+							{State: 0},
+						},
+					},
+				},
+			},
+			expected: "[{\"outlet\":0,\"group\":0,\"state\":2},{\"outlet\":0,\"group\":1,\"state\":1},{\"outlet\":1,\"group\":1,\"state\":0}]\n",
+		},
+	}
 
-	testSaveState(t, f, stateTestConfig)
-}
+	for _, tt := range tests {
+		f := filet.TmpFile(t, "/tmp", "")
 
-func TestSaveStateOverwriteFile(t *testing.T) {
-	defer filet.CleanUp(t)
+		sm := outlet.NewStateManager(f)
+		defer sm.Close()
 
-	f := filet.TmpFile(t, "/tmp", "foo")
+		c := outlet.NewControl(tt.config, sm, transmitter)
 
-	testSaveState(t, f, stateTestConfig)
-}
+		assert.NoError(t, c.SaveState())
 
-func testSaveState(t *testing.T, f afero.File, config *outlet.Config) {
-	sm := outlet.NewStateManager(f)
-	defer sm.Close()
+		f.Seek(0, 0)
 
-	c := outlet.NewControl(config, sm, transmitter)
-
-	err := c.SaveState()
-	assert.Nil(t, err)
-
-	f.Seek(0, 0)
-
-	b, err := ioutil.ReadAll(f)
-	assert.Nil(t, err)
-
-	assert.Equal(t, "[{\"outlet\":0,\"group\":0,\"state\":2},{\"outlet\":0,\"group\":1,\"state\":1},{\"outlet\":1,\"group\":1,\"state\":0}]\n", string(b))
+		b, err := ioutil.ReadAll(f)
+		if assert.NoError(t, err) {
+			assert.Equal(t, tt.expected, string(b))
+		}
+	}
 }
 
 func TestRestoreState(t *testing.T) {
@@ -98,9 +132,9 @@ func TestRestoreState(t *testing.T) {
 			configProvider: func() *outlet.Config {
 				return &outlet.Config{}
 			},
-			fileContents: "[{\"Outlet\":0,\"Group\":0,\"SwitchState\":2}]\n",
+			fileContents: "[{\"outlet\":0,\"group\":1,\"state\":2}]\n",
 			wantErr:      true,
-			errMsg:       "invalid outlet group offset 0",
+			errMsg:       "invalid outlet group offset 1",
 		},
 		{
 			configProvider: func() *outlet.Config {

@@ -7,22 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewOutletGroup(t *testing.T) {
-	og := outlet.NewOutletGroup("foo")
-
-	assert.Equal(t, "foo", og.Identifier)
-}
-
-func TestAddOutlet(t *testing.T) {
-	og := outlet.NewOutletGroup("foo")
-	o := &outlet.Outlet{}
-
-	og.AddOutlet(o)
-
-	assert.Len(t, og.Outlets, 1)
-	assert.Equal(t, o, og.Outlets[0])
-}
-
 func TestOutlet(t *testing.T) {
 	o := &outlet.Outlet{Protocol: 1}
 
@@ -95,10 +79,4 @@ func TestOutputGroupToggleStateInvalidOutletProtocol(t *testing.T) {
 	err := og.ToggleState(transmitter)
 
 	assert.NotNil(t, err)
-}
-
-func TestOutletGroupString(t *testing.T) {
-	og := &outlet.OutletGroup{Identifier: "foo"}
-
-	assert.Equal(t, `OutletGroup{Identifier: "foo"}`, og.String())
 }

@@ -88,10 +88,6 @@ func (m *FileStateManager) SaveState(control *Control) error {
 
 // Close syncs the state file to disk and closes it
 func (m *FileStateManager) Close() error {
-	if err := m.f.Sync(); err != nil {
-		return err
-	}
-
 	return m.f.Close()
 }
 

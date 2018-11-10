@@ -20,8 +20,7 @@ func ReadConfig(filename string) (*Config, error) {
 
 	config := &Config{}
 
-	err = yaml.Unmarshal(contents, config)
-	if err != nil {
+	if err = yaml.Unmarshal(contents, config); err != nil {
 		return nil, err
 	}
 

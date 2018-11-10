@@ -11,16 +11,6 @@ import (
 
 var transmitter, _ = gpio.NewNullTransmitter()
 
-func TestNewOutlet(t *testing.T) {
-	o := outlet.NewOutlet("foo", 1, 2, 3, 4)
-
-	assert.Equal(t, "foo", o.Identifier)
-	assert.Equal(t, uint(1), o.PulseLength)
-	assert.Equal(t, 2, o.Protocol)
-	assert.Equal(t, uint64(3), o.CodeOn)
-	assert.Equal(t, uint64(4), o.CodeOff)
-}
-
 func TestOutletSwitchOn(t *testing.T) {
 	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown, Protocol: 1}
 
@@ -70,10 +60,4 @@ func TestUnmarshalError(t *testing.T) {
 	err := yaml.Unmarshal([]byte("[]"), o)
 
 	assert.NotNil(t, err)
-}
-
-func TestOutletString(t *testing.T) {
-	o := &outlet.Outlet{Identifier: "foo", PulseLength: 123, CodeOn: 456, CodeOff: 789, Protocol: 5}
-
-	assert.Equal(t, `Outlet{Identifier: "foo", PulseLength: 123, Protocol: 5, CodeOn: 456, CodeOff: 789, State: 0}`, o.String())
 }

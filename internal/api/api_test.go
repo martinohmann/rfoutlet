@@ -32,6 +32,11 @@ func createControl() *outlet.Control {
 						Protocol:   1,
 						State:      outlet.StateOn,
 					},
+					{
+						Identifier: "qux",
+						Protocol:   1,
+						State:      outlet.StateOff,
+					},
 				},
 			},
 		},
@@ -111,18 +116,18 @@ func TestOutletRequest(t *testing.T) {
 			code: http.StatusBadRequest,
 			data: api.OutletRequest{
 				GroupId:  0,
-				OutletId: 2,
+				OutletId: 3,
 			},
-			body: `{"error":"invalid outlet offset 2 in group 0"}`,
+			body: `{"error":"invalid outlet offset 3 in group 0"}`,
 		},
 		{
 			code: http.StatusOK,
 			data: api.OutletRequest{
 				GroupId:  0,
 				OutletId: 0,
-				Action:   "on",
+				Action:   "off",
 			},
-			body: `{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}`,
+			body: `{"identifier":"bar","state":2}`,
 		},
 		{
 			code: http.StatusOK,
@@ -131,7 +136,7 @@ func TestOutletRequest(t *testing.T) {
 				OutletId: 0,
 				Action:   "toggle",
 			},
-			body: `{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}`,
+			body: `{"identifier":"bar","state":1}`,
 		},
 	}
 
@@ -171,7 +176,7 @@ func TestOutletGroupRequest(t *testing.T) {
 				GroupId: 0,
 				Action:  "on",
 			},
-			body: `{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1},{"identifier":"baz","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}]}`,
+			body: `{"identifier":"foo","outlets":[{"identifier":"bar","state":1},{"identifier":"baz","state":1},{"identifier":"qux","state":1}]}`,
 		},
 		{
 			code: http.StatusOK,
@@ -179,7 +184,15 @@ func TestOutletGroupRequest(t *testing.T) {
 				GroupId: 0,
 				Action:  "off",
 			},
-			body: `{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":2},{"identifier":"baz","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":2}]}`,
+			body: `{"identifier":"foo","outlets":[{"identifier":"bar","state":2},{"identifier":"baz","state":2},{"identifier":"qux","state":2}]}`,
+		},
+		{
+			code: http.StatusOK,
+			data: api.OutletGroupRequest{
+				GroupId: 0,
+				Action:  "toggle",
+			},
+			body: `{"identifier":"foo","outlets":[{"identifier":"bar","state":1},{"identifier":"baz","state":2},{"identifier":"qux","state":1}]}`,
 		},
 		{
 			code: http.StatusBadRequest,
@@ -220,5 +233,5 @@ func TestStatusRequestHandler(t *testing.T) {
 	r.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, `[{"identifier":"foo","outlets":[{"identifier":"bar","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":0},{"identifier":"baz","pulse_length":0,"protocol":1,"code_on":0,"code_off":0,"state":1}]}]`, rr.Body.String())
+	assert.Equal(t, `[{"identifier":"foo","outlets":[{"identifier":"bar","state":0},{"identifier":"baz","state":1},{"identifier":"qux","state":2}]}]`, rr.Body.String())
 }
