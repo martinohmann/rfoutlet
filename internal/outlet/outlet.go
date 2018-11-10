@@ -10,7 +10,7 @@ import (
 var logger *log.Logger
 
 func init() {
-	logger = log.New(os.Stdout, "outlet: ", log.LstdFlags|log.Lshortfile)
+	logger = log.New(os.Stdout, "[outlet] ", log.LstdFlags|log.Lshortfile)
 }
 
 // Switcher defines the interface for a toggleable switch

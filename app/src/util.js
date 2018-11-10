@@ -1,23 +1,25 @@
-import { api } from './config';
+import config from './config';
 
-export function makeApiRequest(requestUri, data, success) {
-  fetch(api.baseUri + requestUri, {
-    method: "POST",
+export function apiRequest(method, requestUri, data = {}) {
+  const url = config.api.baseUri + requestUri;
+
+  const options = {
+    method: method,
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(data)
-  }).then(response => {
-    return response.json();
-  }).then(result => {
-      return success(result);
-  }).catch(err => {
-    console.log(err);
-  });
+  };
+
+  if ('POST' === method || 'PUT' === method) {
+    options.body = JSON.stringify(data);
+  }
+
+  return fetch(url, options)
+    .then(response => response.json());
 }
 
-export function isOutletEnabled(outlet) {
+export function outletEnabled(outlet) {
   if (undefined === outlet || undefined === outlet.state) {
     return false;
   }

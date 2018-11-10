@@ -1,8 +1,14 @@
 import React from 'react';
-import { ListItem } from 'material-ui/List';
-import Toggle from 'material-ui/Toggle';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import ListItemText from '@material-ui/core/ListItemText';
+import Switch from '@material-ui/core/Switch';
 
-import { makeApiRequest, isOutletEnabled } from '../util'
+import { apiRequest, outletEnabled } from '../util'
+
+const styles = {};
 
 class Outlet extends React.Component {
   constructor(props, context) {
@@ -11,45 +17,45 @@ class Outlet extends React.Component {
     this.handleToggle = this.handleToggle.bind(this)
 
     this.state = {
-      isEnabled: isOutletEnabled(props.attributes),
+      isEnabled: outletEnabled(props.attributes),
     };
 
     this.props.registerOutlet(this);
   }
 
   componentWillReceiveProps(nextProps) {
-    let outlet = nextProps.attributes;
+    const outlet = nextProps.attributes;
 
-    this.setState({ isEnabled: isOutletEnabled(outlet) });
+    this.setState({ isEnabled: outletEnabled(outlet) });
   }
 
   handleToggle(event, isEnabled) {
-    let data = {
+    const data = {
       action: 'toggle',
       group_id: this.props.groupId,
       outlet_id: this.props.outletId
     };
 
-    makeApiRequest('/outlet', data, outlet => {
-      this.setState({ isEnabled: isOutletEnabled(outlet) });
-    });
+    apiRequest('POST', '/outlet', data)
+      .then(outlet => this.setState({ isEnabled: outletEnabled(outlet) }))
+      .catch(err => console.error(err));
   }
 
   render() {
-    var toggle = (
-      <Toggle
-        onToggle={this.handleToggle}
-        toggled={this.state.isEnabled}
-      />
-    );
-
     return (
-      <ListItem
-        primaryText={this.props.attributes.identifier}
-        rightToggle={toggle}
-      />
+      <ListItem button onClick={this.handleToggle}>
+        <ListItemText primary={this.props.attributes.identifier} />
+        <ListItemSecondaryAction>
+          <Switch onChange={this.handleToggle} checked={this.state.isEnabled}
+          />
+        </ListItemSecondaryAction>
+      </ListItem>
     );
   }
 }
 
-export default Outlet;
+Outlet.propTypes = {
+  classes: PropTypes.object.isRequired,
+};
+
+export default withStyles(styles)(Outlet);

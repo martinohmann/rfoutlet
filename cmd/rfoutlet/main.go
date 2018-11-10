@@ -23,11 +23,11 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/packr"
 	"github.com/martinohmann/rfoutlet/internal/api"
 	"github.com/martinohmann/rfoutlet/internal/handler"
-	"github.com/martinohmann/rfoutlet/internal/middleware"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
@@ -95,16 +95,16 @@ func main() {
 	api := api.New(control)
 
 	router := gin.Default()
+	router.Use(cors.Default())
 
-	router.GET("/", middleware.Redirect("/app"))
+	router.GET("/", handler.Redirect("/app"))
 	router.GET("/healthz", handler.Healthz)
 	router.StaticFS("/app", packr.NewBox(webDir))
 
 	apiRoutes := router.Group("/api")
-	apiRoutes.Use(middleware.Cors("*"))
-	apiRoutes.POST("/status", api.StatusRequestHandler)
-	apiRoutes.POST("/outlet_group", api.OutletGroupRequestHandler)
+	apiRoutes.GET("/status", api.StatusRequestHandler)
 	apiRoutes.POST("/outlet", api.OutletRequestHandler)
+	apiRoutes.POST("/outlet_group", api.OutletGroupRequestHandler)
 
 	listenAndServe(router, *listenAddress)
 }

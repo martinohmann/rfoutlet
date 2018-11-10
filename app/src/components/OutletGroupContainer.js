@@ -1,8 +1,15 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 
 import OutletGroup from './OutletGroup';
-import { makeApiRequest } from '../util'
-import { styles } from '../config'
+import { apiRequest } from '../util'
+
+const styles = {
+  outletGroupContainer: {
+    marginTop: 64,
+  },
+}
 
 class OutletGroupContainer extends React.Component {
   constructor(props, context) {
@@ -10,18 +17,21 @@ class OutletGroupContainer extends React.Component {
 
     this.state = {
       outletGroups: [],
+      apiError: null,
     };
   }
 
   componentDidMount() {
-    makeApiRequest('/status', {}, result => {
-      this.setState({ outletGroups: result });
-    });
+    apiRequest('GET', '/status')
+      .then(result => this.setState({ apiError: null, outletGroups: result }))
+      .catch(err => console.error(err));
   }
 
   render() {
+    const { classes } = this.props;
+
     return (
-      <div style={styles.outletGroupContainer}>
+      <div className={classes.outletGroupContainer}>
         {this.state.outletGroups.map((attributes, groupId) =>
           <OutletGroup
             key={groupId}
@@ -34,4 +44,8 @@ class OutletGroupContainer extends React.Component {
   }
 }
 
-export default OutletGroupContainer;
+OutletGroupContainer.propTypes = {
+  classes: PropTypes.object.isRequired,
+};
+
+export default withStyles(styles)(OutletGroupContainer);

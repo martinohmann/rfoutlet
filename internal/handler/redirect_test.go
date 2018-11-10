@@ -10,14 +10,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHealthz(t *testing.T) {
+func TestRedirect(t *testing.T) {
+	url := "http://localhost/somepath"
+
 	r := gin.New()
-	r.GET("/", handler.Healthz)
+	r.GET("/", handler.Redirect(url))
 	rr := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 
 	r.ServeHTTP(rr, req)
 
-	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "ok", rr.Body.String())
+	header := rr.Header().Get("Location")
+
+	assert.Equal(t, http.StatusMovedPermanently, rr.Code)
+	assert.Equal(t, url, header)
 }

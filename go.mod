@@ -3,6 +3,7 @@ module github.com/martinohmann/rfoutlet
 require (
 	github.com/Flaque/filet v0.0.0-20180310200134-dbf95344df50
 	github.com/brian-armstrong/gpio v0.0.0-20171230005827-3846dfc1984f
+	github.com/gin-contrib/cors v0.0.0-20181008113111-488de3ec974f
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v1.3.0
 	github.com/gobuffalo/envy v1.6.8 // indirect
