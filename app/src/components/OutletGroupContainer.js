@@ -3,40 +3,36 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
 import OutletGroup from './OutletGroup';
-import { apiRequest } from '../util'
+import { apiRequest } from '../util';
 
 const styles = {
-  outletGroupContainer: {
+  container: {
     marginTop: 64,
   },
 }
 
 class OutletGroupContainer extends React.Component {
-  constructor(props, context) {
-    super(props, context)
-
-    this.state = {
-      outletGroups: [],
-      apiError: null,
-    };
+  state = {
+    groups: [],
   }
 
   componentDidMount() {
     apiRequest('GET', '/status')
-      .then(result => this.setState({ apiError: null, outletGroups: result }))
+      .then(groups => this.setState({ groups }))
       .catch(err => console.error(err));
   }
 
   render() {
     const { classes } = this.props;
+    const { groups } = this.state;
 
     return (
-      <div className={classes.outletGroupContainer}>
-        {this.state.outletGroups.map((attributes, groupId) =>
+      <div className={classes.container}>
+        {groups.map((group, groupId) =>
           <OutletGroup
             key={groupId}
             groupId={groupId}
-            attributes={attributes}
+            attributes={group}
           />
         )}
       </div>

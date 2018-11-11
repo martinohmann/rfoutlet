@@ -21,14 +21,14 @@ type API struct {
 
 // OutletRequest type definition
 type OutletRequest struct {
-	GroupId  int    `json:"group_id"`
-	OutletId int    `json:"outlet_id"`
+	GroupId  int    `json:"groupId"`
+	OutletId int    `json:"outletId"`
 	Action   string `json:"action"`
 }
 
 // OutletGroupRequest type definition
 type OutletGroupRequest struct {
-	GroupId int    `json:"group_id"`
+	GroupId int    `json:"groupId"`
 	Action  string `json:"action"`
 }
 

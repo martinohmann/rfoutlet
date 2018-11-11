@@ -3,11 +3,13 @@ import config from './config';
 export function apiRequest(method, requestUri, data = {}) {
   const url = config.api.baseUri + requestUri;
 
+  console.log(url, data)
+
   const options = {
     method: method,
     headers: {
       'Accept': 'application/json',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
   };
 
@@ -25,4 +27,8 @@ export function outletEnabled(outlet) {
   }
 
   return 1 === outlet.state;
+}
+
+export function formatTime(date) {
+  return date.toFormat('HH:mm');
 }
