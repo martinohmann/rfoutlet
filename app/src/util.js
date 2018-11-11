@@ -3,8 +3,6 @@ import config from './config';
 export function apiRequest(method, requestUri, data = {}) {
   const url = config.api.baseUri + requestUri;
 
-  console.log(url, data)
-
   const options = {
     method: method,
     headers: {
