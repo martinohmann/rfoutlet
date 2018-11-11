@@ -7,20 +7,19 @@ import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
 import Icon from '@material-ui/core/Icon';
 import Switch from '@material-ui/core/Switch';
-import cyan from '@material-ui/core/colors/cyan';
-import grey from '@material-ui/core/colors/grey';
+import { DateTime } from 'luxon';
 
 import TimeSwitchDialog from './TimeSwitchDialog';
-import { apiRequest, outletEnabled, formatTime } from '../util';
+import { apiRequest, formatTime } from '../util';
 
-const styles = {
+const styles = theme => ({
   buttonTimeSwitchOn: {
-    color: cyan[500],
+    color: theme.palette.primary[500],
   },
   buttonTimeSwitchOff: {
-    color: grey[500],
+    color: theme.palette.grey[500],
   },
-};
+});
 
 class Outlet extends React.Component {
   state = {
@@ -31,25 +30,39 @@ class Outlet extends React.Component {
       to: null,
       enabled: false,
     },
-  };
+  }
 
-  constructor(props, context) {
-    super(props, context)
-
-    this.props.registerOutlet(this);
+  componentDidMount() {
+    this.updateState(this.props);
   }
 
   componentWillReceiveProps(nextProps) {
-    const outlet = nextProps.attributes;
+    this.updateState(nextProps);
+  }
 
-    this.setState({ enabled: outletEnabled(outlet) });
+  updateState(outlet) {
+    this.setState({ enabled: 1 === outlet.state });
+
+    if (undefined === outlet.timeSwitch) {
+      return;
+    }
+
+    const { timeSwitch } = outlet;
+
+    this.setState({
+      timeSwitch: {
+        enabled: timeSwitch.enabled,
+        from: DateTime.fromISO(timeSwitch.from),
+        to: DateTime.fromISO(timeSwitch.to),
+      },
+    });
   }
 
   handleToggle = () => {
     const { groupId, outletId } = this.props;
 
     apiRequest('POST', '/outlet', { groupId, outletId, action: 'toggle' })
-      .then(outlet => this.setState({ enabled: outletEnabled(outlet) }))
+      .then(outlet => this.updateState(outlet))
       .catch(err => console.error(err));
   }
 
@@ -57,7 +70,7 @@ class Outlet extends React.Component {
     this.setState({ timeSwitchDialogOpen: true });
   }
 
-  handleTimeSwitchDialogClose = timeSwitch => {
+  handleTimeSwitchDialogClose = () => {
     this.setState({ timeSwitchDialogOpen: false });
   }
 
@@ -68,7 +81,7 @@ class Outlet extends React.Component {
     });
   }
 
-  getTimeSwitchInfo() {
+  renderTimeSwitchText() {
     const { timeSwitch } = this.state;
 
     if (!timeSwitch.enabled) {
@@ -79,19 +92,18 @@ class Outlet extends React.Component {
   }
 
   render() {
-    const { classes } = this.props;
-    const { identifier } = this.props.attributes;
-    const { enabled, timeSwitch, timeSwitchDialogOpen} = this.state;
+    const { classes, identifier } = this.props;
+    const { enabled, timeSwitch, timeSwitchDialogOpen } = this.state;
     const timeSwitchButtonClass = timeSwitch.enabled
       ? classes.buttonTimeSwitchOn
       : classes.buttonTimeSwitchOff;
 
     return (
       <ListItem>
-        <ListItemText primary={identifier} secondary={this.getTimeSwitchInfo()} />
+        <ListItemText primary={identifier} secondary={this.renderTimeSwitchText()} />
         <ListItemSecondaryAction>
           <IconButton className={timeSwitchButtonClass} onClick={this.handleTimeSwitchDialogOpen}>
-            <Icon>av_timer</Icon>
+            <Icon>schedule</Icon>
           </IconButton>
           <Switch
             color="primary"

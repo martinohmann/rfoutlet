@@ -6,8 +6,7 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
-import { MuiPickersUtilsProvider, TimePicker } from 'material-ui-pickers';
-import LuxonUtils from '@date-io/luxon';
+import { TimePicker } from 'material-ui-pickers';
 
 const styles = theme => ({
   container: {
@@ -24,7 +23,7 @@ class TimeSwitchDialog extends React.Component {
     from: null,
     to: null,
     open: false,
-  };
+  }
 
   componentWillReceiveProps(nextProps) {
     const { open, from, to } = nextProps;
@@ -53,46 +52,41 @@ class TimeSwitchDialog extends React.Component {
 
   render() {
     const { classes, identifier } = this.props;
-    const { open, from, to} = this.state;
+    const { open, from, to } = this.state;
 
     return (
-      <MuiPickersUtilsProvider utils={LuxonUtils}>
-        <Dialog
-          open={open}
-          onClose={this.handleClose}
-        >
-          <DialogTitle>Timer for {identifier}</DialogTitle>
-          <DialogContent className={classes.container}>
-            <TimePicker
-              className={classes.formControl}
-              clearable
-              ampm={false}
-              label="From"
-              value={from}
-              onChange={this.handleChange('from')}
-            />
-            <TimePicker
-              className={classes.formControl}
-              clearable
-              ampm={false}
-              label="To"
-              value={to}
-              onChange={this.handleChange('to')}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={this.handleClear} color="primary">
-              Clear
-            </Button>
-            <Button onClick={this.handleClose} color="primary">
-              Cancel
-            </Button>
-            <Button onClick={this.handleApply} color="secondary">
-              Apply
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </MuiPickersUtilsProvider>
+      <Dialog open={open} onClose={this.handleClose}>
+        <DialogTitle>Timer for {identifier}</DialogTitle>
+        <DialogContent className={classes.container}>
+          <TimePicker
+            className={classes.formControl}
+            clearable
+            ampm={false}
+            label="From"
+            value={from}
+            onChange={this.handleChange('from')}
+          />
+          <TimePicker
+            className={classes.formControl}
+            clearable
+            ampm={false}
+            label="To"
+            value={to}
+            onChange={this.handleChange('to')}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={this.handleClear} color="primary">
+            Clear
+          </Button>
+          <Button onClick={this.handleClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={this.handleApply} color="secondary">
+            Apply
+          </Button>
+        </DialogActions>
+      </Dialog>
     );
   }
 }

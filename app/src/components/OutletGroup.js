@@ -6,96 +6,74 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
 import Icon from '@material-ui/core/Icon';
-import red from '@material-ui/core/colors/red';
-import green from '@material-ui/core/colors/green';
-import grey from '@material-ui/core/colors/grey';
 
 import Outlet from './Outlet';
-import { apiRequest, outletEnabled } from '../util';
+import { apiRequest } from '../util';
 
-const styles = {
+const styles = theme => ({
   group: {
     paddingTop: 1,
     paddingBottom: 1,
     paddingRight: 6,
-    background: grey[100],
+    background: theme.palette.grey[100],
   },
   groupIdentifier: {
     flexGrow: 1,
     fontWeight: 700,
-    color: grey[800],
+    color: theme.palette.grey[800],
   },
   buttonGroupOn: {
-    color: green[500],
+    color: theme.palette.primary[700],
   },
   buttonGroupOff: {
-    color: red[500],
+    color: theme.palette.secondary.light,
   },
-};
+});
 
 class OutletGroup extends React.Component {
   state = {
     outlets: [],
   }
 
-  registerOutlet = (outlet) => {
-    this.setState(state => {
-      return { outlets: [...state.outlets, outlet] }
-    });
-  }
+  componentDidMount() {
+    const { outlets } = this.props;
 
-  updateOutletStates = outlets => {
-    outlets.map((outlet, id) => {
-      const o = this.state.outlets[id];
-
-      if (undefined !== o) {
-        o.setState(state => {
-          return {
-            enabled: outletEnabled(outlet),
-            timeSwitch: { ...state.timeSwitch, enabled: false },
-          };
-        });
-      }
-
-      return outlet;
-    });
+    this.setState({ outlets });
   }
 
   handleButtonClick = action => event => {
     const { groupId } = this.props;
 
     apiRequest('POST', '/outlet_group', { groupId, action })
-      .then(result => this.updateOutletStates(result.outlets))
+      .then(result => result.outlets)
+      .then(outlets => this.setState({ outlets }))
       .catch(err => console.error(err));
   }
 
   render() {
-    const { identifier, outlets } = this.props.attributes;
-    const { classes, groupId } = this.props;
+    const { classes, groupId, identifier } = this.props;
+    const { outlets } = this.state;
 
     return (
       <List component="nav">
         <ListItem className={classes.group}>
           <ListItemText primary={identifier} disableTypography={true} className={classes.groupIdentifier} />
-          <div>
-            <IconButton className={classes.buttonGroupOff} onClick={this.handleButtonClick('off')}>
-              <Icon>flash_off</Icon>
-            </IconButton>
-            <IconButton className={classes.buttonGroupOn} onClick={this.handleButtonClick('on')}>
-              <Icon>flash_on</Icon>
-            </IconButton>
-            <IconButton onClick={this.handleButtonClick('toggle')}>
-              <Icon>swap_horiz</Icon>
-            </IconButton>
-          </div>
+          <IconButton className={classes.buttonGroupOff} onClick={this.handleButtonClick('off')}>
+            <Icon>power_off</Icon>
+          </IconButton>
+          <IconButton className={classes.buttonGroupOn} onClick={this.handleButtonClick('on')}>
+            <Icon>power</Icon>
+          </IconButton>
+          <IconButton onClick={this.handleButtonClick('toggle')}>
+            <Icon>swap_horiz</Icon>
+          </IconButton>
         </ListItem>
         {outlets.map((outlet, outletId) =>
           <Outlet
             key={outletId}
             outletId={outletId}
             groupId={groupId}
-            attributes={outlet}
-            registerOutlet={this.registerOutlet}
+            {...outlet}
           />
         )}
       </List>

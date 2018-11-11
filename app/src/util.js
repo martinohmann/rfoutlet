@@ -19,14 +19,6 @@ export function apiRequest(method, requestUri, data = {}) {
     .then(response => response.json());
 }
 
-export function outletEnabled(outlet) {
-  if (undefined === outlet || undefined === outlet.state) {
-    return false;
-  }
-
-  return 1 === outlet.state;
-}
-
 export function formatTime(date) {
   return date.toFormat('HH:mm');
 }
