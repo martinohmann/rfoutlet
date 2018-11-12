@@ -11,21 +11,21 @@ import Outlet from './Outlet';
 import { apiRequest } from '../util';
 
 const styles = theme => ({
-  group: {
+  container: {
     paddingTop: 1,
     paddingBottom: 1,
     paddingRight: 6,
     background: theme.palette.grey[100],
   },
-  groupIdentifier: {
+  identifier: {
     flexGrow: 1,
     fontWeight: 700,
     color: theme.palette.grey[800],
   },
-  buttonGroupOn: {
+  buttonOn: {
     color: theme.palette.primary[700],
   },
-  buttonGroupOff: {
+  buttonOff: {
     color: theme.palette.secondary.light,
   },
 });
@@ -56,12 +56,12 @@ class OutletGroup extends React.Component {
 
     return (
       <List component="nav">
-        <ListItem className={classes.group}>
-          <ListItemText primary={identifier} disableTypography={true} className={classes.groupIdentifier} />
-          <IconButton className={classes.buttonGroupOff} onClick={this.handleButtonClick('off')}>
+        <ListItem className={classes.container}>
+          <ListItemText className={classes.identifier} primary={identifier} disableTypography={true} />
+          <IconButton className={classes.buttonOff} onClick={this.handleButtonClick('off')}>
             <Icon>power_off</Icon>
           </IconButton>
-          <IconButton className={classes.buttonGroupOn} onClick={this.handleButtonClick('on')}>
+          <IconButton className={classes.buttonOn} onClick={this.handleButtonClick('on')}>
             <Icon>power</Icon>
           </IconButton>
           <IconButton onClick={this.handleButtonClick('toggle')}>
