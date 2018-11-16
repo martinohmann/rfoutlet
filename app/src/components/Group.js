@@ -17,7 +17,7 @@ const styles = theme => ({
     paddingRight: 6,
     background: theme.palette.grey[100],
   },
-  identifier: {
+  groupName: {
     flexGrow: 1,
     fontWeight: 700,
     color: theme.palette.grey[800],
@@ -30,7 +30,7 @@ const styles = theme => ({
   },
 });
 
-class OutletGroup extends React.Component {
+class Group extends React.Component {
   state = {
     outlets: [],
   }
@@ -57,7 +57,7 @@ class OutletGroup extends React.Component {
     return (
       <List component="nav">
         <ListItem className={classes.container}>
-          <ListItemText className={classes.identifier} primary={name} disableTypography={true} />
+          <ListItemText className={classes.groupName} primary={name} disableTypography={true} />
           <IconButton className={classes.buttonOff} onClick={this.handleButtonClick('off')}>
             <Icon>power_off</Icon>
           </IconButton>
@@ -69,18 +69,15 @@ class OutletGroup extends React.Component {
           </IconButton>
         </ListItem>
         {outlets.map(outlet =>
-          <Outlet
-            key={outlet.id}
-            {...outlet}
-          />
+          <Outlet key={outlet.id} {...outlet} />
         )}
       </List>
     );
   }
 }
 
-OutletGroup.propTypes = {
+Group.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(OutletGroup);
+export default withStyles(styles)(Group);

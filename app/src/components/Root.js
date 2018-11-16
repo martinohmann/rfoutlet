@@ -6,7 +6,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
 import GithubLink from './GithubLink';
-import OutletGroup from './OutletGroup';
+import Group from './Group';
 import { apiRequest } from '../util';
 import config from '../config';
 
@@ -50,10 +50,7 @@ class Root extends React.Component {
         </AppBar>
         <div className={classes.container}>
           {groups.map(group =>
-            <OutletGroup
-              key={group.id}
-              {...group}
-            />
+            <Group key={group.id} {...group} />
           )}
         </div>
       </div>
