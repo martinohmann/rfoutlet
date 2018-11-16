@@ -6,105 +6,75 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
 import Icon from '@material-ui/core/Icon';
-import red from '@material-ui/core/colors/red';
-import green from '@material-ui/core/colors/green';
-import grey from '@material-ui/core/colors/grey';
 
 import Outlet from './Outlet';
-import { apiRequest, outletEnabled } from '../util'
+import { apiRequest } from '../util';
 
-const styles = {
-  outletGroup: {
+const styles = theme => ({
+  container: {
     paddingTop: 1,
     paddingBottom: 1,
     paddingRight: 6,
-    background: grey[100],
+    background: theme.palette.grey[100],
   },
-  buttonOn: {
-    color: green[500],
-  },
-  buttonOff: {
-    color: red[500],
-  },
-  outletGroupIdentifier: {
+  identifier: {
     flexGrow: 1,
     fontWeight: 700,
-    color: grey[800],
+    color: theme.palette.grey[800],
   },
-};
+  buttonOn: {
+    color: theme.palette.primary[700],
+  },
+  buttonOff: {
+    color: theme.palette.secondary.light,
+  },
+});
 
 class OutletGroup extends React.Component {
-  constructor(props, context) {
-    super(props, context)
-
-    this.registerOutlet = this.registerOutlet.bind(this);
-
-    this.state = {
-      outlets: {},
-    }
+  state = {
+    outlets: [],
   }
 
-  registerOutlet(id, outlet) {
-    const outlets = this.state.outlets;
+  componentDidMount() {
+    const { outlets } = this.props;
 
-    outlets[id] = outlet
-
-    this.setState({ outlets: outlets });
+    this.setState({ outlets });
   }
 
-  updateOutletStates(outlets) {
-    outlets.map(outlet => {
-      if (undefined !== this.state.outlets[outlet.id]) {
-        this.state.outlets[outlet.id].setState({
-          isEnabled: outletEnabled(outlet),
-        });
-      }
+  handleButtonClick = action => event => {
+    const { id } = this.props;
 
-      return outlet;
-    });
-  }
-
-  handleButtonClick(action) {
-    const data = {
-      action: action,
-      id: this.props.group.id
-    };
-
-    apiRequest('POST', '/outlet_group', data)
-      .then(result => this.updateOutletStates(result.outlets))
+    apiRequest('POST', '/outlet_group', { id, action })
+      .then(result => result.outlets)
+      .then(outlets => this.setState({ outlets }))
       .catch(err => console.error(err));
   }
 
   render() {
-    const { name, outlets } = this.props.group;
-    const { classes } = this.props;
+    const { classes, name } = this.props;
+    const { outlets } = this.state;
 
     return (
-      <div>
-        <List component="nav">
-          <ListItem className={classes.outletGroup}>
-            <ListItemText primary={name} disableTypography={true} className={classes.outletGroupIdentifier} />
-            <div>
-              <IconButton className={classes.buttonOff} onClick={(e) => this.handleButtonClick('off') }>
-                <Icon>flash_off</Icon>
-              </IconButton>
-              <IconButton className={classes.buttonOn} onClick={(e) => this.handleButtonClick('on') }>
-                <Icon>flash_on</Icon>
-              </IconButton>
-              <IconButton onClick={(e) => this.handleButtonClick('toggle') }>
-                <Icon>swap_horiz</Icon>
-              </IconButton>
-            </div>
-          </ListItem>
-          {outlets.map(outlet =>
-            <Outlet
-              key={outlet.id}
-              outlet={outlet}
-              registerOutlet={this.registerOutlet}
-            />
-          )}
-        </List>
-      </div>
+      <List component="nav">
+        <ListItem className={classes.container}>
+          <ListItemText className={classes.identifier} primary={name} disableTypography={true} />
+          <IconButton className={classes.buttonOff} onClick={this.handleButtonClick('off')}>
+            <Icon>power_off</Icon>
+          </IconButton>
+          <IconButton className={classes.buttonOn} onClick={this.handleButtonClick('on')}>
+            <Icon>power</Icon>
+          </IconButton>
+          <IconButton onClick={this.handleButtonClick('toggle')}>
+            <Icon>swap_horiz</Icon>
+          </IconButton>
+        </ListItem>
+        {outlets.map(outlet =>
+          <Outlet
+            key={outlet.id}
+            {...outlet}
+          />
+        )}
+      </List>
     );
   }
 }

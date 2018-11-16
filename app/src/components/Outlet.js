@@ -4,50 +4,122 @@ import { withStyles } from '@material-ui/core/styles';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
+import IconButton from '@material-ui/core/IconButton';
+import Icon from '@material-ui/core/Icon';
 import Switch from '@material-ui/core/Switch';
+import { DateTime } from 'luxon';
 
-import { apiRequest, outletEnabled } from '../util'
+import TimeSwitchDialog from './TimeSwitchDialog';
+import { apiRequest, formatTime } from '../util';
 
-const styles = {};
+const styles = theme => ({
+  buttonTimeSwitchOn: {
+    color: theme.palette.primary[500],
+  },
+  buttonTimeSwitchOff: {
+    color: theme.palette.grey[500],
+  },
+});
 
 class Outlet extends React.Component {
-  constructor(props, context) {
-    super(props, context)
+  state = {
+    enabled: false,
+    timeSwitchDialogOpen: false,
+    timeSwitch: {
+      from: null,
+      to: null,
+      enabled: false,
+    },
+  }
 
-    this.handleToggle = this.handleToggle.bind(this)
-
-    this.state = {
-      isEnabled: outletEnabled(props.outlet),
-    };
-
-    this.props.registerOutlet(props.outlet.id, this);
+  componentDidMount() {
+    this.updateState(this.props);
   }
 
   componentWillReceiveProps(nextProps) {
-    const outlet = nextProps.outlet;
-
-    this.setState({ isEnabled: outletEnabled(outlet) });
+    this.updateState(nextProps);
   }
 
-  handleToggle(event, isEnabled) {
-    const data = {
-      action: 'toggle',
-      id: this.props.outlet.id
-    };
+  updateState(outlet) {
+    this.setState({ enabled: 1 === outlet.state });
 
-    apiRequest('POST', '/outlet', data)
-      .then(outlet => this.setState({ isEnabled: outletEnabled(outlet) }))
+    if (undefined === outlet.timeSwitch) {
+      return;
+    }
+
+    const { timeSwitch } = outlet;
+
+    this.setState({
+      timeSwitch: {
+        enabled: timeSwitch.enabled,
+        from: DateTime.fromISO(timeSwitch.from),
+        to: DateTime.fromISO(timeSwitch.to),
+      },
+    });
+  }
+
+  handleToggle = () => {
+    const { id } = this.props;
+
+    apiRequest('POST', '/outlet', { id, action: 'toggle' })
+      .then(outlet => this.updateState(outlet))
       .catch(err => console.error(err));
   }
 
+  handleTimeSwitchDialogOpen = () => {
+    this.setState({ timeSwitchDialogOpen: true });
+  }
+
+  handleTimeSwitchDialogClose = () => {
+    this.setState({ timeSwitchDialogOpen: false });
+  }
+
+  handleTimeSwitchDialogApply = timeSwitch => {
+    this.setState({
+      timeSwitchDialogOpen: false,
+      timeSwitch: timeSwitch,
+    });
+  }
+
+  renderTimeSwitchText() {
+    const { timeSwitch } = this.state;
+
+    if (!timeSwitch.enabled) {
+      return;
+    }
+
+    return `${formatTime(timeSwitch.from)} - ${formatTime(timeSwitch.to)}`
+  }
+
   render() {
+    const { classes, name } = this.props;
+    const { enabled, timeSwitch, timeSwitchDialogOpen } = this.state;
+    const timeSwitchButtonClass = timeSwitch.enabled
+      ? classes.buttonTimeSwitchOn
+      : classes.buttonTimeSwitchOff;
+
     return (
-      <ListItem button onClick={this.handleToggle}>
-        <ListItemText primary={this.props.outlet.name} />
+      <ListItem>
+        <ListItemText primary={name} secondary={this.renderTimeSwitchText()} />
         <ListItemSecondaryAction>
-          <Switch onChange={this.handleToggle} checked={this.state.isEnabled}
+          <IconButton className={timeSwitchButtonClass} onClick={this.handleTimeSwitchDialogOpen}>
+            <Icon>schedule</Icon>
+          </IconButton>
+          <Switch
+            color="primary"
+            onChange={this.handleToggle}
+            checked={enabled}
+            disabled={timeSwitch.enabled}
           />
         </ListItemSecondaryAction>
+        <TimeSwitchDialog
+          outletName={name}
+          open={timeSwitchDialogOpen}
+          from={timeSwitch.from}
+          to={timeSwitch.to}
+          onApply={this.handleTimeSwitchDialogApply}
+          onClose={this.handleTimeSwitchDialogClose}
+        />
       </ListItem>
     );
   }
