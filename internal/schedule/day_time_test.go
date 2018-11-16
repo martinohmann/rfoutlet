@@ -1,119 +1,92 @@
 package schedule_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBefore(t *testing.T) {
+func TestDayTimeBefore(t *testing.T) {
 	tests := []struct {
-		a, b     schedule.DayTime
+		a        schedule.DayTime
+		b        schedule.DayTime
 		expected bool
 	}{
 		{
-			a:        schedule.NewDayTime(0, 0),
-			b:        schedule.NewDayTime(0, 0),
-			expected: false,
-		},
-		{
-			a:        schedule.NewDayTime(0, 0),
-			b:        schedule.NewDayTime(0, 1),
+			a:        schedule.NewDayTime(10, 0),
+			b:        schedule.NewDayTime(12, 0),
 			expected: true,
 		},
 		{
-			a:        schedule.NewDayTime(0, 1),
-			b:        schedule.NewDayTime(0, 0),
+			a:        schedule.NewDayTime(10, 0),
+			b:        schedule.NewDayTime(10, 1),
+			expected: true,
+		},
+		{
+			a:        schedule.NewDayTime(10, 0),
+			b:        schedule.NewDayTime(10, 0),
 			expected: false,
 		},
 		{
-			a:        schedule.NewDayTime(1, 0),
-			b:        schedule.NewDayTime(0, 0),
+			a:        schedule.NewDayTime(10, 0),
+			b:        schedule.NewDayTime(9, 59),
 			expected: false,
 		},
 		{
-			a:        schedule.NewDayTime(0, 59),
-			b:        schedule.NewDayTime(1, 0),
+			a:        schedule.NewDayTime(0, 0),
+			b:        schedule.NewDayTime(23, 59),
 			expected: true,
 		},
 	}
 
 	for _, tt := range tests {
-		assert.Equal(t, tt.expected, tt.a.Before(tt.b))
+		assert.Equal(t, tt.expected, tt.a.Before(tt.b),
+			fmt.Sprintf("a=%v, b=%v", tt.a, tt.b))
 	}
 }
 
-func TestAfter(t *testing.T) {
+func TestDayTimeAfter(t *testing.T) {
 	tests := []struct {
-		a, b     schedule.DayTime
+		a        schedule.DayTime
+		b        schedule.DayTime
 		expected bool
 	}{
 		{
-			a:        schedule.NewDayTime(0, 0),
-			b:        schedule.NewDayTime(0, 0),
+			a:        schedule.NewDayTime(10, 0),
+			b:        schedule.NewDayTime(12, 0),
 			expected: false,
 		},
 		{
-			a:        schedule.NewDayTime(0, 0),
-			b:        schedule.NewDayTime(0, 1),
+			a:        schedule.NewDayTime(10, 0),
+			b:        schedule.NewDayTime(10, 1),
 			expected: false,
 		},
 		{
-			a:        schedule.NewDayTime(0, 1),
+			a:        schedule.NewDayTime(10, 0),
+			b:        schedule.NewDayTime(10, 0),
+			expected: false,
+		},
+		{
+			a:        schedule.NewDayTime(10, 0),
+			b:        schedule.NewDayTime(9, 59),
+			expected: true,
+		},
+		{
+			a:        schedule.NewDayTime(23, 59),
 			b:        schedule.NewDayTime(0, 0),
 			expected: true,
 		},
 		{
-			a:        schedule.NewDayTime(1, 0),
-			b:        schedule.NewDayTime(0, 0),
-			expected: true,
-		},
-		{
-			a:        schedule.NewDayTime(0, 59),
-			b:        schedule.NewDayTime(1, 0),
+			a:        schedule.NewDayTime(0, 0),
+			b:        schedule.NewDayTime(23, 59),
 			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
-		assert.Equal(t, tt.expected, tt.a.After(tt.b))
-	}
-}
-
-func TestEqual(t *testing.T) {
-	tests := []struct {
-		a, b     schedule.DayTime
-		expected bool
-	}{
-		{
-			a:        schedule.NewDayTime(0, 0),
-			b:        schedule.NewDayTime(0, 0),
-			expected: true,
-		},
-		{
-			a:        schedule.NewDayTime(0, 0),
-			b:        schedule.NewDayTime(0, 1),
-			expected: false,
-		},
-		{
-			a:        schedule.NewDayTime(0, 1),
-			b:        schedule.NewDayTime(0, 0),
-			expected: false,
-		},
-		{
-			a:        schedule.NewDayTime(1, 0),
-			b:        schedule.NewDayTime(0, 0),
-			expected: false,
-		},
-		{
-			a:        schedule.NewDayTime(0, 59),
-			b:        schedule.NewDayTime(1, 0),
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		assert.Equal(t, tt.expected, tt.a.Equal(tt.b))
+		assert.Equal(t, tt.expected, tt.a.After(tt.b),
+			fmt.Sprintf("a=%v, b=%v", tt.a, tt.b))
 	}
 }

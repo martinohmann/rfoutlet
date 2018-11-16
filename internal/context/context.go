@@ -13,31 +13,31 @@ import (
 type Context struct {
 	ctx.Context
 
-	config    *config.Config
-	state     *state.State
+	Config    *config.Config
+	State     *state.State
 	groupMap  map[string]*Group
 	outletMap map[string]*Outlet
 
-	Groups []*Group `json:"groups,omitempty"`
+	Groups []*Group `json:"groups"`
 }
 
 // Group type definition
 type Group struct {
 	ID      string    `json:"id"`
 	Name    string    `json:"name"`
-	Outlets []*Outlet `json:"outlets,omitempty"`
+	Outlets []*Outlet `json:"outlets"`
 }
 
 // Outlet type definition
 type Outlet struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`
-	CodeOn      uint64             `json:"-"`
-	CodeOff     uint64             `json:"-"`
-	Protocol    int                `json:"-"`
-	PulseLength uint               `json:"-"`
-	Schedule    *schedule.Schedule `json:"schedule,omitempty"`
-	State       *state.SwitchState `json:"schedule,omitempty"`
+	ID          string            `json:"id"`
+	Name        string            `json:"name"`
+	CodeOn      uint64            `json:"-"`
+	CodeOff     uint64            `json:"-"`
+	Protocol    int               `json:"-"`
+	PulseLength uint              `json:"-"`
+	Schedule    schedule.Schedule `json:"schedule"`
+	State       state.SwitchState `json:"state"`
 }
 
 // New create a new context for config and state
@@ -49,8 +49,8 @@ func New(c *config.Config, s *state.State) (*Context, error) {
 func Wrap(ctx ctx.Context, c *config.Config, s *state.State) (*Context, error) {
 	context := &Context{
 		Context:   ctx,
-		config:    c,
-		state:     s,
+		Config:    c,
+		State:     s,
 		groupMap:  make(map[string]*Group),
 		outletMap: make(map[string]*Outlet),
 		Groups:    make([]*Group, 0, len(c.Groups)),
@@ -64,8 +64,8 @@ func Wrap(ctx ctx.Context, c *config.Config, s *state.State) (*Context, error) {
 }
 
 func (c *Context) buildGroups() error {
-	for _, id := range c.config.GroupOrder {
-		g, ok := c.config.Groups[id]
+	for _, id := range c.Config.GroupOrder {
+		g, ok := c.Config.Groups[id]
 		if !ok {
 			return fmt.Errorf("invalid group identifier %q", id)
 		}
@@ -89,7 +89,7 @@ func (c *Context) buildGroups() error {
 
 func (c *Context) buildOutlets(g *config.Group, group *Group) error {
 	for _, id := range g.Outlets {
-		o, ok := c.config.Outlets[id]
+		o, ok := c.Config.Outlets[id]
 		if !ok {
 			return fmt.Errorf("invalid outlet identifier %q", id)
 		}
@@ -101,8 +101,8 @@ func (c *Context) buildOutlets(g *config.Group, group *Group) error {
 			CodeOff:     o.CodeOff,
 			Protocol:    o.Protocol,
 			PulseLength: o.PulseLength,
-			State:       c.state.SwitchStates[id],
-			Schedule:    c.state.Schedules[id],
+			State:       c.State.SwitchStates[id],
+			Schedule:    c.State.Schedules[id],
 		}
 
 		c.outletMap[id] = outlet

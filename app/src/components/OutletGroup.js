@@ -40,22 +40,22 @@ class OutletGroup extends React.Component {
     this.registerOutlet = this.registerOutlet.bind(this);
 
     this.state = {
-      outlets: [],
+      outlets: {},
     }
   }
 
-  registerOutlet(outlet) {
+  registerOutlet(id, outlet) {
     const outlets = this.state.outlets;
 
-    outlets.push(outlet);
+    outlets[id] = outlet
 
     this.setState({ outlets: outlets });
   }
 
   updateOutletStates(outlets) {
-    outlets.map((outlet, id) => {
-      if (undefined !== this.state.outlets[id]) {
-        this.state.outlets[id].setState({
+    outlets.map(outlet => {
+      if (undefined !== this.state.outlets[outlet.id]) {
+        this.state.outlets[outlet.id].setState({
           isEnabled: outletEnabled(outlet),
         });
       }
@@ -67,7 +67,7 @@ class OutletGroup extends React.Component {
   handleButtonClick(action) {
     const data = {
       action: action,
-      group_id: this.props.groupId
+      id: this.props.group.id
     };
 
     apiRequest('POST', '/outlet_group', data)
@@ -76,14 +76,14 @@ class OutletGroup extends React.Component {
   }
 
   render() {
-    const { identifier, outlets } = this.props.attributes;
-    const { classes, groupId } = this.props;
+    const { name, outlets } = this.props.group;
+    const { classes } = this.props;
 
     return (
       <div>
         <List component="nav">
           <ListItem className={classes.outletGroup}>
-            <ListItemText primary={identifier} disableTypography={true} className={classes.outletGroupIdentifier} />
+            <ListItemText primary={name} disableTypography={true} className={classes.outletGroupIdentifier} />
             <div>
               <IconButton className={classes.buttonOff} onClick={(e) => this.handleButtonClick('off') }>
                 <Icon>flash_off</Icon>
@@ -96,12 +96,10 @@ class OutletGroup extends React.Component {
               </IconButton>
             </div>
           </ListItem>
-          {outlets.map((attributes, outletId) =>
+          {outlets.map(outlet =>
             <Outlet
-              key={outletId}
-              outletId={outletId}
-              groupId={groupId}
-              attributes={attributes}
+              key={outlet.id}
+              outlet={outlet}
               registerOutlet={this.registerOutlet}
             />
           )}

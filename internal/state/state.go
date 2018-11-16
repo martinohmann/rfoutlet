@@ -14,16 +14,24 @@ type SwitchState uint
 
 const (
 	// SwitchStateOff defines the state for a disabled switch
-	SwitchStateOn SwitchState = iota
+	SwitchStateOff SwitchState = iota
 
 	// SwitchStateOn defines the state for an enabled switch
-	SwitchStateOff
+	SwitchStateOn
 )
 
 // State type definition
 type State struct {
-	SwitchStates map[string]*SwitchState       `json:"switch_states,omitempty"`
-	Schedules    map[string]*schedule.Schedule `json:"schedules,omitempty"`
+	SwitchStates map[string]SwitchState       `json:"switch_states"`
+	Schedules    map[string]schedule.Schedule `json:"schedules"`
+}
+
+// New create a new empty state
+func New() *State {
+	return &State{
+		SwitchStates: make(map[string]SwitchState),
+		Schedules:    make(map[string]schedule.Schedule),
+	}
 }
 
 // Load loads the state from a file
@@ -43,7 +51,7 @@ func LoadWithReader(r io.Reader) (*State, error) {
 		return nil, err
 	}
 
-	state := &State{}
+	state := New()
 
 	err = json.Unmarshal(c, state)
 
@@ -52,7 +60,7 @@ func LoadWithReader(r io.Reader) (*State, error) {
 
 // Save saves the state to a file
 func Save(file string, state *State) error {
-	f, err := os.Open(file)
+	f, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE, 0664)
 	if err != nil {
 		return err
 	}

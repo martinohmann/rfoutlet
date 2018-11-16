@@ -14,7 +14,7 @@
 package main
 
 import (
-	"context"
+	ctx "context"
 	"flag"
 	"fmt"
 	"log"
@@ -27,22 +27,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/packr"
 	"github.com/martinohmann/rfoutlet/internal/api"
+	"github.com/martinohmann/rfoutlet/internal/config"
+	"github.com/martinohmann/rfoutlet/internal/context"
+	"github.com/martinohmann/rfoutlet/internal/control"
 	"github.com/martinohmann/rfoutlet/internal/handler"
-	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/martinohmann/rfoutlet/internal/state"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
 
 const (
 	webDir                = "../../app/build"
-	defaultListenAddress  = "0.0.0.0:3333"
 	defaultConfigFilename = "/etc/rfoutlet/config.yml"
 )
 
 var (
 	configFilename = flag.String("config", defaultConfigFilename, "config filename")
 	stateFilename  = flag.String("state-file", "", "state filename")
-	listenAddress  = flag.String("listen-address", defaultListenAddress, "listen address")
-	gpioPin        = flag.Uint("gpio-pin", gpio.DefaultTransmitPin, "gpio pin to transmit on")
+	listenAddress  = flag.String("listen-address", "", "listen address")
+	gpioPin        = flag.Int("gpio-pin", -1, "gpio pin to transmit on")
 	usage          = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s\n", os.Args[0])
 		flag.PrintDefaults()
@@ -56,13 +58,17 @@ func init() {
 func main() {
 	flag.Parse()
 
-	config, err := outlet.ReadConfig(*configFilename)
+	config, err := config.Load(*configFilename)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	transmitter, err := gpio.NewTransmitter(*gpioPin)
+	if *gpioPin >= 0 {
+		config.GpioPin = uint(*gpioPin)
+	}
+
+	transmitter, err := gpio.NewTransmitter(config.GpioPin)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -70,29 +76,24 @@ func main() {
 
 	defer transmitter.Close()
 
-	var stateManager outlet.StateManager
+	if *listenAddress != "" {
+		config.ListenAddress = *listenAddress
+	}
 
 	if *stateFilename != "" {
-		stateFile, err := os.OpenFile(*stateFilename, os.O_RDWR|os.O_CREATE, 0600)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		stateManager = outlet.NewStateManager(stateFile)
-	} else {
-		stateManager = outlet.NewNullStateManager()
+		config.StateFile = *stateFilename
 	}
 
-	defer stateManager.Close()
-
-	control := outlet.NewControl(config, stateManager, transmitter)
-
-	if err := control.RestoreState(); err != nil {
-		log.Printf("error while restoring state: %s\n", err)
+	s, err := state.Load(config.StateFile)
+	if err != nil {
+		s = state.New()
 	}
 
-	api := api.New(control)
+	ctx, err := context.New(config, s)
+
+	control := control.New(ctx, transmitter)
+
+	api := api.New(ctx, control)
 
 	router := gin.Default()
 	router.Use(cors.Default())
@@ -106,7 +107,7 @@ func main() {
 	apiRoutes.POST("/outlet", api.OutletRequestHandler)
 	apiRoutes.POST("/outlet_group", api.OutletGroupRequestHandler)
 
-	listenAndServe(router, *listenAddress)
+	listenAndServe(router, config.ListenAddress)
 }
 
 func listenAndServe(handler http.Handler, addr string) {
@@ -127,7 +128,7 @@ func listenAndServe(handler http.Handler, addr string) {
 
 	log.Println("Shutdown Server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := ctx.WithTimeout(ctx.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {

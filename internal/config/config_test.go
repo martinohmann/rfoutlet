@@ -1,55 +1,52 @@
 package config_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
-	"github.com/Flaque/filet"
 	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/stretchr/testify/assert"
 )
 
+func TestLoad(t *testing.T) {
+	c, err := config.Load("testdata/full.yml")
+
+	assert.NoError(t, err)
+	assert.Len(t, c.GroupOrder, 1)
+	assert.Len(t, c.Groups, 1)
+	assert.Len(t, c.Outlets, 2)
+}
+
+func TestLoadInvalid(t *testing.T) {
+	_, err := config.Load("testdata/invalid.yml")
+	assert.Error(t, err)
+}
+
+func TestLoadNonexistent(t *testing.T) {
+	_, err := config.Load("testdata/idonotexist.yml")
+	assert.Error(t, err)
+}
+
 func TestLoadWithReader(t *testing.T) {
-	defer filet.CleanUp(t)
+	cfg := `
+groups:
+  foo:
+    name: Foo`
 
-	tests := []struct {
-		content string
-		wantErr bool
-		errMsg  string
-		assert  func(t *testing.T, c *config.Config)
-	}{
-		{
-			content: "",
-			wantErr: false,
-			assert: func(t *testing.T, c *config.Config) {
-				assert.Len(t, c.Groups, 0)
-			},
-		},
-		{
-			content: "groups:\n  foo:\n    name: bar",
-			wantErr: false,
-			assert: func(t *testing.T, c *config.Config) {
-				assert.Equal(t, "bar", c.Groups["foo"].Name)
-			},
-		},
-		{
-			content: "a\n- a\n[",
-			wantErr: true,
-			errMsg:  "yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `a - a [` into config.Config",
-		},
-	}
+	r := strings.NewReader(cfg)
+	c, err := config.LoadWithReader(r)
+	assert.NoError(t, err)
+	assert.Equal(t, "Foo", c.Groups["foo"].Name)
+}
 
-	for _, tt := range tests {
-		f := filet.TmpFile(t, "/tmp", tt.content)
-		f.Seek(0, 0)
+type errorReader struct{}
 
-		c, err := config.LoadWithReader(f)
+func (errorReader) Read(p []byte) (n int, err error) {
+	return 1, fmt.Errorf("error")
+}
 
-		if tt.wantErr {
-			if assert.Error(t, err) {
-				assert.Equal(t, tt.errMsg, err.Error())
-			}
-		} else if assert.NoError(t, err) {
-			tt.assert(t, c)
-		}
-	}
+func TestLoadWithBadReader(t *testing.T) {
+	_, err := config.LoadWithReader(errorReader{})
+	assert.Error(t, err)
 }

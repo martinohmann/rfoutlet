@@ -17,14 +17,14 @@ class Outlet extends React.Component {
     this.handleToggle = this.handleToggle.bind(this)
 
     this.state = {
-      isEnabled: outletEnabled(props.attributes),
+      isEnabled: outletEnabled(props.outlet),
     };
 
-    this.props.registerOutlet(this);
+    this.props.registerOutlet(props.outlet.id, this);
   }
 
   componentWillReceiveProps(nextProps) {
-    const outlet = nextProps.attributes;
+    const outlet = nextProps.outlet;
 
     this.setState({ isEnabled: outletEnabled(outlet) });
   }
@@ -32,8 +32,7 @@ class Outlet extends React.Component {
   handleToggle(event, isEnabled) {
     const data = {
       action: 'toggle',
-      group_id: this.props.groupId,
-      outlet_id: this.props.outletId
+      id: this.props.outlet.id
     };
 
     apiRequest('POST', '/outlet', data)
@@ -44,7 +43,7 @@ class Outlet extends React.Component {
   render() {
     return (
       <ListItem button onClick={this.handleToggle}>
-        <ListItemText primary={this.props.attributes.identifier} />
+        <ListItemText primary={this.props.outlet.name} />
         <ListItemSecondaryAction>
           <Switch onChange={this.handleToggle} checked={this.state.isEnabled}
           />

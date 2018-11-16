@@ -1,39 +1,25 @@
 ---
-# outlet groups can trigger actions on all outlets within this group, e.g.
-# switch all outlets on or off at the same time.
-# you need to create at least one outlet group
-outlet_groups:
-    # the identifier that should be displayed for this outlet group in the web view
-  - identifier: Living Room
+listen_address: 0.0.0.0:3333
+gpio_pin: 17
+state_file: /var/lib/rfoutlet/state.json
+group_order:
+  - foo
+groups:
+  foo:
+    name: Foo
     outlets:
-        # the identifier that should be displayed for this outlet in the web view
-      - identifier: Lamp 1
-        # code to send when the outlet is switched on
-        code_on: 123456
-        # code to send when the outlet is switched off
-        code_off: 012345
-        # optional: set the transmission protocol to use for this outlet
-        # see internal/gpio/transmitter.go for available protocols
-        # default: 1
-        protocol: 2
-        # optional: set pulse length for this outlet
-        # default: 189
-        pulse_length: 300
-        # optional: set initial state when starting the server
-        # 0 = unknown, 1 = on, 2 = off
-        # default: 0
-        state: 1
-      - identifier: Lamp 2
-        code_on: 123
-        code_off: 012
-      - identifier: TV
-        code_on: 456
-        code_off: 045
-  - identifier: Bed Room
-    outlets:
-      - identifier: Lamp
-        code_on: 654321
-        code_off: 065432
-      - identifier: Reading Lamp
-        code_on: 98765
-        code_off: 09876
+      - baz
+      - bar
+outlets:
+  bar:
+    name: Bar
+    code_on: 123
+    code_off: 456
+    protocol: 1
+    pulse_length: 189
+  baz:
+    name: Baz
+    code_on: 789
+    code_off: 012 
+    protocol: 2
+    pulse_length: 189

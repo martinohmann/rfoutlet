@@ -10,42 +10,47 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/martinohmann/rfoutlet/internal/api"
-	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/martinohmann/rfoutlet/internal/config"
+	"github.com/martinohmann/rfoutlet/internal/context"
+	"github.com/martinohmann/rfoutlet/internal/control"
+	"github.com/martinohmann/rfoutlet/internal/state"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
 )
 
-func createControl() *outlet.Control {
-	t, _ := gpio.NewNullTransmitter()
-	sm := outlet.NewNullStateManager()
-	c := &outlet.Config{
-		OutletGroups: []*outlet.OutletGroup{
-			{
-				Identifier: "foo",
-				Outlets: []*outlet.Outlet{
-					{
-						Identifier: "bar",
-						Protocol:   1,
-					},
-					{
-						Identifier: "baz",
-						Protocol:   1,
-						State:      outlet.StateOn,
-					},
-					{
-						Identifier: "qux",
-						Protocol:   1,
-						State:      outlet.StateOff,
-					},
-				},
+func createContext() *context.Context {
+	c := &config.Config{
+		GroupOrder: []string{"foo"},
+		Groups: map[string]*config.Group{
+			"foo": {
+				Name:    "Foo",
+				Outlets: []string{"bar", "baz", "qux"},
 			},
 		},
+		Outlets: map[string]*config.Outlet{
+			"bar": {Name: "Bar", Protocol: 1},
+			"baz": {Name: "Baz", Protocol: 1},
+			"qux": {Name: "Qux", Protocol: 1},
+		},
 	}
-	return outlet.NewControl(c, sm, t)
+
+	s := state.New()
+	s.SwitchStates["qux"] = state.SwitchStateOn
+
+	ctx, _ := context.New(c, s)
+
+	return ctx
+}
+
+func createAPI() *api.API {
+	ctx := createContext()
+	t, _ := gpio.NewNullTransmitter()
+
+	return api.New(ctx, control.New(ctx, t))
 }
 
 func TestInvalidJson(t *testing.T) {
-	a := api.New(createControl())
+	a := createAPI()
 
 	tests := []struct {
 		handler      gin.HandlerFunc
@@ -102,46 +107,47 @@ func TestOutletRequest(t *testing.T) {
 	}{
 		{
 			code: http.StatusBadRequest,
-			body: `{"error":"invalid action \"\""}`,
-		},
-		{
-			code: http.StatusBadRequest,
 			data: api.OutletRequest{
-				GroupId:  1,
-				OutletId: 2,
+				ID: "nonexistent",
 			},
-			body: `{"error":"invalid outlet group offset 1"}`,
-		},
-		{
-			code: http.StatusBadRequest,
-			data: api.OutletRequest{
-				GroupId:  0,
-				OutletId: 3,
-			},
-			body: `{"error":"invalid outlet offset 3 in group 0"}`,
+			body: `{"error":"outlet with identifier \"nonexistent\" does not exist"}`,
 		},
 		{
 			code: http.StatusOK,
 			data: api.OutletRequest{
-				GroupId:  0,
-				OutletId: 0,
-				Action:   "off",
+				ID:     "bar",
+				Action: "on",
 			},
-			body: `{"identifier":"bar","state":2}`,
+			body: `{"id":"bar","name":"Bar","schedule":null,"state":1}`,
 		},
 		{
 			code: http.StatusOK,
 			data: api.OutletRequest{
-				GroupId:  0,
-				OutletId: 0,
-				Action:   "toggle",
+				ID:     "qux",
+				Action: "off",
 			},
-			body: `{"identifier":"bar","state":1}`,
+			body: `{"id":"qux","name":"Qux","schedule":null,"state":0}`,
+		},
+		{
+			code: http.StatusOK,
+			data: api.OutletRequest{
+				ID:     "qux",
+				Action: "toggle",
+			},
+			body: `{"id":"qux","name":"Qux","schedule":null,"state":0}`,
+		},
+		{
+			code: http.StatusInternalServerError,
+			data: api.OutletRequest{
+				ID:     "bar",
+				Action: "foo",
+			},
+			body: `{"error":"invalid action \"foo\""}`,
 		},
 	}
 
 	for _, tt := range tests {
-		a := api.New(createControl())
+		a := createAPI()
 
 		r := gin.New()
 		r.POST("/api/outlet", a.OutletRequestHandler)
@@ -166,46 +172,46 @@ func TestOutletGroupRequest(t *testing.T) {
 		{
 			code: http.StatusBadRequest,
 			data: api.OutletGroupRequest{
-				GroupId: 1,
+				ID: "nonexistent",
 			},
-			body: `{"error":"invalid outlet group offset 1"}`,
+			body: `{"error":"group with identifier \"nonexistent\" does not exist"}`,
 		},
 		{
 			code: http.StatusOK,
 			data: api.OutletGroupRequest{
-				GroupId: 0,
-				Action:  "on",
+				ID:     "foo",
+				Action: "on",
 			},
-			body: `{"identifier":"foo","outlets":[{"identifier":"bar","state":1},{"identifier":"baz","state":1},{"identifier":"qux","state":1}]}`,
+			body: `{"id":"foo","name":"Foo","outlets":[{"id":"bar","name":"Bar","schedule":null,"state":1},{"id":"baz","name":"Baz","schedule":null,"state":1},{"id":"qux","name":"Qux","schedule":null,"state":1}]}`,
 		},
 		{
 			code: http.StatusOK,
 			data: api.OutletGroupRequest{
-				GroupId: 0,
-				Action:  "off",
+				ID:     "foo",
+				Action: "off",
 			},
-			body: `{"identifier":"foo","outlets":[{"identifier":"bar","state":2},{"identifier":"baz","state":2},{"identifier":"qux","state":2}]}`,
+			body: `{"id":"foo","name":"Foo","outlets":[{"id":"bar","name":"Bar","schedule":null,"state":0},{"id":"baz","name":"Baz","schedule":null,"state":0},{"id":"qux","name":"Qux","schedule":null,"state":0}]}`,
 		},
 		{
 			code: http.StatusOK,
 			data: api.OutletGroupRequest{
-				GroupId: 0,
-				Action:  "toggle",
+				ID:     "foo",
+				Action: "toggle",
 			},
-			body: `{"identifier":"foo","outlets":[{"identifier":"bar","state":1},{"identifier":"baz","state":2},{"identifier":"qux","state":1}]}`,
+			body: `{"id":"foo","name":"Foo","outlets":[{"id":"bar","name":"Bar","schedule":null,"state":1},{"id":"baz","name":"Baz","schedule":null,"state":1},{"id":"qux","name":"Qux","schedule":null,"state":0}]}`,
 		},
 		{
-			code: http.StatusBadRequest,
+			code: http.StatusInternalServerError,
 			data: api.OutletGroupRequest{
-				GroupId: 0,
-				Action:  "foo",
+				ID:     "foo",
+				Action: "foo",
 			},
 			body: `{"error":"invalid action \"foo\""}`,
 		},
 	}
 
 	for _, tt := range tests {
-		a := api.New(createControl())
+		a := createAPI()
 
 		r := gin.New()
 		r.POST("/api/outlet_group", a.OutletGroupRequestHandler)
@@ -222,7 +228,7 @@ func TestOutletGroupRequest(t *testing.T) {
 }
 
 func TestStatusRequestHandler(t *testing.T) {
-	a := api.New(createControl())
+	a := createAPI()
 
 	r := gin.New()
 	r.POST("/api/status", a.StatusRequestHandler)
@@ -233,5 +239,5 @@ func TestStatusRequestHandler(t *testing.T) {
 	r.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, `[{"identifier":"foo","outlets":[{"identifier":"bar","state":0},{"identifier":"baz","state":1},{"identifier":"qux","state":2}]}]`, rr.Body.String())
+	assert.Equal(t, `[{"id":"foo","name":"Foo","outlets":[{"id":"bar","name":"Bar","schedule":null,"state":0},{"id":"baz","name":"Baz","schedule":null,"state":0},{"id":"qux","name":"Qux","schedule":null,"state":1}]}]`, rr.Body.String())
 }

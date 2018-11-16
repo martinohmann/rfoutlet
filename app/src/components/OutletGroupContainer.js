@@ -17,13 +17,12 @@ class OutletGroupContainer extends React.Component {
 
     this.state = {
       outletGroups: [],
-      apiError: null,
     };
   }
 
   componentDidMount() {
     apiRequest('GET', '/status')
-      .then(result => this.setState({ apiError: null, outletGroups: result }))
+      .then(result => this.setState({ outletGroups: result }))
       .catch(err => console.error(err));
   }
 
@@ -32,11 +31,10 @@ class OutletGroupContainer extends React.Component {
 
     return (
       <div className={classes.outletGroupContainer}>
-        {this.state.outletGroups.map((attributes, groupId) =>
+        {this.state.outletGroups.map(group =>
           <OutletGroup
-            key={groupId}
-            groupId={groupId}
-            attributes={attributes}
+            key={group.id}
+            group={group}
           />
         )}
       </div>
