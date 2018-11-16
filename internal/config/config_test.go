@@ -50,3 +50,19 @@ func TestLoadWithBadReader(t *testing.T) {
 	_, err := config.LoadWithReader(errorReader{})
 	assert.Error(t, err)
 }
+
+var errorUnmarshal = func(interface{}) error {
+	return fmt.Errorf("error")
+}
+
+func TestBadConfigUnmarshalYAML(t *testing.T) {
+	c := &config.Config{}
+
+	assert.Error(t, c.UnmarshalYAML(errorUnmarshal))
+}
+
+func TestBadOutletUnmarshalYAML(t *testing.T) {
+	o := &config.Outlet{}
+
+	assert.Error(t, o.UnmarshalYAML(errorUnmarshal))
+}
