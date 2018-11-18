@@ -45,7 +45,7 @@ class Root extends React.Component {
             <Typography variant="h6" className={classes.title}>
               {config.project.name}
             </Typography>
-            <GithubLink />
+            <GithubLink url={config.project.url} />
           </Toolbar>
         </AppBar>
         <div className={classes.container}>

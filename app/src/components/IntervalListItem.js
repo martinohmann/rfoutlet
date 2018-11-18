@@ -1,12 +1,10 @@
 import React from 'react';
-import IconButton from '@material-ui/core/IconButton';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import Switch from '@material-ui/core/Switch';
-import EditIcon from '@material-ui/icons/Edit';
-import DeleteIcon from '@material-ui/icons/Delete';
 
+import IntervalActionsMenu from './IntervalActionsMenu';
 import { formatTime, weekdaysShort } from '../util';
 
 class IntervalListItem extends React.Component {
@@ -25,12 +23,7 @@ class IntervalListItem extends React.Component {
             checked={interval.enabled}
             onChange={onToggle}
           />
-          <IconButton onClick={onEdit}>
-            <EditIcon />
-          </IconButton>
-          <IconButton onClick={onDelete}>
-            <DeleteIcon />
-          </IconButton>
+          <IntervalActionsMenu onEdit={onEdit} onDelete={onDelete} />
         </ListItemSecondaryAction>
       </ListItem>
     );

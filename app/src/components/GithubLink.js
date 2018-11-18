@@ -4,8 +4,6 @@ import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import SvgIcon from '@material-ui/core/SvgIcon';
 
-import config from '../config';
-
 const styles = theme => ({
   logo: {
     color: theme.palette.common.white,
@@ -14,7 +12,9 @@ const styles = theme => ({
 
 class GithubLink extends React.Component {
   handleClick = event => {
-    window.location.href = config.project.url;
+    const { url } = this.props;
+
+    window.location.href = url;
   }
 
   render() {

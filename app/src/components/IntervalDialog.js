@@ -2,30 +2,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Dialog from '@material-ui/core/Dialog';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import Divider from '@material-ui/core/Divider';
-import { TimePicker } from 'material-ui-pickers';
 
 import DialogAppBar from './DialogAppBar';
+import IntervalOptionsList from './IntervalOptionsList';
+import IntervalTimePicker from './TimePicker';
 import WeekdaysDialog from './WeekdaysDialog';
-import { formatTime, weekdaysShort } from '../util';
 
 const styles = theme => ({
   container: {
     marginTop: 64,
   },
-  timePicker: {
-    position: 'fixed',
-    top: -1000,
-  },
-  weekdaySelect: {
-    flexGrow: 1,
-  },
 });
 
-class EditIntervalDialog extends React.Component {
+class IntervalDialog extends React.Component {
   state = {
     open: false,
     enabled: false,
@@ -33,7 +22,7 @@ class EditIntervalDialog extends React.Component {
     weekdays: [],
     from: null,
     to: null,
-    weekdaySelectOpen: false,
+    weekdaysDialogOpen: false,
   }
 
   pickerRefs = {
@@ -45,7 +34,6 @@ class EditIntervalDialog extends React.Component {
     const { open, id } = nextProps;
     const create = undefined === id;
 
-    console.log(nextProps);
     if (!create) {
       const { from, to, weekdays, enabled } = nextProps;
 
@@ -55,26 +43,26 @@ class EditIntervalDialog extends React.Component {
     this.setState({ open, create });
   }
 
-  intervalValid() {
+  isIntervalValid() {
     const { from, to, weekdays } = this.state;
 
     return from !== null && to !== null && weekdays.length > 0;
-  }
-
-  handleChange = name => date => {
-    this.setState({ [name]: date });
   }
 
   handlePickerOpen = name => e => {
     this.pickerRefs[name].open(e)
   }
 
-  handleWeekdaySelectOpen = open => () => {
-    this.setState({ weekdaySelectOpen: open });
+  handlePickerChange = name => date => {
+    this.setState({ [name]: date });
   }
 
-  handleWeekdaySelectDone = weekdays => {
-    this.setState({ weekdays, weekdaySelectOpen: false });
+  handleWeekdaysDialogOpen = open => () => {
+    this.setState({ weekdaysDialogOpen: open });
+  }
+
+  handleWeekdaysDialogDone = weekdays => {
+    this.setState({ weekdays, weekdaysDialogOpen: false });
   }
 
   handleApply = () => {
@@ -91,17 +79,9 @@ class EditIntervalDialog extends React.Component {
     this.props.onClose();
   }
 
-  renderTime(time) {
-    if (null === time) {
-      return 'unset';
-    }
-
-    return formatTime(time);
-  }
-
   render() {
     const { classes, onClose } = this.props;
-    const { create, open, weekdays, from, to, weekdaySelectOpen } = this.state;
+    const { create, open, from, to, weekdays, weekdaysDialogOpen } = this.state;
 
     return (
       <Dialog fullScreen open={open} onClose={onClose}>
@@ -109,55 +89,41 @@ class EditIntervalDialog extends React.Component {
           title={create ? 'Add Interval' : 'Edit Interval'}
           onClose={onClose}
           onDone={this.handleApply}
-          doneButtonDisabled={!this.intervalValid()}
+          doneButtonDisabled={!this.isIntervalValid()}
           doneButtonText="Apply"
         />
-        <List component="nav" className={classes.container}>
-          <ListItem onClick={this.handleWeekdaySelectOpen(true)}>
-            <ListItemText
-              primary="Weekdays"
-              secondary={weekdays.length === 0 ? "none" : weekdays.map(i => weekdaysShort[i]).join(', ')}
-            />
-          </ListItem>
-          <Divider />
-          <ListItem onClick={this.handlePickerOpen('from')}>
-            <ListItemText primary="From" secondary={this.renderTime(from)} />
-          </ListItem>
-          <Divider />
-          <ListItem onClick={this.handlePickerOpen('to')}>
-            <ListItemText primary="To" secondary={this.renderTime(to)} />
-          </ListItem>
-        </List>
-        {this.renderTimePicker('from', from)}
-        {this.renderTimePicker('to', to)}
+        <IntervalOptionsList
+          className={classes.container}
+          weekdays={weekdays}
+          fromDayTime={from}
+          toDayTime={to}
+          onWeekdaysClick={this.handleWeekdaysDialogOpen(true)}
+          onFromDayTimeClick={this.handlePickerOpen('from')}
+          onToDayTimeClick={this.handlePickerOpen('to')}
+        />
+        <IntervalTimePicker
+          innerRef={ref => this.pickerRefs.from = ref}
+          value={from}
+          onChange={this.handlePickerChange('from')}
+        />
+        <IntervalTimePicker
+          innerRef={ref => this.pickerRefs.to = ref}
+          value={to}
+          onChange={this.handlePickerChange('to')}
+        />
         <WeekdaysDialog
-          open={weekdaySelectOpen}
-          onClose={this.handleWeekdaySelectOpen(false)}
-          onDone={this.handleWeekdaySelectDone}
+          open={weekdaysDialogOpen}
+          onClose={this.handleWeekdaysDialogOpen(false)}
+          onDone={this.handleWeekdaysDialogDone}
           selected={weekdays}
         />
       </Dialog>
     );
   }
-
-  renderTimePicker(name, value) {
-    const { classes } = this.props;
-
-    return (
-      <TimePicker
-        ref={ref => this.pickerRefs[name] = ref}
-        className={classes.timePicker}
-        clearable
-        ampm={false}
-        value={value}
-        onChange={this.handleChange(name)}
-      />
-    );
-  }
 }
 
-EditIntervalDialog.propTypes = {
+IntervalDialog.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(EditIntervalDialog);
+export default withStyles(styles)(IntervalDialog);

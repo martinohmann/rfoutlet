@@ -1,6 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -11,11 +9,10 @@ import EditIcon from '@material-ui/icons/Edit';
 import ScheduleDialog from './ScheduleDialog';
 import { apiRequest } from '../util';
 
-const styles = theme => ({});
-
-class Outlet extends React.Component {
+class OutletListItem extends React.Component {
   state = {
     enabled: false,
+    enabledIntervals: [],
     schedule: [],
     scheduleDialogOpen: false,
   }
@@ -29,11 +26,14 @@ class Outlet extends React.Component {
   }
 
   updateState(outlet) {
-    const { state, schedule } = outlet;
+    let { state, schedule } = outlet;
+
+    schedule = schedule === null ? [] : schedule;
 
     this.setState({
       enabled: 1 === state,
-      schedule: schedule === null ? [] : schedule,
+      enabledIntervals: this.enabledIntervals(schedule),
+      schedule,
     });
   }
 
@@ -50,37 +50,20 @@ class Outlet extends React.Component {
   }
 
   handleScheduleChange = schedule => {
-    this.setState({ schedule })
+    this.setState({ enabledIntervals: this.enabledIntervals(schedule), schedule })
   }
 
-  enabledIntervals() {
-    const { schedule } = this.state;
-
+  enabledIntervals = schedule => {
     return schedule.filter(interval => interval.enabled)
-  }
-
-  renderScheduleText() {
-    const enabledIntervals = this.enabledIntervals();
-
-    if (enabledIntervals.length === 0) {
-      return ''
-    }
-
-    if (enabledIntervals.length === 1) {
-      return `1 interval scheduled`
-    }
-
-    return `${enabledIntervals.length} intervals scheduled`
   }
 
   render() {
     const { id, name } = this.props;
-    const { enabled, schedule, scheduleDialogOpen } = this.state;
-    const enabledIntervals = this.enabledIntervals();
+    const { enabled, enabledIntervals, schedule, scheduleDialogOpen } = this.state;
 
     return (
       <ListItem>
-        <ListItemText primary={name} secondary={this.renderScheduleText()} />
+        <ListItemText primary={name} secondary={this.renderIntervals()} />
         <ListItemSecondaryAction>
           <Switch
             color="primary"
@@ -102,10 +85,20 @@ class Outlet extends React.Component {
       </ListItem>
     );
   }
+
+  renderIntervals() {
+    const { enabledIntervals } = this.state;
+
+    if (enabledIntervals.length === 0) {
+      return ''
+    }
+
+    if (enabledIntervals.length === 1) {
+      return `1 interval scheduled`
+    }
+
+    return `${enabledIntervals.length} intervals scheduled`
+  }
 }
 
-Outlet.propTypes = {
-  classes: PropTypes.object.isRequired,
-};
-
-export default withStyles(styles)(Outlet);
+export default OutletListItem;

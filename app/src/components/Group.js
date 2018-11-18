@@ -1,34 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import IconButton from '@material-ui/core/IconButton';
-import Icon from '@material-ui/core/Icon';
 
-import Outlet from './Outlet';
+import GroupListItem from './GroupListItem';
+import OutletListItem from './OutletListItem';
 import { apiRequest } from '../util';
-
-const styles = theme => ({
-  container: {
-    paddingTop: 1,
-    paddingBottom: 1,
-    paddingRight: 6,
-    background: theme.palette.grey[100],
-  },
-  groupName: {
-    flexGrow: 1,
-    fontWeight: 700,
-    color: theme.palette.grey[800],
-  },
-  buttonOn: {
-    color: theme.palette.primary[700],
-  },
-  buttonOff: {
-    color: theme.palette.secondary.light,
-  },
-});
 
 class Group extends React.Component {
   state = {
@@ -41,7 +16,7 @@ class Group extends React.Component {
     this.setState({ outlets });
   }
 
-  handleButtonClick = action => event => {
+  handleAction = action => event => {
     const { id } = this.props;
 
     apiRequest('POST', '/outlet_group', { id, action })
@@ -51,33 +26,23 @@ class Group extends React.Component {
   }
 
   render() {
-    const { classes, name } = this.props;
+    const { name } = this.props;
     const { outlets } = this.state;
 
     return (
       <List component="nav">
-        <ListItem className={classes.container}>
-          <ListItemText className={classes.groupName} primary={name} disableTypography={true} />
-          <IconButton className={classes.buttonOff} onClick={this.handleButtonClick('off')}>
-            <Icon>power_off</Icon>
-          </IconButton>
-          <IconButton className={classes.buttonOn} onClick={this.handleButtonClick('on')}>
-            <Icon>power</Icon>
-          </IconButton>
-          <IconButton onClick={this.handleButtonClick('toggle')}>
-            <Icon>swap_horiz</Icon>
-          </IconButton>
-        </ListItem>
+        <GroupListItem
+          name={name}
+          onActionOn={this.handleAction('on')}
+          onActionOff={this.handleAction('off')}
+          onActionToggle={this.handleAction('toggle')}
+        />
         {outlets.map(outlet =>
-          <Outlet key={outlet.id} {...outlet} />
+          <OutletListItem key={outlet.id} {...outlet} />
         )}
       </List>
     );
   }
 }
 
-Group.propTypes = {
-  classes: PropTypes.object.isRequired,
-};
-
-export default withStyles(styles)(Group);
+export default Group;

@@ -12,7 +12,7 @@ import AddIcon from '@material-ui/icons/Add';
 import DialogAppBar from './DialogAppBar';
 import IntervalListItem from './IntervalListItem';
 import IntervalDialog from './IntervalDialog';
-import { apiRequest, formatTime, weekdaysShort, scheduleToApp, intervalToApi } from '../util';
+import { apiRequest, scheduleToApp, intervalToApi } from '../util';
 
 const styles = theme => ({
   container: {
@@ -28,7 +28,7 @@ const styles = theme => ({
 class ScheduleDialog extends React.Component {
   state = {
     open: false,
-    editIntervalOpen: false,
+    intervalDialogOpen: false,
     schedule: [],
     currentInterval: null,
   }
@@ -45,8 +45,8 @@ class ScheduleDialog extends React.Component {
     this.setState({ open, schedule: scheduleToApp(schedule) });
   }
 
-  handleEditIntervalDialogOpen = (open, currentInterval) => () => {
-    this.setState({ editIntervalOpen: open, currentInterval })
+  handleIntervalDialogOpen = (open, currentInterval) => () => {
+    this.setState({ intervalDialogOpen: open, currentInterval })
   }
 
   handleIntervalCreate = interval => {
@@ -83,22 +83,19 @@ class ScheduleDialog extends React.Component {
 
   render() {
     const { classes, outletId, onClose } = this.props;
-    const { open, editIntervalOpen, schedule, currentInterval } = this.state;
+    const { open, intervalDialogOpen, schedule, currentInterval } = this.state;
 
     return (
       <Dialog fullScreen open={open} onClose={onClose}>
-        <DialogAppBar
-          title="Schedule"
-          onClose={onClose}
-        />
+        <DialogAppBar title="Schedule" onClose={onClose} />
         <List component="nav" className={classes.container}>
-          {schedule.map((interval, i) => {
+          {schedule.map((interval, key) => {
             return (
-              <div key={i}>
+              <div key={key}>
                 <IntervalListItem
                   interval={interval}
                   onToggle={this.handleIntervalToggle(interval)}
-                  onEdit={this.handleEditIntervalDialogOpen(true, interval)}
+                  onEdit={this.handleIntervalDialogOpen(true, interval)}
                   onDelete={this.handleIntervalDelete(interval)}
                 />
                 <Divider />
@@ -111,14 +108,18 @@ class ScheduleDialog extends React.Component {
             </ListItem>
           ) : ''}
         </List>
-        <Button variant="fab" color="secondary" className={classes.fab} onClick={this.handleEditIntervalDialogOpen(true, null)}>
+        <Button
+          variant="fab"
+          color="secondary"
+          className={classes.fab}
+          onClick={this.handleIntervalDialogOpen(true, null)}
+        >
           <AddIcon />
         </Button>
         <IntervalDialog
           outletId={outletId}
-          open={editIntervalOpen}
-          onClose={this.handleEditIntervalDialogOpen(false, null)}
-          onSave={this.props.onChange}
+          open={intervalDialogOpen}
+          onClose={this.handleIntervalDialogOpen(false, null)}
           onIntervalCreate={this.handleIntervalCreate}
           onIntervalUpdate={this.handleIntervalUpdate}
           {...currentInterval}
@@ -126,10 +127,6 @@ class ScheduleDialog extends React.Component {
       </Dialog>
     );
   }
-
-  renderInterval = ({ from, to }) => `${formatTime(from)} - ${formatTime(to)}`;
-
-  renderIntervalWeekdays = ({ weekdays }) => weekdays.map(i => weekdaysShort[i]).join(', ');
 }
 
 ScheduleDialog.propTypes = {

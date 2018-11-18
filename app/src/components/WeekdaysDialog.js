@@ -33,21 +33,15 @@ class WeekdaysDialog extends React.Component {
     this.setState({ open, selected });
   }
 
-  handleDone = () => {
-    const { selected } = this.state;
-
-    this.props.onDone(selected);
-  }
-
-  handleToggle = value => () => {
+  handleWeekdayToggle = key => () => {
     this.setState(state => {
       const { selected } = state;
-      const index = selected.indexOf(value);
+      const index = selected.indexOf(key);
 
       if (index > -1) {
         selected.splice(index, 1);
       } else {
-        selected.push(value);
+        selected.push(key);
       }
 
       selected.sort();
@@ -70,12 +64,12 @@ class WeekdaysDialog extends React.Component {
           doneButtonText="Done"
         />
         <List component="nav" className={classes.container}>
-          {weekdaysLong.map((name, value) => (
-            <div key={value}>
+          {weekdaysLong.map((weekday, key) => (
+            <div key={key}>
               <WeekdayListItem
-                weekday={name}
-                selected={selected.indexOf(value) > -1}
-                onToggle={this.handleToggle(value)}
+                weekday={weekday}
+                selected={selected.indexOf(key) > -1}
+                onToggle={this.handleWeekdayToggle(key)}
               />
               <Divider />
             </div>
