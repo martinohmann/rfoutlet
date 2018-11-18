@@ -1,25 +1,28 @@
-package control
+package scheduler
 
 import (
 	"time"
 
 	"github.com/martinohmann/rfoutlet/internal/context"
+	"github.com/martinohmann/rfoutlet/internal/control"
 	"github.com/martinohmann/rfoutlet/internal/state"
 )
 
 // Scheduler type definition
 type Scheduler struct {
-	ctx    *context.Context
-	ticker *time.Ticker
-	stop   chan bool
+	ctx     *context.Context
+	control *control.Control
+	ticker  *time.Ticker
+	stop    chan bool
 }
 
-// NewScheduler create a new scheduler
-func NewScheduler(ctx *context.Context, interval time.Duration) *Scheduler {
+// New creates a new scheduler
+func New(ctx *context.Context, control *control.Control, interval time.Duration) *Scheduler {
 	return &Scheduler{
-		ctx:    ctx,
-		ticker: time.NewTicker(interval),
-		stop:   make(chan bool, 1),
+		ctx:     ctx,
+		control: control,
+		ticker:  time.NewTicker(interval),
+		stop:    make(chan bool, 1),
 	}
 }
 
@@ -53,12 +56,18 @@ func (s *Scheduler) schedule() {
 			}
 
 			if o.Schedule.Contains(time.Now()) {
-				if o.State != state.SwitchStateOn {
-					// switch on
-				}
-			} else if o.State != state.SwitchStateOff {
-				// switch off
+				s.maybeSwitchState(o, state.SwitchStateOn)
+			} else {
+				s.maybeSwitchState(o, state.SwitchStateOff)
 			}
 		}
 	}
+}
+
+func (s *Scheduler) maybeSwitchState(o *context.Outlet, newState state.SwitchState) error {
+	if o.State == newState {
+		return nil
+	}
+
+	return s.control.SwitchState(o, newState)
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/control"
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 	"github.com/martinohmann/rfoutlet/internal/state"
-	uuid "github.com/satori/go.uuid"
 )
 
 const (
@@ -129,16 +128,10 @@ func (a *API) OutletScheduleIntervalDeleteRequestHandler(c *gin.Context) {
 		return
 	}
 
-	for i, interval := range o.Schedule {
-		if interval.ID == data.IntervalID {
-			o.Schedule = append(o.Schedule[:i], o.Schedule[i+1:]...)
-			break
-		}
+	if err := a.control.DeleteInterval(o, data.IntervalID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	a.ctx.State.Schedules[o.ID] = o.Schedule
-
-	a.control.SaveState()
 
 	c.JSON(http.StatusOK, o)
 }
@@ -158,14 +151,10 @@ func (a *API) OutletScheduleIntervalAddRequestHandler(c *gin.Context) {
 		return
 	}
 
-	if data.Interval.ID == "" {
-		data.Interval.ID = uuid.NewV4().String()
+	if err := a.control.AddInterval(o, data.Interval); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	o.Schedule = append(o.Schedule, data.Interval)
-	a.ctx.State.Schedules[o.ID] = o.Schedule
-
-	a.control.SaveState()
 
 	c.JSON(http.StatusOK, o)
 }
@@ -185,22 +174,12 @@ func (a *API) OutletScheduleIntervalUpdateRequestHandler(c *gin.Context) {
 		return
 	}
 
-	for i, interval := range o.Schedule {
-		if interval.ID == data.Interval.ID {
-			o.Schedule[i] = data.Interval
-
-			a.ctx.State.Schedules[o.ID] = o.Schedule
-
-			a.control.SaveState()
-
-			c.JSON(http.StatusOK, o)
-			return
-		}
+	if err := a.control.UpdateInterval(o, data.Interval); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
-	c.JSON(http.StatusBadRequest,
-		gin.H{"error": fmt.Errorf("interval with identifier %q does not exist", data.Interval.ID)})
-	return
+	c.JSON(http.StatusOK, o)
 }
 
 func (a *API) performAction(o *context.Outlet, action string) error {

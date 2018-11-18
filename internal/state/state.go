@@ -65,6 +65,8 @@ func Save(file string, state *State) error {
 		return err
 	}
 
+	f.Truncate(0)
+
 	return SaveWithWriter(f, state)
 }
 

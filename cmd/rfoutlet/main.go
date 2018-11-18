@@ -31,6 +31,7 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/context"
 	"github.com/martinohmann/rfoutlet/internal/control"
 	"github.com/martinohmann/rfoutlet/internal/handler"
+	"github.com/martinohmann/rfoutlet/internal/scheduler"
 	"github.com/martinohmann/rfoutlet/internal/state"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
@@ -92,6 +93,11 @@ func main() {
 	ctx, err := context.New(config, s)
 
 	control := control.New(ctx, transmitter)
+	scheduler := scheduler.New(ctx, control, 10*time.Second)
+
+	scheduler.Start()
+
+	defer scheduler.Stop()
 
 	api := api.New(ctx, control)
 
