@@ -5,6 +5,7 @@
   "dependencies": {
     "@date-io/luxon": "0.0.2",
     "@material-ui/core": "^3.4.0",
+    "@material-ui/icons": "^3.0.1",
     "luxon": "^1.6.2",
     "material-ui-pickers": "^2.0.1",
     "react": "^16.6.0",

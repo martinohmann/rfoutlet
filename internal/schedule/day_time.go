@@ -2,8 +2,8 @@ package schedule
 
 // DayTime type definition
 type DayTime struct {
-	Hour   int
-	Minute int
+	Hour   int `json:"hour"`
+	Minute int `json:"minute"`
 }
 
 // NewDayTime create a new day time

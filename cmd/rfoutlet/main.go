@@ -106,6 +106,9 @@ func main() {
 	apiRoutes.GET("/status", api.StatusRequestHandler)
 	apiRoutes.POST("/outlet", api.OutletRequestHandler)
 	apiRoutes.POST("/outlet_group", api.OutletGroupRequestHandler)
+	apiRoutes.PUT("/outlet/schedule", api.OutletScheduleIntervalAddRequestHandler)
+	apiRoutes.POST("/outlet/schedule", api.OutletScheduleIntervalUpdateRequestHandler)
+	apiRoutes.DELETE("/outlet/schedule", api.OutletScheduleIntervalDeleteRequestHandler)
 
 	listenAndServe(router, config.ListenAddress)
 }

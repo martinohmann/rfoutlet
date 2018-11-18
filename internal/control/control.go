@@ -28,26 +28,8 @@ func New(ctx *context.Context, transmitter gpio.CodeTransmitter) *Control {
 	return c
 }
 
-// SwitchOn switches an outlet on
-func (c *Control) SwitchOn(outlet *context.Outlet) error {
-	return c.switchState(state.SwitchStateOn, outlet)
-}
-
-// SwitchOff switches an outlet off
-func (c *Control) SwitchOff(outlet *context.Outlet) error {
-	return c.switchState(state.SwitchStateOff, outlet)
-}
-
-// Toggle switches outlet on if it is off, otherwise switches it on
-func (c *Control) Toggle(outlet *context.Outlet) error {
-	if outlet.State == state.SwitchStateOn {
-		return c.SwitchOff(outlet)
-	}
-
-	return c.SwitchOn(outlet)
-}
-
-func (c *Control) switchState(newState state.SwitchState, o *context.Outlet) error {
+// SwitchState switches the outlet state
+func (c *Control) SwitchState(o *context.Outlet, newState state.SwitchState) error {
 	code := o.CodeOn
 	if newState == state.SwitchStateOff {
 		code = o.CodeOff
@@ -60,10 +42,19 @@ func (c *Control) switchState(newState state.SwitchState, o *context.Outlet) err
 	o.State = newState
 	c.ctx.State.SwitchStates[o.ID] = newState
 
-	return c.saveState()
+	return c.SaveState()
 }
 
-func (c *Control) saveState() error {
+// Toggle switches outlet on if it is off, otherwise switches it on
+func (c *Control) Toggle(o *context.Outlet) error {
+	if o.State == state.SwitchStateOn {
+		return c.SwitchState(o, state.SwitchStateOff)
+	}
+
+	return c.SwitchState(o, state.SwitchStateOn)
+}
+
+func (c *Control) SaveState() error {
 	if c.ctx.Config.StateFile == "" {
 		return nil
 	}

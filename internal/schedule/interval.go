@@ -4,10 +4,11 @@ import "time"
 
 // Interval type definition
 type Interval struct {
-	Enabled  bool
-	Weekdays []time.Weekday
-	From     DayTime
-	To       DayTime
+	ID       string         `json:"id"`
+	Enabled  bool           `json:"enabled"`
+	Weekdays []time.Weekday `json:"weekdays"`
+	From     DayTime        `json:"from"`
+	To       DayTime        `json:"to"`
 }
 
 // Contains returns true if interval is enabled and t lies within

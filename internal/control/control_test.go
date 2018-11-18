@@ -17,18 +17,15 @@ func createContext() *context.Context {
 		Groups: map[string]*config.Group{
 			"foo": {
 				Name:    "Foo",
-				Outlets: []string{"bar", "baz", "qux"},
+				Outlets: []string{"bar"},
 			},
 		},
 		Outlets: map[string]*config.Outlet{
 			"bar": {Name: "Bar", Protocol: 1},
-			"baz": {Name: "Baz", Protocol: 1},
-			"qux": {Name: "Qux", Protocol: 1},
 		},
 	}
 
 	s := state.New()
-	s.SwitchStates["qux"] = state.SwitchStateOn
 
 	ctx, _ := context.New(c, s)
 
@@ -41,38 +38,26 @@ func createControl(ctx *context.Context) *control.Control {
 	return control.New(ctx, t)
 }
 
-func TestSwitchOn(t *testing.T) {
+func TestSwitchState(t *testing.T) {
 	ctx := createContext()
 	c := createControl(ctx)
 	o := ctx.Groups[0].Outlets[0]
 
-	err := c.SwitchOn(o)
+	err := c.SwitchState(o, state.SwitchStateOn)
 
 	if assert.NoError(t, err) {
 		assert.Equal(t, state.SwitchStateOn, o.State)
 	}
 }
 
-func TestSwitchOff(t *testing.T) {
-	ctx := createContext()
-	c := createControl(ctx)
-	o := ctx.Groups[0].Outlets[2]
-
-	err := c.SwitchOff(o)
-
-	if assert.NoError(t, err) {
-		assert.Equal(t, state.SwitchStateOff, o.State)
-	}
-}
-
 func TestToggle(t *testing.T) {
 	ctx := createContext()
 	c := createControl(ctx)
-	o := ctx.Groups[0].Outlets[2]
+	o := ctx.Groups[0].Outlets[0]
 
 	err := c.Toggle(o)
 
 	if assert.NoError(t, err) {
-		assert.Equal(t, state.SwitchStateOff, o.State)
+		assert.Equal(t, state.SwitchStateOn, o.State)
 	}
 }

@@ -5,31 +5,19 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
-import Icon from '@material-ui/core/Icon';
 import Switch from '@material-ui/core/Switch';
-import { DateTime } from 'luxon';
+import EditIcon from '@material-ui/icons/Edit';
 
-import TimeSwitchDialog from './TimeSwitchDialog';
-import { apiRequest, formatTime } from '../util';
+import ScheduleDialog from './ScheduleDialog';
+import { apiRequest } from '../util';
 
-const styles = theme => ({
-  buttonTimeSwitchOn: {
-    color: theme.palette.primary[500],
-  },
-  buttonTimeSwitchOff: {
-    color: theme.palette.grey[500],
-  },
-});
+const styles = theme => ({});
 
 class Outlet extends React.Component {
   state = {
     enabled: false,
-    timeSwitchDialogOpen: false,
-    timeSwitch: {
-      from: null,
-      to: null,
-      enabled: false,
-    },
+    schedule: [],
+    scheduleDialogOpen: false,
   }
 
   componentDidMount() {
@@ -41,20 +29,11 @@ class Outlet extends React.Component {
   }
 
   updateState(outlet) {
-    this.setState({ enabled: 1 === outlet.state });
-
-    if (undefined === outlet.timeSwitch) {
-      return;
-    }
-
-    const { timeSwitch } = outlet;
+    const { state, schedule } = outlet;
 
     this.setState({
-      timeSwitch: {
-        enabled: timeSwitch.enabled,
-        from: DateTime.fromISO(timeSwitch.from),
-        to: DateTime.fromISO(timeSwitch.to),
-      },
+      enabled: 1 === state,
+      schedule: schedule === null ? [] : schedule,
     });
   }
 
@@ -66,59 +45,59 @@ class Outlet extends React.Component {
       .catch(err => console.error(err));
   }
 
-  handleTimeSwitchDialogOpen = () => {
-    this.setState({ timeSwitchDialogOpen: true });
+  handleScheduleDialogOpen = open => () => {
+    this.setState({ scheduleDialogOpen: open });
   }
 
-  handleTimeSwitchDialogClose = () => {
-    this.setState({ timeSwitchDialogOpen: false });
+  handleScheduleChange = schedule => {
+    this.setState({ schedule })
   }
 
-  handleTimeSwitchDialogApply = timeSwitch => {
-    this.setState({
-      timeSwitchDialogOpen: false,
-      timeSwitch: timeSwitch,
-    });
+  enabledIntervals() {
+    const { schedule } = this.state;
+
+    return schedule.filter(interval => interval.enabled)
   }
 
-  renderTimeSwitchText() {
-    const { timeSwitch } = this.state;
+  renderScheduleText() {
+    const enabledIntervals = this.enabledIntervals();
 
-    if (!timeSwitch.enabled) {
-      return;
+    if (enabledIntervals.length === 0) {
+      return ''
     }
 
-    return `${formatTime(timeSwitch.from)} - ${formatTime(timeSwitch.to)}`
+    if (enabledIntervals.length === 1) {
+      return `1 interval scheduled`
+    }
+
+    return `${enabledIntervals.length} intervals scheduled`
   }
 
   render() {
-    const { classes, name } = this.props;
-    const { enabled, timeSwitch, timeSwitchDialogOpen } = this.state;
-    const timeSwitchButtonClass = timeSwitch.enabled
-      ? classes.buttonTimeSwitchOn
-      : classes.buttonTimeSwitchOff;
+    const { id, name } = this.props;
+    const { enabled, schedule, scheduleDialogOpen } = this.state;
+    const enabledIntervals = this.enabledIntervals();
 
     return (
       <ListItem>
-        <ListItemText primary={name} secondary={this.renderTimeSwitchText()} />
+        <ListItemText primary={name} secondary={this.renderScheduleText()} />
         <ListItemSecondaryAction>
-          <IconButton className={timeSwitchButtonClass} onClick={this.handleTimeSwitchDialogOpen}>
-            <Icon>schedule</Icon>
-          </IconButton>
           <Switch
             color="primary"
             onChange={this.handleToggle}
             checked={enabled}
-            disabled={timeSwitch.enabled}
+            disabled={enabledIntervals.length > 0}
           />
+          <IconButton onClick={this.handleScheduleDialogOpen(true)}>
+            <EditIcon />
+          </IconButton>
         </ListItemSecondaryAction>
-        <TimeSwitchDialog
-          outletName={name}
-          open={timeSwitchDialogOpen}
-          from={timeSwitch.from}
-          to={timeSwitch.to}
-          onApply={this.handleTimeSwitchDialogApply}
-          onClose={this.handleTimeSwitchDialogClose}
+        <ScheduleDialog
+          outletId={id}
+          schedule={schedule}
+          open={scheduleDialogOpen}
+          onClose={this.handleScheduleDialogOpen(false)}
+          onChange={this.handleScheduleChange}
         />
       </ListItem>
     );
