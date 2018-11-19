@@ -53,7 +53,7 @@ func (s *Scheduler) schedule() {
 		for _, o := range g.Outlets {
 			sch := o.GetSchedule()
 
-			if sch == nil {
+			if sch == nil || !sch.Enabled() {
 				continue
 			}
 
