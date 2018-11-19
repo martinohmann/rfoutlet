@@ -13,6 +13,10 @@ const styles = theme => ({
     flexGrow: 1,
     color: theme.palette.common.white,
   },
+  toolbar: {
+    paddingLeft: theme.spacing.unit,
+    paddingRight: theme.spacing.unit,
+  },
   toolbarButton: {
     color: theme.palette.common.white,
   },
@@ -35,7 +39,7 @@ class DialogAppBar extends React.Component {
 
     return (
       <AppBar position="fixed">
-        <Toolbar>
+        <Toolbar className={classes.toolbar}>
           <IconButton onClick={onClose} className={classes.toolbarButton}>
             <ArrowBackIcon />
           </IconButton>
