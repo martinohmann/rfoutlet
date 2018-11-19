@@ -38,7 +38,7 @@ pack-app: ## pack app using packr
 
 .PHONY: test
 test: ## run tests
-	go test -tags="$(TAGS)" $$(go list ./... | grep -v /vendor/)
+	go test -race -tags="$(TAGS)" $$(go list ./... | grep -v /vendor/)
 
 .PHONY: vet
 vet: ## run go vet
