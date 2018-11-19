@@ -51,20 +51,22 @@ func (s *Scheduler) run() {
 func (s *Scheduler) schedule() {
 	for _, g := range s.ctx.Groups {
 		for _, o := range g.Outlets {
-			if o.Schedule == nil {
+			sch := o.GetSchedule()
+
+			if sch == nil {
 				continue
 			}
 
-			if o.Schedule.Contains(time.Now()) {
-				s.maybeSwitchState(o, state.SwitchStateOn)
+			if sch.Contains(time.Now()) {
+				s.transitionToState(o, state.SwitchStateOn)
 			} else {
-				s.maybeSwitchState(o, state.SwitchStateOff)
+				s.transitionToState(o, state.SwitchStateOff)
 			}
 		}
 	}
 }
 
-func (s *Scheduler) maybeSwitchState(o *context.Outlet, newState state.SwitchState) error {
+func (s *Scheduler) transitionToState(o *context.Outlet, newState state.SwitchState) error {
 	if o.State == newState {
 		return nil
 	}

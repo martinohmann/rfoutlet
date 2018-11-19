@@ -5,6 +5,7 @@ import (
 
 	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/martinohmann/rfoutlet/internal/context"
+	"github.com/martinohmann/rfoutlet/internal/schedule"
 	"github.com/martinohmann/rfoutlet/internal/state"
 	"github.com/stretchr/testify/assert"
 )
@@ -149,4 +150,49 @@ func TestGet(t *testing.T) {
 		_, err = context.GetOutlet("b")
 		assert.Error(t, err)
 	}
+}
+
+func TestCollectState(t *testing.T) {
+	config := &config.Config{
+		GroupOrder: []string{"foo"},
+		Groups: map[string]*config.Group{
+			"foo": &config.Group{
+				Name:    "foo",
+				Outlets: []string{"baz", "qux"},
+			},
+		},
+		Outlets: map[string]*config.Outlet{
+			"baz": &config.Outlet{
+				Name: "Baz",
+			},
+			"qux": &config.Outlet{
+				Name: "Qux",
+			},
+		},
+	}
+
+	st := &state.State{
+		SwitchStates: map[string]state.SwitchState{
+			"baz": state.SwitchStateOff,
+			"qux": state.SwitchStateOn,
+		},
+		Schedules: map[string]schedule.Schedule{
+			"baz": {{ID: "baz-interval", Enabled: true}},
+		},
+	}
+
+	ctx, err := context.New(config, st)
+
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	s := ctx.CollectState()
+
+	assert.Len(t, s.SwitchStates, 2)
+	assert.Len(t, s.Schedules, 2)
+
+	assert.Equal(t, state.SwitchStateOn, s.SwitchStates["qux"])
+	assert.Len(t, s.Schedules["baz"], 1)
+	assert.Equal(t, "baz-interval", s.Schedules["baz"][0].ID)
 }

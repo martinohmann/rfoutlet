@@ -3,21 +3,23 @@ package context
 import (
 	ctx "context"
 	"fmt"
+	"sync"
 
 	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 	"github.com/martinohmann/rfoutlet/internal/state"
+	uuid "github.com/satori/go.uuid"
 )
 
 // Context type definition
 type Context struct {
 	ctx.Context
 
-	Config    *config.Config
-	State     *state.State
+	state     *state.State
 	groupMap  map[string]*Group
 	outletMap map[string]*Outlet
 
+	Config *config.Config
 	Groups []*Group `json:"groups"`
 }
 
@@ -30,6 +32,7 @@ type Group struct {
 
 // Outlet type definition
 type Outlet struct {
+	sync.RWMutex
 	ID          string            `json:"id"`
 	Name        string            `json:"name"`
 	CodeOn      uint64            `json:"-"`
@@ -50,7 +53,7 @@ func Wrap(ctx ctx.Context, c *config.Config, s *state.State) (*Context, error) {
 	context := &Context{
 		Context:   ctx,
 		Config:    c,
-		State:     s,
+		state:     s,
 		groupMap:  make(map[string]*Group),
 		outletMap: make(map[string]*Outlet),
 		Groups:    make([]*Group, 0, len(c.Groups)),
@@ -101,8 +104,8 @@ func (c *Context) buildOutlets(g *config.Group, group *Group) error {
 			CodeOff:     o.CodeOff,
 			Protocol:    o.Protocol,
 			PulseLength: o.PulseLength,
-			State:       c.State.SwitchStates[id],
-			Schedule:    c.State.Schedules[id],
+			State:       c.state.SwitchStates[id],
+			Schedule:    c.state.Schedules[id],
 		}
 
 		c.outletMap[id] = outlet
@@ -130,4 +133,95 @@ func (c *Context) GetGroup(id string) (*Group, error) {
 	}
 
 	return group, nil
+}
+
+// CollectState collects the state of all outlets
+func (c *Context) CollectState() *state.State {
+	state := state.New()
+
+	for _, o := range c.outletMap {
+		state.Schedules[o.ID] = o.GetSchedule()
+		state.SwitchStates[o.ID] = o.GetSwitchState()
+	}
+
+	return state
+}
+
+// GetSwitchState returns the switch state of an outlet (thread-safe)
+func (o *Outlet) GetSwitchState() state.SwitchState {
+	o.RLock()
+	defer o.RUnlock()
+
+	return o.State
+}
+
+// SetSwitchState sets the switch state of an outlet (thread-safe)
+func (o *Outlet) SetSwitchState(state state.SwitchState) {
+	o.Lock()
+	defer o.Unlock()
+
+	o.State = state
+}
+
+// GetSchedule returns the schedule of an outlet (thread-safe)
+func (o *Outlet) GetSchedule() schedule.Schedule {
+	o.RLock()
+	defer o.RUnlock()
+
+	return o.Schedule
+}
+
+// AddInterval adds an interval to the schedule of an outlet (thread-safe)
+func (o *Outlet) AddInterval(interval schedule.Interval) error {
+	if interval.ID == "" {
+		interval.ID = uuid.NewV4().String()
+	}
+
+	o.Lock()
+	defer o.Unlock()
+
+	for _, i := range o.Schedule {
+		if i.ID == interval.ID {
+			return fmt.Errorf("interval with identifier %q already exists", interval.ID)
+		}
+	}
+
+	o.Schedule = append(o.Schedule, interval)
+
+	return nil
+}
+
+// UpdateInterval updates an interval of the schedule of an outlet
+// (thread-safe). Will return an error if the interval does not exist.
+func (o *Outlet) UpdateInterval(interval schedule.Interval) error {
+	o.Lock()
+	defer o.Unlock()
+
+	for i, intv := range o.Schedule {
+		if intv.ID != interval.ID {
+			continue
+		}
+
+		o.Schedule[i] = interval
+
+		return nil
+	}
+
+	return fmt.Errorf("interval with identifier %q does not exist", interval.ID)
+}
+
+// DeleteInterval deletes an interval of the schedule of an outlet
+// (thread-safe). Will return an error if the interval does not exist.
+func (o *Outlet) DeleteInterval(interval schedule.Interval) error {
+	o.Lock()
+	defer o.Unlock()
+
+	for i, intv := range o.Schedule {
+		if intv.ID == interval.ID {
+			o.Schedule = append(o.Schedule[:i], o.Schedule[i+1:]...)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("interval with identifier %q does not exist", interval.ID)
 }

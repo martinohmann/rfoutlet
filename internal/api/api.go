@@ -29,28 +29,16 @@ type OutletRequest struct {
 	Action string `json:"action"`
 }
 
-// OutletGroupRequest type definition
-type OutletGroupRequest struct {
+// GroupRequest type definition
+type GroupRequest struct {
 	ID     string `json:"id"`
 	Action string `json:"action"`
 }
 
-// OutletScheduleIntervalAddRequest type definition
-type OutletScheduleIntervalAddRequest struct {
+// IntervalRequest type definition
+type IntervalRequest struct {
 	ID       string            `json:"id"`
 	Interval schedule.Interval `json:"interval"`
-}
-
-// OutletScheduleIntervalUpdateRequest type definition
-type OutletScheduleIntervalUpdateRequest struct {
-	ID       string            `json:"id"`
-	Interval schedule.Interval `json:"interval"`
-}
-
-// OutletScheduleIntervalDeleteRequest type definition
-type OutletScheduleIntervalDeleteRequest struct {
-	ID         string `json:"id"`
-	IntervalID string `json:"intervalId"`
 }
 
 // New create a new API
@@ -64,9 +52,9 @@ func (a *API) StatusRequestHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, a.ctx.Groups)
 }
 
-// OutletGroupRequestHandler performs actions on an outlet group
-func (a *API) OutletGroupRequestHandler(c *gin.Context) {
-	var data OutletGroupRequest
+// GroupRequestHandler performs actions on an outlet group
+func (a *API) GroupRequestHandler(c *gin.Context) {
+	var data GroupRequest
 
 	if err := c.ShouldBindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -113,9 +101,9 @@ func (a *API) OutletRequestHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, o)
 }
 
-// OutletScheduleIntervalDeleteRequestHandler adds a schedule interval for outlet
-func (a *API) OutletScheduleIntervalDeleteRequestHandler(c *gin.Context) {
-	var data OutletScheduleIntervalDeleteRequest
+// IntervalRequestHandler handles interval create/update/delete requests
+func (a *API) IntervalRequestHandler(c *gin.Context) {
+	var data IntervalRequest
 
 	if err := c.ShouldBindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -128,53 +116,19 @@ func (a *API) OutletScheduleIntervalDeleteRequestHandler(c *gin.Context) {
 		return
 	}
 
-	if err := a.control.DeleteInterval(o, data.IntervalID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	switch c.Request.Method {
+	case http.MethodPut:
+		err = a.control.AddInterval(o, data.Interval)
+	case http.MethodPost:
+		err = a.control.UpdateInterval(o, data.Interval)
+	case http.MethodDelete:
+		err = a.control.DeleteInterval(o, data.Interval)
+	default:
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": http.StatusText(http.StatusMethodNotAllowed)})
 		return
 	}
 
-	c.JSON(http.StatusOK, o)
-}
-
-// OutletScheduleIntervalAddRequestHandler adds a schedule interval for outlet
-func (a *API) OutletScheduleIntervalAddRequestHandler(c *gin.Context) {
-	var data OutletScheduleIntervalAddRequest
-
-	if err := c.ShouldBindJSON(&data); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	o, err := a.ctx.GetOutlet(data.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := a.control.AddInterval(o, data.Interval); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, o)
-}
-
-// OutletScheduleIntervalUpdateRequestHandler adds a schedule interval for outlet
-func (a *API) OutletScheduleIntervalUpdateRequestHandler(c *gin.Context) {
-	var data OutletScheduleIntervalUpdateRequest
-
-	if err := c.ShouldBindJSON(&data); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	o, err := a.ctx.GetOutlet(data.ID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := a.control.UpdateInterval(o, data.Interval); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

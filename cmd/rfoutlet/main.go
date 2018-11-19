@@ -111,10 +111,10 @@ func main() {
 	apiRoutes := router.Group("/api")
 	apiRoutes.GET("/status", api.StatusRequestHandler)
 	apiRoutes.POST("/outlet", api.OutletRequestHandler)
-	apiRoutes.POST("/outlet_group", api.OutletGroupRequestHandler)
-	apiRoutes.PUT("/outlet/schedule", api.OutletScheduleIntervalAddRequestHandler)
-	apiRoutes.POST("/outlet/schedule", api.OutletScheduleIntervalUpdateRequestHandler)
-	apiRoutes.DELETE("/outlet/schedule", api.OutletScheduleIntervalDeleteRequestHandler)
+	apiRoutes.POST("/outlet_group", api.GroupRequestHandler)
+	apiRoutes.PUT("/outlet/schedule", api.IntervalRequestHandler)
+	apiRoutes.POST("/outlet/schedule", api.IntervalRequestHandler)
+	apiRoutes.DELETE("/outlet/schedule", api.IntervalRequestHandler)
 
 	listenAndServe(router, config.ListenAddress)
 }

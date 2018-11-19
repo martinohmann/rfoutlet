@@ -49,24 +49,11 @@ class ScheduleDialog extends React.Component {
     this.setState({ intervalDialogOpen: open, currentInterval })
   }
 
-  handleIntervalCreate = interval => {
-    const { outletId } = this.props;
+  handleIntervalCreate = interval => this.doRequest('PUT', interval);
 
-    this.apiRequest('PUT', { id: outletId, interval: intervalToApi(interval) });
-  }
+  handleIntervalUpdate = interval => this.doRequest('POST', interval);
 
-  handleIntervalUpdate = interval => {
-    const { outletId } = this.props;
-
-    this.apiRequest('POST', { id: outletId, interval: intervalToApi(interval) });
-  }
-
-  handleIntervalDelete = interval => () => {
-    const { id } = interval;
-    const { outletId } = this.props;
-
-    this.apiRequest('DELETE', { id: outletId, intervalId: id });
-  }
+  handleIntervalDelete = interval => () => this.doRequest('DELETE', interval);
 
   handleIntervalToggle = interval => () => {
     interval.enabled = !interval.enabled;
@@ -74,8 +61,10 @@ class ScheduleDialog extends React.Component {
     this.handleIntervalUpdate(interval);
   }
 
-  apiRequest = (method, data) => {
-    apiRequest(method, '/outlet/schedule', data)
+  doRequest = (method, interval) => {
+    const { outletId } = this.props;
+
+    apiRequest(method, '/outlet/schedule', { id: outletId, interval: intervalToApi(interval) })
       .then(response => response.schedule)
       .then(schedule => this.props.onChange(schedule))
       .catch(err => console.error(err));
