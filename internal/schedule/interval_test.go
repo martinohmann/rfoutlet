@@ -84,7 +84,7 @@ func TestIntervalContains(t *testing.T) {
 				To:       schedule.NewDayTime(3, 0),
 			},
 			t:        time.Date(2018, 11, 6, 3, 0, 0, 0, time.UTC), // it's a tuesday
-			expected: true,
+			expected: false,
 		},
 		{
 			i: schedule.Interval{
@@ -135,7 +135,7 @@ func TestIntervalContains(t *testing.T) {
 				To:       schedule.NewDayTime(0, 0),
 			},
 			t:        time.Date(2018, 11, 6, 0, 0, 0, 0, time.UTC), // it's a tuesday
-			expected: true,
+			expected: false,
 		},
 		{
 			i: schedule.Interval{
@@ -156,6 +156,26 @@ func TestIntervalContains(t *testing.T) {
 			},
 			t:        time.Date(2018, 11, 6, 0, 1, 0, 0, time.UTC), // it's a tuesday
 			expected: false,
+		},
+		{
+			i: schedule.Interval{
+				Enabled:  true,
+				Weekdays: []time.Weekday{time.Tuesday},
+				From:     schedule.NewDayTime(3, 0),
+				To:       schedule.NewDayTime(0, 0),
+			},
+			t:        time.Date(2018, 11, 6, 23, 59, 0, 0, time.UTC), // it's a tuesday
+			expected: true,
+		},
+		{
+			i: schedule.Interval{
+				Enabled:  true,
+				Weekdays: []time.Weekday{time.Tuesday},
+				From:     schedule.NewDayTime(3, 0),
+				To:       schedule.NewDayTime(0, 0),
+			},
+			t:        time.Date(2018, 11, 6, 3, 1, 0, 0, time.UTC), // it's a tuesday
+			expected: true,
 		},
 		// From == To
 		{

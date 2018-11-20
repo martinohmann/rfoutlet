@@ -23,7 +23,7 @@ func (i Interval) Contains(t time.Time) bool {
 		return !dt.Between(i.To, i.From)
 	}
 
-	return dt.BetweenInclusive(i.From, i.To)
+	return dt.Between(i.From, i.To)
 }
 
 func (i Interval) enabledOn(weekday time.Weekday) bool {

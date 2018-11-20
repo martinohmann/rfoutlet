@@ -34,12 +34,7 @@ func (t DayTime) After(other DayTime) bool {
 	return !t.Equal(other) && !t.Before(other)
 }
 
-// Between returns true if t is between start and end (exclusive)
+// Between returns true if t is between start and end or equal to start
 func (t DayTime) Between(start, end DayTime) bool {
-	return t.After(start) && t.Before(end)
-}
-
-// BetweenInclusive returns true if t is between start and end or equal to one of them
-func (t DayTime) BetweenInclusive(start, end DayTime) bool {
-	return t.Between(start, end) || t.Equal(start) || t.Equal(end)
+	return t.Equal(start) || (t.After(start) && t.Before(end))
 }
