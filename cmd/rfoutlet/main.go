@@ -1,5 +1,5 @@
-// The rfoutlet command starts a server which serves the frontend and api for
-// controlling outlets via web interface.
+// The rfoutlet command starts a server which serves the frontend and connects
+// clients through websockets for controlling outlets via web interface.
 //
 // Available command line flags:
 //
@@ -26,7 +26,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/packr"
-	"github.com/martinohmann/rfoutlet/internal/api"
 	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/martinohmann/rfoutlet/internal/context"
 	"github.com/martinohmann/rfoutlet/internal/control"
@@ -93,28 +92,19 @@ func main() {
 	ctx, err := context.New(config, s)
 
 	control := control.New(ctx, transmitter)
-	scheduler := scheduler.New(ctx, control, 10*time.Second)
+	scheduler := scheduler.New(control)
 
 	scheduler.Start()
 
 	defer scheduler.Stop()
-
-	api := api.New(ctx, control)
 
 	router := gin.Default()
 	router.Use(cors.Default())
 
 	router.GET("/", handler.Redirect("/app"))
 	router.GET("/healthz", handler.Healthz)
+	router.GET("/ws", handler.Websocket(control))
 	router.StaticFS("/app", packr.NewBox(webDir))
-
-	apiRoutes := router.Group("/api")
-	apiRoutes.GET("/status", api.StatusRequestHandler)
-	apiRoutes.POST("/outlet", api.OutletRequestHandler)
-	apiRoutes.POST("/outlet_group", api.GroupRequestHandler)
-	apiRoutes.PUT("/outlet/schedule", api.IntervalRequestHandler)
-	apiRoutes.POST("/outlet/schedule", api.IntervalRequestHandler)
-	apiRoutes.DELETE("/outlet/schedule", api.IntervalRequestHandler)
 
 	listenAndServe(router, config.ListenAddress)
 }

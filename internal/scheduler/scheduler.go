@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/martinohmann/rfoutlet/internal/context"
@@ -10,18 +11,16 @@ import (
 
 // Scheduler type definition
 type Scheduler struct {
-	ctx     *context.Context
 	control *control.Control
 	ticker  *time.Ticker
 	stop    chan bool
 }
 
 // New creates a new scheduler
-func New(ctx *context.Context, control *control.Control, interval time.Duration) *Scheduler {
+func New(control *control.Control) *Scheduler {
 	return &Scheduler{
-		ctx:     ctx,
 		control: control,
-		ticker:  time.NewTicker(interval),
+		ticker:  time.NewTicker(10 * time.Second),
 		stop:    make(chan bool, 1),
 	}
 }
@@ -49,7 +48,7 @@ func (s *Scheduler) run() {
 }
 
 func (s *Scheduler) schedule() {
-	for _, g := range s.ctx.Groups {
+	for _, g := range s.control.Groups() {
 		for _, o := range g.Outlets {
 			sch := o.GetSchedule()
 
@@ -71,5 +70,16 @@ func (s *Scheduler) transitionToState(o *context.Outlet, newState state.SwitchSt
 		return nil
 	}
 
-	return s.control.SwitchState(o, newState)
+	if err := s.control.SwitchState(o, newState); err != nil {
+		return err
+	}
+
+	b, err := json.Marshal(s.control.Groups())
+	if err != nil {
+		return err
+	}
+
+	s.control.Broadcast(b)
+
+	return nil
 }

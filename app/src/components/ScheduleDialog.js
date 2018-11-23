@@ -12,7 +12,7 @@ import AddIcon from '@material-ui/icons/Add';
 import DialogAppBar from './DialogAppBar';
 import IntervalListItem from './IntervalListItem';
 import IntervalDialog from './IntervalDialog';
-import { apiRequest, scheduleToApp, intervalToApi } from '../util';
+import { scheduleToApp, intervalToApi } from '../util';
 
 const styles = theme => ({
   container: {
@@ -49,11 +49,11 @@ class ScheduleDialog extends React.Component {
     this.setState({ intervalDialogOpen: open, currentInterval })
   }
 
-  handleIntervalCreate = interval => this.doRequest('PUT', interval);
+  handleIntervalCreate = interval => this.dispatchMessage('create', interval);
 
-  handleIntervalUpdate = interval => this.doRequest('POST', interval);
+  handleIntervalUpdate = interval => this.dispatchMessage('update', interval);
 
-  handleIntervalDelete = interval => () => this.doRequest('DELETE', interval);
+  handleIntervalDelete = interval => () => this.dispatchMessage('delete', interval);
 
   handleIntervalToggle = interval => () => {
     interval.enabled = !interval.enabled;
@@ -61,13 +61,11 @@ class ScheduleDialog extends React.Component {
     this.handleIntervalUpdate(interval);
   }
 
-  doRequest = (method, interval) => {
+  dispatchMessage = (action, interval) => {
     const { outletId } = this.props;
+    const data = { action, id: outletId, interval: intervalToApi(interval) }
 
-    apiRequest(method, '/outlet/schedule', { id: outletId, interval: intervalToApi(interval) })
-      .then(response => response.schedule)
-      .then(schedule => this.props.onChange(schedule))
-      .catch(err => console.error(err));
+    this.props.dispatchMessage({ type: 'interval', data });
   }
 
   render() {

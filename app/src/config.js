@@ -3,15 +3,15 @@ export default {
     name: "rfoutlet",
     url: 'https://github.com/martinohmann/rfoutlet',
   },
-  api: {
-    baseUri: (() => {
-      if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-        const l = window.location;
+  ws: {
+    url: (() => {
+      const l = window.location;
 
-        return `${l.protocol}//${l.hostname}:3333/api`
+      if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+        return `ws://${l.hostname}:3333/ws`
       }
 
-      return '/api';
+      return `ws://${l.host}/ws`;
     })(),
   }
 }

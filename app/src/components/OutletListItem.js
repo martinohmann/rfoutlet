@@ -7,7 +7,6 @@ import Switch from '@material-ui/core/Switch';
 import EditIcon from '@material-ui/icons/Edit';
 
 import ScheduleDialog from './ScheduleDialog';
-import { apiRequest } from '../util';
 
 class OutletListItem extends React.Component {
   state = {
@@ -40,9 +39,7 @@ class OutletListItem extends React.Component {
   handleToggle = () => {
     const { id } = this.props;
 
-    apiRequest('POST', '/outlet', { id, action: 'toggle' })
-      .then(outlet => this.updateState(outlet))
-      .catch(err => console.error(err));
+    this.props.dispatchMessage({ type: 'outlet', data: { id, action: 'toggle' } });
   }
 
   handleScheduleDialogOpen = open => () => {
@@ -76,6 +73,7 @@ class OutletListItem extends React.Component {
           </IconButton>
         </ListItemSecondaryAction>
         <ScheduleDialog
+          {...this.props}
           outletId={id}
           schedule={schedule}
           open={scheduleDialogOpen}

@@ -3,7 +3,6 @@ import List from '@material-ui/core/List';
 
 import GroupListItem from './GroupListItem';
 import OutletListItem from './OutletListItem';
-import { apiRequest } from '../util';
 
 class Group extends React.Component {
   state = {
@@ -11,7 +10,15 @@ class Group extends React.Component {
   }
 
   componentDidMount() {
-    const { outlets } = this.props;
+    this.updateState(this.props);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.updateState(nextProps);
+  }
+
+  updateState(props) {
+    const { outlets } = props;
 
     this.setState({ outlets });
   }
@@ -19,10 +26,7 @@ class Group extends React.Component {
   handleAction = action => event => {
     const { id } = this.props;
 
-    apiRequest('POST', '/outlet_group', { id, action })
-      .then(result => result.outlets)
-      .then(outlets => this.setState({ outlets }))
-      .catch(err => console.error(err));
+    this.props.dispatchMessage({ type: 'group', data: { id, action } });
   }
 
   render() {
@@ -38,7 +42,7 @@ class Group extends React.Component {
           onActionToggle={this.handleAction('toggle')}
         />
         {outlets.map(outlet =>
-          <OutletListItem key={outlet.id} {...outlet} />
+          <OutletListItem key={outlet.id} {...this.props} {...outlet} />
         )}
       </List>
     );

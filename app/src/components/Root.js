@@ -7,8 +7,8 @@ import Typography from '@material-ui/core/Typography';
 
 import GithubLink from './GithubLink';
 import Group from './Group';
-import { apiRequest } from '../util';
 import config from '../config';
+import WebSocket from '../websocket';
 
 const styles = theme => ({
   root: {
@@ -29,8 +29,18 @@ class Root extends React.Component {
   }
 
   componentDidMount() {
-    apiRequest('GET', '/status')
-      .then(groups => this.setState({ groups }))
+    this.connectWebSocket();
+    this.dispatchMessage({ type: 'status' });
+  }
+
+  connectWebSocket() {
+    this.ws = new WebSocket(config.ws.baseUri);
+    this.ws.attachDefaultListeners();
+    this.ws.onMessage(groups => this.setState({ groups }));
+  }
+
+  dispatchMessage = (msg) => {
+    this.ws.sendMessage(msg)
       .catch(err => console.error(err));
   }
 
@@ -50,7 +60,7 @@ class Root extends React.Component {
         </AppBar>
         <div className={classes.container}>
           {groups.map(group =>
-            <Group key={group.id} {...group} />
+            <Group key={group.id} {...group} dispatchMessage={this.dispatchMessage} />
           )}
         </div>
       </div>
