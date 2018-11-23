@@ -34,7 +34,7 @@ class Root extends React.Component {
   }
 
   connectWebSocket() {
-    this.ws = new WebSocket(config.ws.baseUri);
+    this.ws = new WebSocket(config.ws.url);
     this.ws.attachDefaultListeners();
     this.ws.onMessage(groups => this.setState({ groups }));
   }
