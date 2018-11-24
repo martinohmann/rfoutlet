@@ -15,6 +15,8 @@ func TestAddInterval(t *testing.T) {
 
 	assert.NoError(t, o.AddInterval(i))
 	assert.Error(t, o.AddInterval(i))
+
+	assert.Len(t, o.Schedule, 1)
 }
 
 func TestDeleteInterval(t *testing.T) {

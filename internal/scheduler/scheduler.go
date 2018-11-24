@@ -1,7 +1,7 @@
 package scheduler
 
 import (
-	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/martinohmann/rfoutlet/internal/context"
@@ -39,7 +39,7 @@ func (s *Scheduler) run() {
 	for {
 		select {
 		case <-s.ticker.C:
-			s.schedule()
+			s.check()
 		case <-s.stop:
 			s.ticker.Stop()
 			return
@@ -47,39 +47,32 @@ func (s *Scheduler) run() {
 	}
 }
 
-func (s *Scheduler) schedule() {
+func (s *Scheduler) check() {
 	for _, g := range s.control.Groups() {
 		for _, o := range g.Outlets {
 			sch := o.GetSchedule()
-
 			if sch == nil || !sch.Enabled() {
 				continue
 			}
 
+			var err error
 			if sch.Contains(time.Now()) {
-				s.transitionToState(o, state.SwitchStateOn)
+				err = s.applyState(o, state.SwitchStateOn)
 			} else {
-				s.transitionToState(o, state.SwitchStateOff)
+				err = s.applyState(o, state.SwitchStateOff)
+			}
+
+			if err != nil {
+				log.Println(err)
 			}
 		}
 	}
 }
 
-func (s *Scheduler) transitionToState(o *context.Outlet, newState state.SwitchState) error {
+func (s *Scheduler) applyState(o *context.Outlet, newState state.SwitchState) error {
 	if o.State == newState {
 		return nil
 	}
 
-	if err := s.control.SwitchState(o, newState); err != nil {
-		return err
-	}
-
-	b, err := json.Marshal(s.control.Groups())
-	if err != nil {
-		return err
-	}
-
-	s.control.Broadcast(b)
-
-	return nil
+	return s.control.SwitchState(o, newState)
 }

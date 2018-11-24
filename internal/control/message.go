@@ -35,10 +35,6 @@ type messageEnvelope struct {
 	Data *json.RawMessage
 }
 
-func encodeMessage(m interface{}) ([]byte, error) {
-	return json.Marshal(m)
-}
-
 func decodeMessage(env messageEnvelope) (interface{}, error) {
 	switch env.Type {
 	case statusMessageType:

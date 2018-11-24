@@ -1,6 +1,7 @@
 package control
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/martinohmann/rfoutlet/internal/context"
@@ -42,7 +43,7 @@ func (c *Control) AddInterval(o *context.Outlet, interval schedule.Interval) err
 		return err
 	}
 
-	return c.SaveState()
+	return c.dispatch()
 }
 
 // UpdateInterval updates an existing schedule interval for an outlet
@@ -51,7 +52,7 @@ func (c *Control) UpdateInterval(o *context.Outlet, interval schedule.Interval) 
 		return err
 	}
 
-	return c.SaveState()
+	return c.dispatch()
 }
 
 // DeleteInterval deletes a schedule interval for an outlet
@@ -60,7 +61,7 @@ func (c *Control) DeleteInterval(o *context.Outlet, interval schedule.Interval) 
 		return err
 	}
 
-	return c.SaveState()
+	return c.dispatch()
 }
 
 // SwitchState switches the outlet state
@@ -76,7 +77,7 @@ func (c *Control) SwitchState(o *context.Outlet, newState state.SwitchState) err
 
 	o.SetSwitchState(newState)
 
-	return c.SaveState()
+	return c.dispatch()
 }
 
 // Groups returns the configured outlet groups
@@ -93,8 +94,22 @@ func (c *Control) Toggle(o *context.Outlet) error {
 	return c.SwitchState(o, state.SwitchStateOn)
 }
 
-// SaveState saves the current state of all outlets
-func (c *Control) SaveState() error {
+func (c *Control) dispatch() error {
+	if err := c.saveState(); err != nil {
+		return err
+	}
+
+	msg, err := json.Marshal(c.ctx.Groups)
+	if err != nil {
+		return err
+	}
+
+	c.hub.broadcast <- msg
+
+	return nil
+}
+
+func (c *Control) saveState() error {
 	if c.ctx.Config.StateFile == "" {
 		return nil
 	}
@@ -149,9 +164,7 @@ func (c *Control) HandleMessage(message messageEnvelope) error {
 			return err
 		}
 
-		if err = c.handleOutletAction(o, data.Action); err != nil {
-			return err
-		}
+		return c.handleOutletAction(o, data.Action)
 	case groupMessage:
 		data := msg.(groupMessage)
 
@@ -173,21 +186,8 @@ func (c *Control) HandleMessage(message messageEnvelope) error {
 			return err
 		}
 
-		if err := c.handleIntervalAction(o, data.Interval, data.Action); err != nil {
-			return err
-		}
+		return c.handleIntervalAction(o, data.Interval, data.Action)
 	}
-
-	b, err := encodeMessage(c.ctx.Groups)
-	if err != nil {
-		return err
-	}
-
-	c.Broadcast(b)
 
 	return nil
-}
-
-func (c *Control) Broadcast(msg []byte) {
-	c.hub.broadcast <- msg
 }
