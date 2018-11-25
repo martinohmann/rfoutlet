@@ -4,75 +4,72 @@ import (
 	"log"
 	"time"
 
-	"github.com/martinohmann/rfoutlet/internal/context"
-	"github.com/martinohmann/rfoutlet/internal/control"
-	"github.com/martinohmann/rfoutlet/internal/state"
+	"github.com/martinohmann/rfoutlet/internal/outlet"
 )
 
 // Scheduler type definition
 type Scheduler struct {
-	control *control.Control
-	ticker  *time.Ticker
-	stop    chan bool
+	outlets  map[*outlet.Outlet]bool
+	switcher outlet.Switcher
+	ticker   *time.Ticker
+	outlet   chan *outlet.Outlet
 }
 
 // New creates a new scheduler
-func New(control *control.Control) *Scheduler {
-	return &Scheduler{
-		control: control,
-		ticker:  time.NewTicker(10 * time.Second),
-		stop:    make(chan bool, 1),
+func New(switcher outlet.Switcher) *Scheduler {
+	return NewWithInterval(switcher, time.Second)
+}
+
+// NewWithInterval create a new scheduler with user defined check interval
+func NewWithInterval(switcher outlet.Switcher, interval time.Duration) *Scheduler {
+	s := &Scheduler{
+		outlets:  make(map[*outlet.Outlet]bool),
+		switcher: switcher,
+		ticker:   time.NewTicker(interval),
+		outlet:   make(chan *outlet.Outlet),
 	}
-}
 
-// Start starts the scheduler
-func (s *Scheduler) Start() {
 	go s.run()
+
+	return s
 }
 
-// Stop stops the scheduler
-func (s *Scheduler) Stop() {
-	s.stop <- true
+// Register registers an outlet to the scheduler
+func (s *Scheduler) Register(outlet *outlet.Outlet) {
+	s.outlet <- outlet
 }
 
 func (s *Scheduler) run() {
 	for {
 		select {
+		case outlet := <-s.outlet:
+			s.outlets[outlet] = true
 		case <-s.ticker.C:
 			s.check()
-		case <-s.stop:
-			s.ticker.Stop()
-			return
 		}
 	}
 }
 
 func (s *Scheduler) check() {
-	for _, g := range s.control.Groups() {
-		for _, o := range g.Outlets {
-			sch := o.GetSchedule()
-			if sch == nil || !sch.Enabled() {
-				continue
-			}
+	for o := range s.outlets {
+		if o.Schedule == nil || !o.Schedule.Enabled() {
+			continue
+		}
 
-			var err error
-			if sch.Contains(time.Now()) {
-				err = s.applyState(o, state.SwitchStateOn)
-			} else {
-				err = s.applyState(o, state.SwitchStateOff)
-			}
-
-			if err != nil {
-				log.Println(err)
-			}
+		if o.Schedule.Contains(time.Now()) {
+			s.applyState(o, outlet.StateOn)
+		} else {
+			s.applyState(o, outlet.StateOff)
 		}
 	}
 }
 
-func (s *Scheduler) applyState(o *context.Outlet, newState state.SwitchState) error {
-	if o.State == newState {
-		return nil
+func (s *Scheduler) applyState(o *outlet.Outlet, newState outlet.State) {
+	if o.GetState() == newState {
+		return
 	}
 
-	return s.control.SwitchState(o, newState)
+	if err := s.switcher.Switch(o, newState); err != nil {
+		log.Println(err)
+	}
 }

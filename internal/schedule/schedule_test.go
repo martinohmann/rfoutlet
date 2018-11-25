@@ -1,21 +1,20 @@
-package schedule_test
+package schedule
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/martinohmann/rfoutlet/internal/schedule"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestScheduleEnabled(t *testing.T) {
 	tests := []struct {
-		s        schedule.Schedule
+		is       []Interval
 		expected bool
 	}{
 		{
-			s: schedule.Schedule{
+			is: []Interval{
 				{
 					Enabled: true,
 				},
@@ -26,7 +25,7 @@ func TestScheduleEnabled(t *testing.T) {
 			expected: true,
 		},
 		{
-			s: schedule.Schedule{
+			is: []Interval{
 				{
 					Enabled: true,
 				},
@@ -37,7 +36,7 @@ func TestScheduleEnabled(t *testing.T) {
 			expected: true,
 		},
 		{
-			s: schedule.Schedule{
+			is: []Interval{
 				{
 					Enabled: false,
 				},
@@ -48,7 +47,7 @@ func TestScheduleEnabled(t *testing.T) {
 			expected: true,
 		},
 		{
-			s: schedule.Schedule{
+			is: []Interval{
 				{
 					Enabled: false,
 				},
@@ -61,48 +60,48 @@ func TestScheduleEnabled(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		assert.Equal(t, tt.expected, tt.s.Enabled(),
-			fmt.Sprintf("i=%v", tt.s))
+		s := NewWithIntervals(tt.is)
+		assert.Equal(t, tt.expected, s.Enabled(), fmt.Sprintf("is=%v", tt.is))
 	}
 }
 
 func TestScheduleContains(t *testing.T) {
 	tests := []struct {
-		s        schedule.Schedule
+		is       []Interval
 		t        time.Time
 		expected bool
 	}{
 		{
-			s: schedule.Schedule{
+			is: []Interval{
 				{
 					Enabled:  true,
 					Weekdays: []time.Weekday{time.Monday},
-					From:     schedule.NewDayTime(0, 0),
-					To:       schedule.NewDayTime(3, 0),
+					From:     NewDayTime(0, 0),
+					To:       NewDayTime(3, 0),
 				},
 			},
 			t:        time.Date(2018, 11, 5, 0, 0, 0, 0, time.UTC), // it's a monday
 			expected: true,
 		},
 		{
-			s: schedule.Schedule{
+			is: []Interval{
 				{
 					Enabled:  true,
 					Weekdays: []time.Weekday{time.Tuesday},
-					From:     schedule.NewDayTime(0, 0),
-					To:       schedule.NewDayTime(3, 0),
+					From:     NewDayTime(0, 0),
+					To:       NewDayTime(3, 0),
 				},
 			},
 			t:        time.Date(2018, 11, 5, 0, 0, 0, 0, time.UTC), // it's a monday
 			expected: false,
 		},
 		{
-			s: schedule.Schedule{
+			is: []Interval{
 				{
 					Enabled:  false,
 					Weekdays: []time.Weekday{time.Monday},
-					From:     schedule.NewDayTime(0, 0),
-					To:       schedule.NewDayTime(3, 0),
+					From:     NewDayTime(0, 0),
+					To:       NewDayTime(3, 0),
 				},
 			},
 			t:        time.Date(2018, 11, 5, 0, 0, 0, 0, time.UTC), // it's a monday
@@ -111,7 +110,39 @@ func TestScheduleContains(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		assert.Equal(t, tt.expected, tt.s.Contains(tt.t),
-			fmt.Sprintf("i=%v, t=%v", tt.s, tt.t))
+		s := NewWithIntervals(tt.is)
+		assert.Equal(t, tt.expected, s.Contains(tt.t), fmt.Sprintf("is=%v, t=%v", tt.is, tt.t))
 	}
+}
+
+func TestAddInterval(t *testing.T) {
+	s := New()
+	i := Interval{}
+
+	err := s.AddInterval(i)
+
+	assert.NoError(t, err)
+	assert.Len(t, s.intervals, 1)
+}
+
+func TestDeleteInterval(t *testing.T) {
+	i := Interval{ID: "foo"}
+	s := NewWithIntervals([]Interval{i})
+
+	err := s.DeleteInterval(i)
+
+	assert.NoError(t, err)
+	assert.Len(t, s.intervals, 0)
+}
+
+func TestUpdateInterval(t *testing.T) {
+	i := Interval{ID: "foo", Enabled: false}
+	s := NewWithIntervals([]Interval{i})
+
+	i2 := Interval{ID: "foo", Enabled: true}
+
+	err := s.UpdateInterval(i2)
+
+	assert.NoError(t, err)
+	assert.Equal(t, true, s.intervals[0].Enabled)
 }

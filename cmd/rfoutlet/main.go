@@ -14,7 +14,7 @@
 package main
 
 import (
-	ctx "context"
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -27,9 +27,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/packr"
 	"github.com/martinohmann/rfoutlet/internal/config"
-	"github.com/martinohmann/rfoutlet/internal/context"
 	"github.com/martinohmann/rfoutlet/internal/control"
 	"github.com/martinohmann/rfoutlet/internal/handler"
+	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/internal/scheduler"
 	"github.com/martinohmann/rfoutlet/internal/state"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
@@ -55,26 +55,22 @@ func init() {
 	flag.Usage = usage
 }
 
+func exitError(err error) {
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
 func main() {
 	flag.Parse()
 
 	config, err := config.Load(*configFilename)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	exitError(err)
 
 	if *gpioPin >= 0 {
 		config.GpioPin = uint(*gpioPin)
 	}
-
-	transmitter, err := gpio.NewTransmitter(config.GpioPin)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	defer transmitter.Close()
 
 	if *listenAddress != "" {
 		config.ListenAddress = *listenAddress
@@ -84,26 +80,33 @@ func main() {
 		config.StateFile = *stateFilename
 	}
 
-	s, err := state.Load(config.StateFile)
-	if err != nil {
-		s = state.New()
-	}
+	manager := outlet.NewManager(state.NewHandler(config.StateFile))
+	defer manager.SaveState()
 
-	ctx, err := context.New(config, s)
+	err = outlet.RegisterFromConfig(manager, config)
+	exitError(err)
 
-	control := control.New(ctx, transmitter)
+	manager.LoadState()
+
+	transmitter, err := gpio.NewTransmitter(config.GpioPin)
+	exitError(err)
+	defer transmitter.Close()
+
+	switcher := outlet.NewSwitch(transmitter)
+	hub := control.NewHub()
+	control := control.New(manager, switcher, hub)
 	scheduler := scheduler.New(control)
 
-	scheduler.Start()
-
-	defer scheduler.Stop()
+	for _, o := range manager.Outlets() {
+		scheduler.Register(o)
+	}
 
 	router := gin.Default()
 	router.Use(cors.Default())
 
 	router.GET("/", handler.Redirect("/app"))
 	router.GET("/healthz", handler.Healthz)
-	router.GET("/ws", handler.Websocket(control))
+	router.GET("/ws", handler.Websocket(hub, control))
 	router.StaticFS("/app", packr.NewBox(webDir))
 
 	listenAndServe(router, config.ListenAddress)
@@ -127,7 +130,7 @@ func listenAndServe(handler http.Handler, addr string) {
 
 	log.Println("Shutdown Server...")
 
-	ctx, cancel := ctx.WithTimeout(ctx.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {

@@ -6,31 +6,21 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/internal/schedule"
-)
-
-// SwitchState type defintion
-type SwitchState uint
-
-const (
-	// SwitchStateOff defines the state for a disabled switch
-	SwitchStateOff SwitchState = iota
-
-	// SwitchStateOn defines the state for an enabled switch
-	SwitchStateOn
 )
 
 // State type definition
 type State struct {
-	SwitchStates map[string]SwitchState       `json:"switch_states"`
-	Schedules    map[string]schedule.Schedule `json:"schedules"`
+	SwitchStates map[string]outlet.State       `json:"switch_states"`
+	Schedules    map[string]*schedule.Schedule `json:"schedules"`
 }
 
 // New create a new empty state
 func New() *State {
 	return &State{
-		SwitchStates: make(map[string]SwitchState),
-		Schedules:    make(map[string]schedule.Schedule),
+		SwitchStates: make(map[string]outlet.State),
+		Schedules:    make(map[string]*schedule.Schedule),
 	}
 }
 
@@ -38,7 +28,7 @@ func New() *State {
 func Load(file string) (*State, error) {
 	f, err := os.Open(file)
 	if err != nil {
-		return nil, err
+		return New(), err
 	}
 
 	return LoadWithReader(f)
@@ -73,4 +63,32 @@ func Save(file string, state *State) error {
 // SaveWithWriter saves the state using writer
 func SaveWithWriter(w io.Writer, state *State) error {
 	return json.NewEncoder(w).Encode(state)
+}
+
+// Apply applies the state to outlets
+func (s *State) Apply(outlets []*outlet.Outlet) {
+	for _, o := range outlets {
+		if state, ok := s.SwitchStates[o.ID]; ok {
+			o.SetState(state)
+		}
+
+		if schedule := s.Schedules[o.ID]; schedule != nil {
+			o.Schedule = schedule
+		}
+	}
+}
+
+// Collect collects the states of passed outlets
+func Collect(outlets []*outlet.Outlet) *State {
+	s := New()
+
+	for _, o := range outlets {
+		if o.Schedule != nil {
+			s.Schedules[o.ID] = o.Schedule
+		}
+
+		s.SwitchStates[o.ID] = o.GetState()
+	}
+
+	return s
 }

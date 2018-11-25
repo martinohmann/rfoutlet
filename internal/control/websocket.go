@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/martinohmann/rfoutlet/internal/message"
 )
 
 const (
@@ -25,22 +26,24 @@ const (
 
 // Client type definition
 type Client struct {
-	control *Control
-	conn    *websocket.Conn
-	send    chan []byte
+	hub        *Hub
+	dispatcher message.Dispatcher
+	conn       *websocket.Conn
+	send       chan []byte
 }
 
 // NewClient create a new client to handle a websocket connection
-func NewClient(control *Control, conn *websocket.Conn) *Client {
+func NewClient(hub *Hub, dispatcher message.Dispatcher, conn *websocket.Conn) *Client {
 	return &Client{
-		control: control,
-		conn:    conn,
-		send:    make(chan []byte, 256),
+		hub:        hub,
+		dispatcher: dispatcher,
+		conn:       conn,
+		send:       make(chan []byte, 256),
 	}
 }
 
 func (c *Client) Listen() {
-	c.control.hub.register <- c
+	c.hub.register <- c
 
 	go c.listenWrite()
 	go c.listenRead()
@@ -49,7 +52,7 @@ func (c *Client) Listen() {
 // listenRead reads messages from the websocket and processes them
 func (c *Client) listenRead() {
 	defer func() {
-		c.control.hub.unregister <- c
+		c.hub.unregister <- c
 		c.conn.Close()
 	}()
 
@@ -58,7 +61,7 @@ func (c *Client) listenRead() {
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	for {
-		msg := messageEnvelope{}
+		msg := message.Envelope{}
 
 		if err := c.conn.ReadJSON(&msg); err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -67,7 +70,7 @@ func (c *Client) listenRead() {
 			break
 		}
 
-		if err := c.control.HandleMessage(msg); err != nil {
+		if err := c.dispatcher.Dispatch(msg); err != nil {
 			log.Println(err)
 		}
 	}

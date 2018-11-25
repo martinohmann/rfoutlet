@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/martinohmann/rfoutlet/internal/control"
+	"github.com/martinohmann/rfoutlet/internal/message"
 )
 
 var upgrader = websocket.Upgrader{
@@ -17,7 +18,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func Websocket(ctrl *control.Control) gin.HandlerFunc {
+func Websocket(hub *control.Hub, dispatcher message.Dispatcher) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
@@ -25,7 +26,7 @@ func Websocket(ctrl *control.Control) gin.HandlerFunc {
 			return
 		}
 
-		client := control.NewClient(ctrl, conn)
+		client := control.NewClient(hub, dispatcher, conn)
 		client.Listen()
 	}
 }
