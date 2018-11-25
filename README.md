@@ -212,9 +212,9 @@ Todo
 - [x] make transmitter/receiver code available as library below `pkg/`
 - [x] persist outlet state across server restarts
 - [ ] use receiver to detect outlet state changes (e.g. via remote control)?
-- [ ] time switch: switch outlets on/off using user defined rules (e.g. fixed
+- [x] time switch: switch outlets on/off using user defined rules (e.g. fixed
   time or relative)
-- [ ] use web sockets for communication to be able to push outlet state changes
+- [x] use web sockets for communication to be able to push outlet state changes
   to multiple clients
 
 License
