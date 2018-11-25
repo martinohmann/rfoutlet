@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	outletActionType   = "outlet"
-	groupActionType    = "group"
-	intervalActionType = "interval"
+	OutletActionType   = "outlet"
+	GroupActionType    = "group"
+	IntervalActionType = "interval"
 )
 
 // Dispatcher defines the interface for a message dispatcher

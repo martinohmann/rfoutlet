@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var testStateHandler = &nopStateHandler{}
+var testStateHandler = new(nopStateHandler)
 
-type nopStateHandler struct{}
+type nopStateHandler int
 
 func (nopStateHandler) LoadState(o []*Outlet) error {
 	return nil

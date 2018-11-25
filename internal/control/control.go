@@ -45,97 +45,102 @@ func (c *Control) Switch(o *outlet.Outlet, newState outlet.State) error {
 }
 
 // Dispatch implements the messsage.Dispatcher interface
-func (c *Control) Dispatch(env message.Envelope) error {
-	msg, err := message.Decode(env)
+func (c *Control) Dispatch(envelope message.Envelope) error {
+	msg, err := message.Decode(envelope)
 	if err != nil {
 		return err
 	}
 
-	switch msg.(type) {
-	case message.Unknown:
+	switch data := msg.(type) {
+	case *message.Unknown:
 		return c.broadcastState()
-	case message.OutletAction:
-		data := msg.(message.OutletAction)
-
+	case *message.OutletAction:
 		o, err := c.manager.Get(data.ID)
 		if err != nil {
 			return err
 		}
 
-		if err = handleOutletAction(o, c, data.Action); err != nil {
-			return err
-		}
-	case message.GroupAction:
-		data := msg.(message.GroupAction)
-
-		og, err := c.manager.GetGroup(data.ID)
+		return c.outletAction(o, data.Action)
+	case *message.GroupAction:
+		g, err := c.manager.GetGroup(data.ID)
 		if err != nil {
 			return err
 		}
 
-		for _, o := range og.Outlets {
-			if err := handleOutletAction(o, c, data.Action); err != nil {
+		for _, o := range g.Outlets {
+			if err := c.outletAction(o, data.Action); err != nil {
 				return err
 			}
 		}
-	case message.IntervalAction:
-		data := msg.(message.IntervalAction)
-
+	case *message.IntervalAction:
 		o, err := c.manager.Get(data.ID)
 		if err != nil {
 			return err
 		}
 
-		if err = handleIntervalAction(o, data.Interval, data.Action); err != nil {
-			return err
-		}
-
-		return c.broadcastState()
+		return c.intervalAction(o, data.Interval, data.Action)
 	}
 
 	return nil
 }
 
+// broadcastState broadcasts the state of all outlet groups to all connected
+// clients. the is called whenever switch states or outlet schedules are
+// changed.
 func (c *Control) broadcastState() error {
-	if b, err := json.Marshal(c.manager.Groups()); err != nil {
+	b, err := json.Marshal(c.manager.Groups())
+	if err != nil {
 		return err
-	} else {
-		c.hub.broadcast <- b
+	}
+
+	select {
+	case c.hub.broadcast <- b:
+	default:
 	}
 
 	return nil
 }
 
-func handleOutletAction(o *outlet.Outlet, s outlet.Switcher, action string) error {
-	if o.Schedule.Enabled() {
+// outletAction switches an outlet on or off, depending on the action provided.
+// Outlets with enabled schedules will not be switched as they are managed by
+// the scheduler.
+func (c *Control) outletAction(o *outlet.Outlet, action string) error {
+	if o.Schedule != nil && o.Schedule.Enabled() {
 		return nil
 	}
 
 	switch action {
 	case actionOn:
-		return s.Switch(o, outlet.StateOn)
+		return c.Switch(o, outlet.StateOn)
 	case actionOff:
-		return s.Switch(o, outlet.StateOff)
+		return c.Switch(o, outlet.StateOff)
 	case actionToggle:
 		if o.State == outlet.StateOn {
-			return s.Switch(o, outlet.StateOff)
+			return c.Switch(o, outlet.StateOff)
 		}
 
-		return s.Switch(o, outlet.StateOn)
+		return c.Switch(o, outlet.StateOn)
 	}
 
 	return fmt.Errorf("invalid outlet action %q", action)
 }
 
-func handleIntervalAction(o *outlet.Outlet, i schedule.Interval, action string) (err error) {
+// intervalAction
+func (c *Control) intervalAction(o *outlet.Outlet, i schedule.Interval, action string) (err error) {
 	switch action {
 	case actionCreate:
-		return o.Schedule.AddInterval(i)
+		err = o.Schedule.AddInterval(i)
 	case actionUpdate:
-		return o.Schedule.UpdateInterval(i)
+		err = o.Schedule.UpdateInterval(i)
 	case actionDelete:
-		return o.Schedule.DeleteInterval(i)
+		err = o.Schedule.DeleteInterval(i)
+	default:
+		err = fmt.Errorf("invalid interval action %q", action)
 	}
 
-	return fmt.Errorf("invalid interval action %q", action)
+	if err != nil {
+		return err
+	}
+
+	return c.broadcastState()
 }

@@ -6,9 +6,9 @@
 //  -config string
 //        config filename (default "/etc/rfoutlet/config.yml")
 //  -gpio-pin uint
-//        gpio pin to transmit on (default 17)
+//        gpio pin to transmit on (default -1)
 //  -listen-address string
-//        listen address (default "0.0.0.0:3333")
+//        listen address
 //  -state-file string
 //        state filename
 package main

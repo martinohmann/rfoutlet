@@ -5,24 +5,19 @@ import (
 )
 
 // Decode decodes the contents of a message envelope into the correct type
-func Decode(env Envelope) (interface{}, error) {
-	switch env.Type {
-	case outletActionType:
-		var msg OutletAction
-		err := json.Unmarshal(*env.Data, &msg)
-
-		return msg, err
-	case groupActionType:
-		var msg GroupAction
-		err := json.Unmarshal(*env.Data, &msg)
-
-		return msg, err
-	case intervalActionType:
-		var msg IntervalAction
-		err := json.Unmarshal(*env.Data, &msg)
-
-		return msg, err
+func Decode(envelope Envelope) (interface{}, error) {
+	switch envelope.Type {
+	case OutletActionType:
+		return decode(envelope.Data, &OutletAction{})
+	case GroupActionType:
+		return decode(envelope.Data, &GroupAction{})
+	case IntervalActionType:
+		return decode(envelope.Data, &IntervalAction{})
 	}
 
-	return Unknown{}, nil
+	return &Unknown{}, nil
+}
+
+func decode(data *json.RawMessage, msg interface{}) (interface{}, error) {
+	return msg, json.Unmarshal(*data, msg)
 }

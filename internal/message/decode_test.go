@@ -13,10 +13,10 @@ func TestDecodeMessage(t *testing.T) {
 		data     string
 		expected interface{}
 	}{
-		{t: outletActionType, data: `{"id": "foo","action":"on"}`, expected: OutletAction{}},
-		{t: groupActionType, data: `{"id": "bar","action":"toggle"}`, expected: GroupAction{}},
-		{t: intervalActionType, data: `{"id":"baz","action":"create","interval":{"ID":"foo"}}`, expected: IntervalAction{}},
-		{t: "foo", expected: Unknown{}},
+		{t: OutletActionType, data: `{"id": "foo","action":"on"}`, expected: &OutletAction{}},
+		{t: GroupActionType, data: `{"id": "bar","action":"toggle"}`, expected: &GroupAction{}},
+		{t: IntervalActionType, data: `{"id":"baz","action":"create","interval":{"ID":"foo"}}`, expected: &IntervalAction{}},
+		{t: "foo", expected: &Unknown{}},
 	}
 
 	for _, tt := range tests {
@@ -36,7 +36,7 @@ func TestDecodeMessage(t *testing.T) {
 func TestDecodeInvalidMessage(t *testing.T) {
 	data := json.RawMessage([]byte(`{`))
 	env := Envelope{
-		Type: outletActionType,
+		Type: OutletActionType,
 		Data: &data,
 	}
 

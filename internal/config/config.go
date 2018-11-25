@@ -46,7 +46,7 @@ type Group struct {
 	Outlets []string `yaml:"outlets"`
 }
 
-// Oultet config type definition
+// Outlet config type definition
 type Outlet struct {
 	Name        string `yaml:"name"`
 	CodeOn      uint64 `yaml:"code_on"`

@@ -18,6 +18,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// Websocket accepts websocket connections and creates a clients to handle them
 func Websocket(hub *control.Hub, dispatcher message.Dispatcher) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
