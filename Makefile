@@ -20,7 +20,7 @@ deps: ## install go deps
 
 .PHONY: deps-app
 deps-app: ## install node deps
-	cd app && npm install
+	cd web && npm install
 
 .PHONY: build
 build: ## build binaries
@@ -30,7 +30,7 @@ build: ## build binaries
 
 .PHONY: build-app
 build-app: ## build node app
-	cd app && yarn build
+	cd web && yarn build
 
 .PHONY: pack-app
 pack-app: ## pack app using packr
@@ -50,7 +50,7 @@ coverage: ## generate code coverage
 
 .PHONY: clean
 clean: ## clean dependencies and artifacts
-	rm -rf vendor/ app/node_modules/ app/build/
+	rm -rf vendor/ web/node_modules/ web/build/
 	rm -f rfoutlet rfsniff rftransmit
 	packr clean
 

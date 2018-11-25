@@ -36,7 +36,7 @@ import (
 )
 
 const (
-	webDir                = "../../app/build"
+	webDir                = "../../web/build"
 	defaultConfigFilename = "/etc/rfoutlet/config.yml"
 )
 
