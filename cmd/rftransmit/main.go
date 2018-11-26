@@ -55,12 +55,7 @@ func main() {
 
 	code := uint64(c)
 
-	t, err := gpio.NewTransmitter(*gpioPin)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
+	t := gpio.NewTransmitter(*gpioPin)
 	defer t.Close()
 
 	fmt.Printf("transmitting code=%d pulseLength=%d protocol=%d\n", code, *pulseLength, *protocol)

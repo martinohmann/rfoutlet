@@ -59,7 +59,7 @@ type NativeTransmitter struct {
 }
 
 // NewNativeTransmitter create a native transmitter on the gpio pin.
-func NewNativeTransmitter(gpioPin Pin) (*NativeTransmitter, error) {
+func NewNativeTransmitter(gpioPin Pin) *NativeTransmitter {
 	t := &NativeTransmitter{
 		gpioPin:      gpioPin,
 		transmission: make(chan transmission, transmissionChanLen),
@@ -69,7 +69,7 @@ func NewNativeTransmitter(gpioPin Pin) (*NativeTransmitter, error) {
 
 	go t.watch()
 
-	return t, nil
+	return t
 }
 
 // Transmit transmits a code using given protocol and pulse length. It will
@@ -162,10 +162,8 @@ type NullTransmitter struct{}
 // NewNullTransmitter create a transmitter that does nothing except logging the
 // transmissions. This is mainly useful for development on systems where
 // /dev/gpiomem is not available.
-func NewNullTransmitter() (*NullTransmitter, error) {
-	t := &NullTransmitter{}
-
-	return t, nil
+func NewNullTransmitter() *NullTransmitter {
+	return &NullTransmitter{}
 }
 
 // Transmit does nothing.
@@ -187,7 +185,7 @@ func (t *NullTransmitter) Wait() {}
 
 // NewTransmitter creates a NativeTransmitter when /dev/gpiomem is available,
 // NullTransmitter otherwise.
-func NewTransmitter(gpioPin uint) (CodeTransmitter, error) {
+func NewTransmitter(gpioPin uint) CodeTransmitter {
 	if _, err := os.Stat("/dev/gpiomem"); os.IsNotExist(err) {
 		return NewNullTransmitter()
 	}

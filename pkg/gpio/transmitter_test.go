@@ -37,12 +37,10 @@ func TestTransmitterTransmit(t *testing.T) {
 	gpio.TransmitRetries = 1
 	pin := newTestPin()
 
-	transmitter, err := gpio.NewNativeTransmitter(pin)
+	transmitter := gpio.NewNativeTransmitter(pin)
 	defer transmitter.Close()
 
-	assert.Nil(t, err)
-
-	err = transmitter.Transmit(0x1, 1, 190)
+	err := transmitter.Transmit(0x1, 1, 190)
 
 	assert.Nil(t, err)
 
@@ -54,12 +52,10 @@ func TestTransmitterTransmit(t *testing.T) {
 func TestTransmitInvalidProtocol(t *testing.T) {
 	pin := newTestPin()
 
-	transmitter, err := gpio.NewNativeTransmitter(pin)
+	transmitter := gpio.NewNativeTransmitter(pin)
 	defer transmitter.Close()
 
-	assert.Nil(t, err)
-
-	err = transmitter.Transmit(0x1, 999, 190)
+	err := transmitter.Transmit(0x1, 999, 190)
 
 	if assert.Error(t, err) {
 		assert.Equal(t, errors.New("Protocol 999 does not exist"), err)
@@ -69,19 +65,17 @@ func TestTransmitInvalidProtocol(t *testing.T) {
 func TestTransmitterClose(t *testing.T) {
 	pin := newTestPin()
 
-	transmitter, _ := gpio.NewNativeTransmitter(pin)
+	transmitter := gpio.NewNativeTransmitter(pin)
 	assert.Nil(t, transmitter.Close())
 
 	assert.True(t, pin.closed)
 }
 
 func TestNullTransmitInvalidProtocol(t *testing.T) {
-	transmitter, err := gpio.NewNullTransmitter()
+	transmitter := gpio.NewNullTransmitter()
 	defer transmitter.Close()
 
-	assert.Nil(t, err)
-
-	err = transmitter.Transmit(0x1, 999, 190)
+	err := transmitter.Transmit(0x1, 999, 190)
 
 	if assert.Error(t, err) {
 		assert.Equal(t, errors.New("Protocol 999 does not exist"), err)

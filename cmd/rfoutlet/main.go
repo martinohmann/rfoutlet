@@ -88,8 +88,7 @@ func main() {
 
 	manager.LoadState()
 
-	transmitter, err := gpio.NewTransmitter(config.GpioPin)
-	exitError(err)
+	transmitter := gpio.NewTransmitter(config.GpioPin)
 	defer transmitter.Close()
 
 	switcher := outlet.NewSwitch(transmitter)
