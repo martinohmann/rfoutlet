@@ -21,15 +21,7 @@ func NewSwitch(t gpio.CodeTransmitter) *Switch {
 
 // Switch switches an outlet to the provided state
 func (s *Switch) Switch(o *Outlet, state State) error {
-	var code uint64
-	switch state {
-	case StateOn:
-		code = o.CodeOn
-	case StateOff:
-		code = o.CodeOff
-	}
-
-	if err := s.t.Transmit(code, o.Protocol, o.PulseLength); err != nil {
+	if err := s.t.Transmit(o.CodeForState(state), o.Protocol, o.PulseLength); err != nil {
 		return err
 	}
 

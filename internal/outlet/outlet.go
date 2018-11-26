@@ -52,6 +52,16 @@ func (o *Outlet) GetState() State {
 	return o.State
 }
 
+// CodeForState returns the code to transmit to bring the outlet into state
+func (o *Outlet) CodeForState(state State) uint64 {
+	switch state {
+	case StateOn:
+		return o.CodeOn
+	default:
+		return o.CodeOff
+	}
+}
+
 // Register registers an outlet to given name
 func (m *Manager) Register(name string, outlet *Outlet) {
 	m.Lock()
