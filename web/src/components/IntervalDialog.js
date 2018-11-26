@@ -5,7 +5,7 @@ import Dialog from '@material-ui/core/Dialog';
 
 import DialogAppBar from './DialogAppBar';
 import IntervalOptionsList from './IntervalOptionsList';
-import IntervalTimePicker from './TimePicker';
+import IntervalTimePicker from './IntervalTimePicker';
 import WeekdaysDialog from './WeekdaysDialog';
 
 const styles = theme => ({

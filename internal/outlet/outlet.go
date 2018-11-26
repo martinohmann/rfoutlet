@@ -8,7 +8,7 @@ import (
 )
 
 // StateHandler defines the interface for a state handler, that loads and saves
-// the state of an outlet.
+// the state of the outlets.
 type StateHandler interface {
 	LoadState([]*Outlet) error
 	SaveState([]*Outlet) error

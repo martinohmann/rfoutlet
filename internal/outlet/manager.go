@@ -23,10 +23,12 @@ func NewManager(sh StateHandler) *Manager {
 	}
 }
 
+// SaveState saves the outlet state using the state handler
 func (m *Manager) SaveState() error {
 	return m.sh.SaveState(m.Outlets())
 }
 
+// LoadState loads the outlet state using the state handler
 func (m *Manager) LoadState() error {
 	return m.sh.LoadState(m.Outlets())
 }
