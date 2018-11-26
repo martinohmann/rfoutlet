@@ -22,28 +22,72 @@ func (ts *testSwitcher) Switch(o *outlet.Outlet, s outlet.State) error {
 }
 
 func TestScheduler(t *testing.T) {
-	ts := &testSwitcher{}
-
-	s := NewWithInterval(ts, 5*time.Millisecond)
-
 	now := time.Now()
 	plus1 := now.Add(time.Hour)
 
-	intervals := []schedule.Interval{
+	tests := []struct {
+		outlet               *outlet.Outlet
+		intervals            []schedule.Interval
+		expectedState        outlet.State
+		expectedStateChanges int64
+	}{
 		{
-			Enabled:  true,
-			Weekdays: []time.Weekday{now.Weekday()},
-			From:     schedule.NewDayTime(now.Hour(), now.Minute()),
-			To:       schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+			outlet: &outlet.Outlet{},
+			intervals: []schedule.Interval{
+				{
+					Enabled:  true,
+					Weekdays: []time.Weekday{now.Weekday()},
+					From:     schedule.NewDayTime(now.Hour(), now.Minute()),
+					To:       schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+				},
+			},
+			expectedState:        outlet.StateOn,
+			expectedStateChanges: 1,
+		},
+		{
+			outlet: &outlet.Outlet{State: outlet.StateOn},
+			intervals: []schedule.Interval{
+				{
+					Enabled:  true,
+					Weekdays: []time.Weekday{now.Weekday()},
+					From:     schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+					To:       schedule.NewDayTime(now.Hour(), now.Minute()),
+				},
+			},
+			expectedState:        outlet.StateOff,
+			expectedStateChanges: 1,
+		},
+		{
+			outlet: &outlet.Outlet{State: outlet.StateOn},
+			intervals: []schedule.Interval{
+				{
+					Enabled:  false,
+					Weekdays: []time.Weekday{now.Weekday()},
+					From:     schedule.NewDayTime(now.Hour(), now.Minute()),
+					To:       schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+				},
+			},
+			expectedState:        outlet.StateOn,
+			expectedStateChanges: 0,
 		},
 	}
 
-	o := &outlet.Outlet{Schedule: schedule.NewWithIntervals(intervals)}
+	for _, tt := range tests {
+		tt.outlet.Schedule = schedule.NewWithIntervals(tt.intervals)
+		testScheduler(t, tt.outlet, tt.expectedState, tt.expectedStateChanges)
+	}
+}
+
+func testScheduler(t *testing.T, o *outlet.Outlet, expectedState outlet.State, expectedStateChanges int64) {
+	ts := &testSwitcher{}
+
+	s := NewWithInterval(ts, 5*time.Millisecond)
+	defer s.ticker.Stop()
 
 	s.Register(o)
 
 	time.Sleep(10 * time.Millisecond)
 
-	assert.Equal(t, outlet.StateOn, o.GetState())
-	assert.Equal(t, int64(1), atomic.LoadInt64(&ts.count))
+	assert.Equal(t, expectedState, o.GetState())
+	assert.Equal(t, expectedStateChanges, atomic.LoadInt64(&ts.count))
 }
