@@ -15,8 +15,8 @@ binaries: deps pack-app build ## install binary dependencies, pack app and build
 
 .PHONY: deps
 deps: ## install go deps
-	go mod vendor
-	go get -u github.com/gobuffalo/packr/packr
+	go mod download
+	go get github.com/gobuffalo/packr/packr@v1.30.1
 
 .PHONY: deps-app
 deps-app: ## install node deps

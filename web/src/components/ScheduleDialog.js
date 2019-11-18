@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Dialog from '@material-ui/core/Dialog';
-import Button from '@material-ui/core/Button';
+import Fab from '@material-ui/core/Fab';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -95,14 +95,13 @@ class ScheduleDialog extends React.Component {
             </ListItem>
           ) : ''}
         </List>
-        <Button
-          variant="fab"
+        <Fab
           color="secondary"
           className={classes.fab}
           onClick={this.handleIntervalDialogOpen(true, null)}
         >
           <AddIcon />
-        </Button>
+        </Fab>
         <IntervalDialog
           outletId={outletId}
           open={intervalDialogOpen}

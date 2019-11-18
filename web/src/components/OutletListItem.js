@@ -61,6 +61,14 @@ class OutletListItem extends React.Component {
     return (
       <ListItem>
         <ListItemText primary={name} secondary={this.renderIntervals()} />
+        <ScheduleDialog
+          {...this.props}
+          outletId={id}
+          schedule={schedule}
+          open={scheduleDialogOpen}
+          onClose={this.handleScheduleDialogOpen(false)}
+          onChange={this.handleScheduleChange}
+        />
         <ListItemSecondaryAction>
           <Switch
             color="primary"
@@ -72,14 +80,6 @@ class OutletListItem extends React.Component {
             <EditIcon />
           </IconButton>
         </ListItemSecondaryAction>
-        <ScheduleDialog
-          {...this.props}
-          outletId={id}
-          schedule={schedule}
-          open={scheduleDialogOpen}
-          onClose={this.handleScheduleDialogOpen(false)}
-          onChange={this.handleScheduleChange}
-        />
       </ListItem>
     );
   }
