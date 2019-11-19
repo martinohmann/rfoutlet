@@ -89,7 +89,7 @@ This command starts a server which listens on `0.0.0.0:3333` by default.
 
 By default it
 looks for its configuration file at `/etc/rfoutlet/config.yml`. Check
-[example/config.yml](example/config.yml) for an example config file with all
+[configs/config.yml](configs/config.yml) for an example config file with all
 available config values. Use the `rfsniff` command for reading the on/off
 codes, protocol and pulse lengths for your outlets to put into the
 configuration file.
@@ -192,7 +192,7 @@ Please let me know about others that work well too, so I can extend the list her
 Running rfoutlet as systemd service
 -----------------------------------
 
-See [example/systemd/rfoutlet.service](example/systemd/rfoutlet.service) for an
+See [init/systemd/rfoutlet.service](init/systemd/rfoutlet.service) for an
 example systemd service file.
 
 Development / Testing
@@ -212,9 +212,9 @@ Todo
 - [x] make transmitter/receiver code available as library below `pkg/`
 - [x] persist outlet state across server restarts
 - [ ] use receiver to detect outlet state changes (e.g. via remote control)?
-- [ ] time switch: switch outlets on/off using user defined rules (e.g. fixed
+- [x] time switch: switch outlets on/off using user defined rules (e.g. fixed
   time or relative)
-- [ ] use web sockets for communication to be able to push outlet state changes
+- [x] use web sockets for communication to be able to push outlet state changes
   to multiple clients
 
 License

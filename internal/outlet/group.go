@@ -1,55 +1,51 @@
 package outlet
 
-import (
-	"fmt"
+import "fmt"
 
-	"github.com/martinohmann/rfoutlet/pkg/gpio"
-)
-
-// OutletGroup type definition
-type OutletGroup struct {
-	Identifier string    `yaml:"identifier" json:"identifier"`
-	Outlets    []*Outlet `yaml:"outlets" json:"outlets"`
+// Group type definition
+type Group struct {
+	ID      string    `json:"id"`
+	Name    string    `json:"name"`
+	Outlets []*Outlet `json:"outlets"`
 }
 
-// Outlet returns the outlet with the given offset in the group
-func (og *OutletGroup) Outlet(offset int) (*Outlet, error) {
-	if offset >= 0 && len(og.Outlets) > offset {
-		return og.Outlets[offset], nil
-	}
-
-	return nil, fmt.Errorf("invalid offset %d", offset)
+// RegisterGroup registers a group to given name
+func (m *Manager) RegisterGroup(name string, group *Group) {
+	m.Lock()
+	m.groups[name] = group
+	m.Unlock()
 }
 
-// ToggleState toggles the state of all outlets of the group
-func (og *OutletGroup) ToggleState(t gpio.CodeTransmitter) error {
-	for _, o := range og.Outlets {
-		if err := o.ToggleState(t); err != nil {
-			return err
-		}
+// GetGroup retieves the group for given name
+func (m *Manager) GetGroup(name string) (*Group, error) {
+	m.Lock()
+	defer m.Unlock()
+
+	g, ok := m.groups[name]
+	if !ok {
+		return nil, fmt.Errorf("unknown group %q", name)
 	}
 
-	return nil
+	return g, nil
 }
 
-// SwitchOn switches all outlets of the group on
-func (og *OutletGroup) SwitchOn(t gpio.CodeTransmitter) error {
-	for _, o := range og.Outlets {
-		if err := o.SwitchOn(t); err != nil {
-			return err
-		}
+// Groups returns a slice with all registered groups. The slice is ordered by
+// the cofigured group order.
+func (m *Manager) Groups() []*Group {
+	m.Lock()
+	defer m.Unlock()
+
+	s := make([]*Group, 0, len(m.groups))
+	for _, name := range m.groupOrder {
+		s = append(s, m.groups[name])
 	}
 
-	return nil
+	return s
 }
 
-// SwitchOff switches all outlets of the group off
-func (og *OutletGroup) SwitchOff(t gpio.CodeTransmitter) error {
-	for _, o := range og.Outlets {
-		if err := o.SwitchOff(t); err != nil {
-			return err
-		}
-	}
-
-	return nil
+// SetGroupOrder sets the display order for the groups
+func (m *Manager) SetGroupOrder(order []string) {
+	m.Lock()
+	m.groupOrder = order
+	m.Unlock()
 }

@@ -1,14 +1,14 @@
-// The rfoutlet command starts a server which serves the frontend and api for
-// controlling outlets via web interface.
+// The rfoutlet command starts a server which serves the frontend and connects
+// clients through websockets for controlling outlets via web interface.
 //
 // Available command line flags:
 //
 //  -config string
 //        config filename (default "/etc/rfoutlet/config.yml")
 //  -gpio-pin uint
-//        gpio pin to transmit on (default 17)
+//        gpio pin to transmit on (default -1)
 //  -listen-address string
-//        listen address (default "0.0.0.0:3333")
+//        listen address
 //  -state-file string
 //        state filename
 package main
@@ -26,23 +26,25 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/packr"
-	"github.com/martinohmann/rfoutlet/internal/api"
+	"github.com/martinohmann/rfoutlet/internal/config"
+	"github.com/martinohmann/rfoutlet/internal/control"
 	"github.com/martinohmann/rfoutlet/internal/handler"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/martinohmann/rfoutlet/internal/scheduler"
+	"github.com/martinohmann/rfoutlet/internal/state"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
 
 const (
-	webDir                = "../../app/build"
-	defaultListenAddress  = "0.0.0.0:3333"
+	webDir                = "../../web/build"
 	defaultConfigFilename = "/etc/rfoutlet/config.yml"
 )
 
 var (
 	configFilename = flag.String("config", defaultConfigFilename, "config filename")
 	stateFilename  = flag.String("state-file", "", "state filename")
-	listenAddress  = flag.String("listen-address", defaultListenAddress, "listen address")
-	gpioPin        = flag.Uint("gpio-pin", gpio.DefaultTransmitPin, "gpio pin to transmit on")
+	listenAddress  = flag.String("listen-address", "", "listen address")
+	gpioPin        = flag.Int("gpio-pin", -1, "gpio pin to transmit on")
 	usage          = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s\n", os.Args[0])
 		flag.PrintDefaults()
@@ -53,60 +55,60 @@ func init() {
 	flag.Usage = usage
 }
 
+func exitError(err error) {
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
 func main() {
 	flag.Parse()
 
-	config, err := outlet.ReadConfig(*configFilename)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	config, err := config.Load(*configFilename)
+	exitError(err)
+
+	if *gpioPin >= 0 {
+		config.GpioPin = uint(*gpioPin)
 	}
 
-	transmitter, err := gpio.NewTransmitter(*gpioPin)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if *listenAddress != "" {
+		config.ListenAddress = *listenAddress
 	}
-
-	defer transmitter.Close()
-
-	var stateManager outlet.StateManager
 
 	if *stateFilename != "" {
-		stateFile, err := os.OpenFile(*stateFilename, os.O_RDWR|os.O_CREATE, 0600)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		stateManager = outlet.NewStateManager(stateFile)
-	} else {
-		stateManager = outlet.NewNullStateManager()
+		config.StateFile = *stateFilename
 	}
 
-	defer stateManager.Close()
+	manager := outlet.NewManager(state.NewHandler(config.StateFile))
+	defer manager.SaveState()
 
-	control := outlet.NewControl(config, stateManager, transmitter)
+	err = outlet.RegisterFromConfig(manager, config)
+	exitError(err)
 
-	if err := control.RestoreState(); err != nil {
-		log.Printf("error while restoring state: %s\n", err)
+	manager.LoadState()
+
+	transmitter := gpio.NewTransmitter(config.GpioPin)
+	defer transmitter.Close()
+
+	switcher := outlet.NewSwitch(transmitter)
+	hub := control.NewHub()
+	control := control.New(manager, switcher, hub)
+	scheduler := scheduler.New(control)
+
+	for _, o := range manager.Outlets() {
+		scheduler.Register(o)
 	}
-
-	api := api.New(control)
 
 	router := gin.Default()
 	router.Use(cors.Default())
 
 	router.GET("/", handler.Redirect("/app"))
 	router.GET("/healthz", handler.Healthz)
+	router.GET("/ws", handler.Websocket(hub, control))
 	router.StaticFS("/app", packr.NewBox(webDir))
 
-	apiRoutes := router.Group("/api")
-	apiRoutes.GET("/status", api.StatusRequestHandler)
-	apiRoutes.POST("/outlet", api.OutletRequestHandler)
-	apiRoutes.POST("/outlet_group", api.OutletGroupRequestHandler)
-
-	listenAndServe(router, *listenAddress)
+	listenAndServe(router, config.ListenAddress)
 }
 
 func listenAndServe(handler http.Handler, addr string) {

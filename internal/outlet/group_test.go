@@ -1,82 +1,38 @@
-package outlet_test
+package outlet
 
 import (
 	"testing"
 
-	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOutlet(t *testing.T) {
-	o := &outlet.Outlet{Protocol: 1}
+func TestRegisterGroup(t *testing.T) {
+	m := NewManager(testStateHandler)
+	_, err := m.GetGroup("foo")
 
-	og := &outlet.OutletGroup{
-		Outlets: []*outlet.Outlet{o},
-	}
+	assert.Error(t, err)
 
-	res, err := og.Outlet(0)
+	g := &Group{}
 
-	assert.Nil(t, err)
-	assert.Equal(t, o, res)
+	m.RegisterGroup("foo", g)
 
-	res, err = og.Outlet(1)
+	r, err := m.GetGroup("foo")
 
-	assert.Nil(t, res)
-	assert.EqualError(t, err, "invalid offset 1")
+	assert.NoError(t, err)
+	assert.Equal(t, g, r)
 }
 
-func TestOutputGroupSwitchOn(t *testing.T) {
-	o := &outlet.Outlet{State: outlet.StateOff, Protocol: 1}
-
-	og := &outlet.OutletGroup{
-		Outlets: []*outlet.Outlet{o},
+func TestGroups(t *testing.T) {
+	m := NewManager(testStateHandler)
+	for _, name := range []string{"foo", "baz", "bar"} {
+		m.RegisterGroup(name, &Group{ID: name})
 	}
 
-	err := og.SwitchOn(transmitter)
+	m.SetGroupOrder([]string{"baz", "bar", "foo"})
 
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOn, o.State)
-}
+	groups := m.Groups()
 
-func TestOutputGroupSwitchOff(t *testing.T) {
-	o := &outlet.Outlet{State: outlet.StateOn, Protocol: 1}
-
-	og := &outlet.OutletGroup{
-		Outlets: []*outlet.Outlet{o},
+	if assert.Len(t, groups, 3) {
+		assert.Equal(t, "baz", groups[0].ID)
 	}
-
-	err := og.SwitchOff(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOff, o.State)
-}
-
-func TestOutputGroupToggleState(t *testing.T) {
-	o := &outlet.Outlet{State: outlet.StateOff, Protocol: 1}
-
-	og := &outlet.OutletGroup{
-		Outlets: []*outlet.Outlet{o},
-	}
-
-	err := og.ToggleState(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOn, o.State)
-
-	err = og.ToggleState(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOff, o.State)
-}
-
-func TestOutputGroupToggleStateInvalidOutletProtocol(t *testing.T) {
-	o := &outlet.Outlet{State: outlet.StateOff, Protocol: 9999}
-
-	og := &outlet.OutletGroup{
-		Outlets: []*outlet.Outlet{o},
-	}
-
-	err := og.ToggleState(transmitter)
-
-	assert.NotNil(t, err)
 }

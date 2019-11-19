@@ -1,63 +1,50 @@
-package outlet_test
+package outlet
 
 import (
 	"testing"
 
-	"github.com/martinohmann/rfoutlet/internal/outlet"
-	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
-	yaml "gopkg.in/yaml.v2"
 )
 
-var transmitter, _ = gpio.NewNullTransmitter()
+func TestRegister(t *testing.T) {
+	m := NewManager(testStateHandler)
+	_, err := m.Get("foo")
 
-func TestOutletSwitchOn(t *testing.T) {
-	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown, Protocol: 1}
+	assert.Error(t, err)
 
-	err := o.SwitchOn(transmitter)
+	g := &Outlet{}
 
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOn, o.State)
+	m.Register("foo", g)
+
+	r, err := m.Get("foo")
+
+	assert.NoError(t, err)
+	assert.Equal(t, g, r)
 }
 
-func TestOutletSwitchOff(t *testing.T) {
-	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown, Protocol: 1}
+func TestOutlets(t *testing.T) {
+	m := NewManager(testStateHandler)
+	names := []string{"foo", "baz", "bar"}
 
-	err := o.SwitchOff(transmitter)
+	for _, name := range names {
+		m.Register(name, &Outlet{ID: name})
+	}
 
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOff, o.State)
+	outlets := m.Outlets()
+
+	if assert.Len(t, outlets, 3) {
+		for _, name := range names {
+			assert.True(t, hasOutletWithName(outlets, name))
+		}
+	}
 }
 
-func TestOutletToggleState(t *testing.T) {
-	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown, Protocol: 1}
+func hasOutletWithName(outlets []*Outlet, name string) bool {
+	for _, o := range outlets {
+		if o.ID == name {
+			return true
+		}
+	}
 
-	err := o.ToggleState(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOn, o.State)
-
-	err = o.ToggleState(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOff, o.State)
-}
-
-func TestUnmarshalDefaults(t *testing.T) {
-	o := &outlet.Outlet{}
-
-	err := yaml.Unmarshal([]byte("{}"), o)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateUnknown, o.State)
-	assert.Equal(t, gpio.DefaultPulseLength, o.PulseLength)
-	assert.Equal(t, gpio.DefaultProtocol, o.Protocol)
-}
-
-func TestUnmarshalError(t *testing.T) {
-	o := &outlet.Outlet{}
-
-	err := yaml.Unmarshal([]byte("[]"), o)
-
-	assert.NotNil(t, err)
+	return false
 }

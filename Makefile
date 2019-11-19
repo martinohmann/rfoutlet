@@ -15,12 +15,12 @@ binaries: deps pack-app build ## install binary dependencies, pack app and build
 
 .PHONY: deps
 deps: ## install go deps
-	go mod vendor
-	go get -u github.com/gobuffalo/packr/packr
+	go mod download
+	go get github.com/gobuffalo/packr/packr@v1.30.1
 
 .PHONY: deps-app
 deps-app: ## install node deps
-	cd app && npm install
+	cd web && npm install
 
 .PHONY: build
 build: ## build binaries
@@ -30,7 +30,7 @@ build: ## build binaries
 
 .PHONY: build-app
 build-app: ## build node app
-	cd app && yarn build
+	cd web && yarn build
 
 .PHONY: pack-app
 pack-app: ## pack app using packr
@@ -38,7 +38,7 @@ pack-app: ## pack app using packr
 
 .PHONY: test
 test: ## run tests
-	go test -tags="$(TAGS)" $$(go list ./... | grep -v /vendor/)
+	go test -race -tags="$(TAGS)" $$(go list ./... | grep -v /vendor/)
 
 .PHONY: vet
 vet: ## run go vet
@@ -50,7 +50,7 @@ coverage: ## generate code coverage
 
 .PHONY: clean
 clean: ## clean dependencies and artifacts
-	rm -rf vendor/ app/node_modules/ app/build/
+	rm -rf vendor/ web/node_modules/ web/build/
 	rm -f rfoutlet rfsniff rftransmit
 	packr clean
 

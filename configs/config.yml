@@ -1,0 +1,25 @@
+---
+listen_address: 0.0.0.0:3333
+gpio_pin: 17
+state_file: /var/lib/rfoutlet/state.json
+group_order:
+  - foo
+groups:
+  foo:
+    name: Foo
+    outlets:
+      - baz
+      - bar
+outlets:
+  bar:
+    name: Bar
+    code_on: 123
+    code_off: 456
+    protocol: 1
+    pulse_length: 189
+  baz:
+    name: Baz
+    code_on: 789
+    code_off: 012 
+    protocol: 2
+    pulse_length: 189
