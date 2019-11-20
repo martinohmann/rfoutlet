@@ -114,12 +114,6 @@ func (t *NativeTransmitter) transmit(trans transmission) {
 	case t.transmitted <- true:
 	default:
 	}
-
-	// if we send out codes too quickly in a row it will confuse outlets and
-	// they wont react on it. this is especially the case when sending out
-	// codes to multiple different outlets in a loop. we sleep a little bit
-	// after each transmission to better separate signals flying around.
-	time.Sleep(time.Millisecond * 200)
 }
 
 // Close stops started goroutines and closes the gpio pin
@@ -151,9 +145,30 @@ func (t *NativeTransmitter) watch() {
 // send sends a sequence of high and low pulses on the gpio pin.
 func (t *NativeTransmitter) send(pulses HighLow, pulseLength uint) {
 	t.gpioPin.High()
-	time.Sleep(time.Microsecond * time.Duration(pulseLength*pulses.High))
+	sleepFor(time.Microsecond * time.Duration(pulseLength*pulses.High))
 	t.gpioPin.Low()
-	time.Sleep(time.Microsecond * time.Duration(pulseLength*pulses.Low))
+	sleepFor(time.Microsecond * time.Duration(pulseLength*pulses.Low))
+}
+
+// sleepFor sleeps for given duration using busy waiting. The godoc for
+// time.Sleep states:
+//
+//   Sleep pauses the current goroutine for *at least* the duration d
+//
+// This means that for sub-millisecond sleep durations it will pause the
+// current goroutine for longer than we can afford as for us the sleep duration
+// needs to be as precise as possible to send out the correct codes to the
+// outlets. time.Sleep causes sleep pauses to be off by 100+ microseconds on
+// average whereas we can bring this down to < 5 microseconds using busy
+// waiting.
+func sleepFor(duration time.Duration) {
+	now := time.Now()
+
+	for {
+		if time.Since(now) >= duration {
+			break
+		}
+	}
 }
 
 // NullTransmitter type definition.
