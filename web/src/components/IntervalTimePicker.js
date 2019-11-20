@@ -1,38 +1,30 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
-import { TimePicker } from 'material-ui-pickers';
+import { makeStyles } from '@material-ui/core/styles';
+import { TimePicker } from '@material-ui/pickers';
 
-const styles = theme => ({
+const useStyles = makeStyles({
   timePicker: {
     position: 'fixed',
     top: -1000,
   },
 });
 
-class IntervalTimePicker extends React.Component {
-  pickerRef = null;
+export default function IntervalTimePicker(props) {
+  const classes = useStyles();
 
-  open = e => this.pickerRef.open(e)
-
-  render() {
-    const { classes, value, onChange } = this.props;
-
-    return (
-      <TimePicker
-        ref={ref => this.pickerRef = ref}
-        className={classes.timePicker}
-        clearable
-        ampm={false}
-        value={value}
-        onChange={onChange}
-      />
-    );
-  }
+  return (
+    <TimePicker
+      className={classes.timePicker}
+      clearable
+      ampm={false}
+      {...props}
+    />
+  );
 }
 
 IntervalTimePicker.propTypes = {
-  classes: PropTypes.object.isRequired,
+  open: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
-
-export default withStyles(styles)(IntervalTimePicker);
