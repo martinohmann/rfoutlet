@@ -1,7 +1,3 @@
-// These tests are slow and unstable
-//
-// +build integration
-
 package gpio_test
 
 import (
@@ -43,7 +39,7 @@ func TestTransmitReceive(t *testing.T) {
 	receiver := gpio.NewNativeReceiver(gpioPin, watcher)
 	defer receiver.Close()
 
-	transmitter, _ := gpio.NewNativeTransmitter(pin)
+	transmitter := gpio.NewNativeTransmitter(pin)
 	defer transmitter.Close()
 
 	tests := []struct {
