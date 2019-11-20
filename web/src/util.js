@@ -51,7 +51,7 @@ function dateTimeToDayTime(dateTime) {
 }
 
 export function scheduleToApp(schedule) {
-  return schedule.map(interval => {
+  return (schedule || []).map(interval => {
     const { from, to } = intervalToDateTimes(interval);
 
     return { ...interval, from, to };

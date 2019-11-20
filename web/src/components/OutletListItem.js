@@ -7,33 +7,22 @@ import Switch from '@material-ui/core/Switch';
 import EditIcon from '@material-ui/icons/Edit';
 
 import ScheduleDialog from './ScheduleDialog';
+import { scheduleToApp } from '../util';
 
 class OutletListItem extends React.Component {
   state = {
-    enabled: false,
-    enabledIntervals: [],
     schedule: [],
     scheduleDialogOpen: false,
   }
 
-  componentDidMount() {
-    this.updateState(this.props);
-  }
+  static getDerivedStateFromProps(props, state) {
+    if (props.schedule !== state.schedule) {
+      return {
+        schedule: scheduleToApp(props.schedule),
+      };
+    }
 
-  componentWillReceiveProps(nextProps) {
-    this.updateState(nextProps);
-  }
-
-  updateState(outlet) {
-    let { state, schedule } = outlet;
-
-    schedule = schedule === null ? [] : schedule;
-
-    this.setState({
-      enabled: 1 === state,
-      enabledIntervals: this.enabledIntervals(schedule),
-      schedule,
-    });
+    return null;
   }
 
   handleToggle = () => {
@@ -46,35 +35,26 @@ class OutletListItem extends React.Component {
     this.setState({ scheduleDialogOpen: open });
   }
 
-  handleScheduleChange = schedule => {
-    this.setState({ enabledIntervals: this.enabledIntervals(schedule), schedule })
-  }
-
-  enabledIntervals = schedule => {
-    return schedule.filter(interval => interval.enabled)
-  }
-
   render() {
-    const { id, name } = this.props;
-    const { enabled, enabledIntervals, schedule, scheduleDialogOpen } = this.state;
+    const { id, name, state } = this.props;
+    const { schedule, scheduleDialogOpen } = this.state;
 
     return (
       <ListItem>
-        <ListItemText primary={name} secondary={this.renderIntervals()} />
+        <ListItemText primary={name} secondary={getScheduleText(schedule)} />
         <ScheduleDialog
           {...this.props}
           outletId={id}
           schedule={schedule}
           open={scheduleDialogOpen}
           onClose={this.handleScheduleDialogOpen(false)}
-          onChange={this.handleScheduleChange}
         />
         <ListItemSecondaryAction>
           <Switch
             color="primary"
             onChange={this.handleToggle}
-            checked={enabled}
-            disabled={enabledIntervals.length > 0}
+            checked={state === 1}
+            disabled={hasEnabledIntervals(schedule)}
           />
           <IconButton onClick={this.handleScheduleDialogOpen(true)}>
             <EditIcon />
@@ -83,20 +63,24 @@ class OutletListItem extends React.Component {
       </ListItem>
     );
   }
+}
 
-  renderIntervals() {
-    const { enabledIntervals } = this.state;
+function hasEnabledIntervals(schedule) {
+  return schedule.some(interval => interval.enabled)
+}
 
-    if (enabledIntervals.length === 0) {
-      return ''
-    }
+function getScheduleText(schedule) {
+  const intervals = schedule.filter(interval => interval.enabled);
 
-    if (enabledIntervals.length === 1) {
-      return `1 interval scheduled`
-    }
-
-    return `${enabledIntervals.length} intervals scheduled`
+  if (intervals.length === 0) {
+    return ''
   }
+
+  if (intervals.length === 1) {
+    return `1 interval scheduled`
+  }
+
+  return `${intervals.length} intervals scheduled`
 }
 
 export default OutletListItem;

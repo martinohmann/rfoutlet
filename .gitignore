@@ -8,3 +8,4 @@
 /config.yml
 *-packr.go
 /internal/state/testdata/state.json
+/state.json

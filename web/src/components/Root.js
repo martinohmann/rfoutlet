@@ -36,10 +36,14 @@ class Root extends React.Component {
   connectWebSocket() {
     this.ws = new WebSocket(config.ws.url);
     this.ws.attachDefaultListeners();
-    this.ws.onMessage(groups => this.setState({ groups }));
+    this.ws.onMessage(msg => {
+      console.log("[ws recv]", msg);
+      this.setState({ groups: msg });
+    });
   }
 
   dispatchMessage = (msg) => {
+    console.log("[ws send]", msg);
     this.ws.sendMessage(msg)
       .catch(err => console.error(err));
   }

@@ -17,7 +17,6 @@ const styles = theme => ({
 
 class WeekdaysDialog extends React.Component {
   state = {
-    open: false,
     selected: [],
   }
 
@@ -25,12 +24,6 @@ class WeekdaysDialog extends React.Component {
     const { selected } = this.props;
 
     this.setState({ selected });
-  }
-
-  componentWillReceiveProps(nextProps) {
-    const { open, selected } = nextProps;
-
-    this.setState({ open, selected });
   }
 
   handleWeekdayToggle = key => () => {
@@ -51,8 +44,8 @@ class WeekdaysDialog extends React.Component {
   }
 
   render() {
-    const { classes, onClose } = this.props;
-    const { open, selected } = this.state;
+    const { classes, open, onClose } = this.props;
+    const { selected } = this.state;
 
     return (
       <Dialog fullScreen open={open} onClose={onClose}>
