@@ -23,11 +23,8 @@ class IntervalDialog extends React.Component {
     from: null,
     to: null,
     weekdaysDialogOpen: false,
-  }
-
-  pickerRefs = {
-    from: null,
-    to: null,
+    fromOpen: false,
+    toOpen: false,
   }
 
   componentWillReceiveProps(nextProps) {
@@ -50,11 +47,15 @@ class IntervalDialog extends React.Component {
   }
 
   handlePickerOpen = name => e => {
-    this.pickerRefs[name].open(e)
+    this.setState({ [name + 'Open']: true });
+  }
+
+  handlePickerClose = name => e => {
+    this.setState({ [name + 'Open']: false });
   }
 
   handlePickerChange = name => date => {
-    this.setState({ [name]: date });
+    this.setState({ [name]: date, [name + 'Open']: false });
   }
 
   handleWeekdaysDialogOpen = open => () => {
@@ -81,7 +82,7 @@ class IntervalDialog extends React.Component {
 
   render() {
     const { classes, onClose } = this.props;
-    const { create, open, from, to, weekdays, weekdaysDialogOpen } = this.state;
+    const { create, open, from, fromOpen, to, toOpen, weekdays, weekdaysDialogOpen } = this.state;
 
     return (
       <Dialog fullScreen open={open} onClose={onClose}>
@@ -102,14 +103,16 @@ class IntervalDialog extends React.Component {
           onToDayTimeClick={this.handlePickerOpen('to')}
         />
         <IntervalTimePicker
-          innerRef={ref => this.pickerRefs.from = ref}
+          open={fromOpen}
           value={from}
           onChange={this.handlePickerChange('from')}
+          onClose={this.handlePickerClose('from')}
         />
         <IntervalTimePicker
-          innerRef={ref => this.pickerRefs.to = ref}
+          open={toOpen}
           value={to}
           onChange={this.handlePickerChange('to')}
+          onClose={this.handlePickerClose('to')}
         />
         <WeekdaysDialog
           open={weekdaysDialogOpen}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
-import { MuiPickersUtilsProvider } from 'material-ui-pickers';
+import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import LuxonUtils from '@date-io/luxon';
 import cyan from '@material-ui/core/colors/cyan';
 
@@ -13,16 +13,24 @@ const theme = createMuiTheme({
   typography: {
     useNextVariants: true,
   },
+  overrides: {
+    MuiPickersToolbarText: {
+      toolbarTxt: {
+        color: "rgba(255, 255, 255, 0.54)",
+      },
+      toolbarBtnSelected: {
+        color: "white",
+      },
+    },
+  },
 });
 
-export default class App extends React.Component {
-  render() {
-    return (
-      <MuiThemeProvider theme={theme}>
-        <MuiPickersUtilsProvider utils={LuxonUtils}>
-          <Root />
-        </MuiPickersUtilsProvider>
-      </MuiThemeProvider>
-    );
-  }
+export default function App() {
+  return (
+    <MuiThemeProvider theme={theme}>
+      <MuiPickersUtilsProvider utils={LuxonUtils}>
+        <Root />
+      </MuiPickersUtilsProvider>
+    </MuiThemeProvider>
+  );
 }

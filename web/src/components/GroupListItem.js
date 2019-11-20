@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
@@ -8,7 +8,7 @@ import PowerIcon from '@material-ui/icons/Power';
 import PowerOffIcon from '@material-ui/icons/PowerOff';
 import SwapHorizIcon from '@material-ui/icons/SwapHoriz';
 
-const styles = theme => ({
+const useStyles = makeStyles(theme => ({
   container: {
     paddingTop: 1,
     paddingBottom: 1,
@@ -26,31 +26,32 @@ const styles = theme => ({
   buttonOff: {
     color: theme.palette.secondary.light,
   },
-});
+}));
 
-class GroupListItem extends React.Component {
-  render() {
-    const { classes, name, onActionOn, onActionOff, onActionToggle } = this.props;
+export default function GroupListItem(props) {
+  const classes = useStyles();
 
-    return (
-      <ListItem className={classes.container}>
-        <ListItemText className={classes.groupName} primary={name} disableTypography={true} />
-        <IconButton className={classes.buttonOff} onClick={onActionOff}>
-          <PowerOffIcon />
-        </IconButton>
-        <IconButton className={classes.buttonOn} onClick={onActionOn}>
-          <PowerIcon />
-        </IconButton>
-        <IconButton onClick={onActionToggle}>
-          <SwapHorizIcon />
-        </IconButton>
-      </ListItem>
-    );
-  }
+  const { name, onActionOn, onActionOff, onActionToggle } = props;
+
+  return (
+    <ListItem className={classes.container}>
+      <ListItemText className={classes.groupName} primary={name} disableTypography={true} />
+      <IconButton className={classes.buttonOff} onClick={onActionOff}>
+        <PowerOffIcon />
+      </IconButton>
+      <IconButton className={classes.buttonOn} onClick={onActionOn}>
+        <PowerIcon />
+      </IconButton>
+      <IconButton onClick={onActionToggle}>
+        <SwapHorizIcon />
+      </IconButton>
+    </ListItem>
+  );
 }
 
 GroupListItem.propTypes = {
-  classes: PropTypes.object.isRequired,
+  name: PropTypes.string.isRequired,
+  onActionOn: PropTypes.func.isRequired,
+  onActionOff: PropTypes.func.isRequired,
+  onActionToggle: PropTypes.func.isRequired,
 };
-
-export default withStyles(styles)(GroupListItem);
