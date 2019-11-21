@@ -5,24 +5,6 @@ import GroupListItem from './GroupListItem';
 import OutletListItem from './OutletListItem';
 
 class Group extends React.Component {
-  state = {
-    outlets: [],
-  }
-
-  componentDidMount() {
-    this.updateState(this.props);
-  }
-
-  componentWillReceiveProps(nextProps) {
-    this.updateState(nextProps);
-  }
-
-  updateState(props) {
-    const { outlets } = props;
-
-    this.setState({ outlets });
-  }
-
   handleAction = action => event => {
     const { id } = this.props;
 
@@ -30,8 +12,7 @@ class Group extends React.Component {
   }
 
   render() {
-    const { name } = this.props;
-    const { outlets } = this.state;
+    const { name, outlets } = this.props;
 
     return (
       <List component="nav">

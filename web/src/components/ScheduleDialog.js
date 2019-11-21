@@ -12,7 +12,7 @@ import AddIcon from '@material-ui/icons/Add';
 import DialogAppBar from './DialogAppBar';
 import IntervalListItem from './IntervalListItem';
 import IntervalDialog from './IntervalDialog';
-import { scheduleToApp, intervalToApi } from '../util';
+import { intervalToApi } from '../util';
 
 const styles = theme => ({
   container: {
@@ -27,22 +27,8 @@ const styles = theme => ({
 
 class ScheduleDialog extends React.Component {
   state = {
-    open: false,
     intervalDialogOpen: false,
-    schedule: [],
     currentInterval: null,
-  }
-
-  componentDidMount() {
-    const { schedule } = this.props;
-
-    this.setState({ schedule: scheduleToApp(schedule) });
-  }
-
-  componentWillReceiveProps(nextProps) {
-    const { open, schedule } = nextProps;
-
-    this.setState({ open, schedule: scheduleToApp(schedule) });
   }
 
   handleIntervalDialogOpen = (open, currentInterval) => () => {
@@ -69,8 +55,8 @@ class ScheduleDialog extends React.Component {
   }
 
   render() {
-    const { classes, outletId, onClose } = this.props;
-    const { open, intervalDialogOpen, schedule, currentInterval } = this.state;
+    const { open, classes, outletId, onClose, schedule } = this.props;
+    const { intervalDialogOpen, currentInterval } = this.state;
 
     return (
       <Dialog fullScreen open={open} onClose={onClose}>
