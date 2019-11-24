@@ -27,11 +27,13 @@ COPY --from=node-builder /web/build web/build
 ADD cmd/ cmd/
 ADD internal/ internal/
 ADD pkg/ pkg/
+ADD main.go main.go
 
-RUN CGO_ENABLED=0 GOOS=linux packr build ./cmd/rfoutlet
+RUN CGO_ENABLED=0 GOOS=linux make pack-app build
 
 FROM scratch
 
 COPY --from=golang-builder /go/src/github.com/martinohmann/rfoutlet/rfoutlet /rfoutlet
 
 ENTRYPOINT ["/rfoutlet"]
+CMD ["serve"]

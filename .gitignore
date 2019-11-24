@@ -2,8 +2,6 @@
 /coverage.txt
 /dist
 /rfoutlet
-/rfsniff
-/rftransmit
 /vendor
 /config.yml
 *-packr.go
