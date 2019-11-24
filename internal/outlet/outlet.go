@@ -2,112 +2,95 @@ package outlet
 
 import (
 	"fmt"
-	"log"
-	"os"
+	"sync"
 
-	"github.com/martinohmann/rfoutlet/pkg/gpio"
+	"github.com/martinohmann/rfoutlet/internal/schedule"
 )
+
+// StateHandler defines the interface for a state handler, that loads and saves
+// the state of the outlets.
+type StateHandler interface {
+	LoadState([]*Outlet) error
+	SaveState([]*Outlet) error
+}
+
+// State defines an outlet switch state
+type State uint
 
 const (
-	StateUnknown = iota
+	// StateOff defines the state for a disabled switch
+	StateOff State = iota
+
+	// SwitchStateOn defines the state for an enabled switch
 	StateOn
-	StateOff
 )
-
-var logger *log.Logger
-
-func init() {
-	logger = log.New(os.Stdout, "outlet: ", log.LstdFlags|log.Lshortfile)
-}
-
-// Switcher defines the interface for a toggleable switch
-type Switcher interface {
-	SwitchOn(gpio.CodeTransmitter) error
-	SwitchOff(gpio.CodeTransmitter) error
-	ToggleState(gpio.CodeTransmitter) error
-}
 
 // Outlet type definition
 type Outlet struct {
-	Identifier  string `yaml:"identifier" json:"identifier"`
-	PulseLength int    `yaml:"pulse_length" json:"pulse_length"`
-	Protocol    int    `yaml:"protocol" json:"protocol"`
-	CodeOn      uint64 `yaml:"code_on" json:"code_on"`
-	CodeOff     uint64 `yaml:"code_off" json:"code_off"`
-	State       int    `yaml:"state" json:"state"`
+	sync.Mutex
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	CodeOn      uint64             `json:"-"`
+	CodeOff     uint64             `json:"-"`
+	Protocol    int                `json:"-"`
+	PulseLength uint               `json:"-"`
+	Schedule    *schedule.Schedule `json:"schedule"`
+	State       State              `json:"state"`
 }
 
-// NewOutlet creates a new outlet
-func NewOutlet(identifier string, pulseLength int, protocol int, codeOn uint64, codeOff uint64) *Outlet {
-	return &Outlet{
-		Identifier:  identifier,
-		PulseLength: pulseLength,
-		Protocol:    protocol,
-		CodeOn:      codeOn,
-		CodeOff:     codeOff,
-		State:       StateUnknown,
-	}
+// SetState sets the state of the outlet
+func (o *Outlet) SetState(state State) {
+	o.Lock()
+	o.State = state
+	o.Unlock()
 }
 
-// ToggleState toggles the state of the outlet
-func (o *Outlet) ToggleState(t gpio.CodeTransmitter) error {
-	switch o.State {
+// GetState returns the state of the outlet
+func (o *Outlet) GetState() State {
+	o.Lock()
+	defer o.Unlock()
+	return o.State
+}
+
+// CodeForState returns the code to transmit to bring the outlet into state
+func (o *Outlet) CodeForState(state State) uint64 {
+	switch state {
 	case StateOn:
-		return o.SwitchOff(t)
+		return o.CodeOn
 	default:
-		return o.SwitchOn(t)
+		return o.CodeOff
 	}
 }
 
-// SwitchOn switches the outlet on
-func (o *Outlet) SwitchOn(t gpio.CodeTransmitter) error {
-	if err := o.sendCode(t, o.CodeOn); err != nil {
-		return err
-	}
-
-	o.State = StateOn
-
-	return nil
+// Register registers an outlet to given name
+func (m *Manager) Register(name string, outlet *Outlet) {
+	m.Lock()
+	m.outlets[name] = outlet
+	m.Unlock()
 }
 
-// SwitchOff switches the outlet off
-func (o *Outlet) SwitchOff(t gpio.CodeTransmitter) error {
-	if err := o.sendCode(t, o.CodeOff); err != nil {
-		return err
+// Get retrieves the outlet for given name
+func (m *Manager) Get(name string) (*Outlet, error) {
+	m.Lock()
+	defer m.Unlock()
+
+	o, ok := m.outlets[name]
+	if !ok {
+		return nil, fmt.Errorf("unknown outlet %q", name)
 	}
 
-	o.State = StateOff
-
-	return nil
+	return o, nil
 }
 
-func (o *Outlet) sendCode(t gpio.CodeTransmitter, code uint64) error {
-	logger.Printf("transmitting code=%d pulseLength=%d protocol=%d\n", code, o.PulseLength, o.Protocol)
+// Outlets returns a slice with all registered outlets
+func (m *Manager) Outlets() []*Outlet {
+	m.Lock()
+	defer m.Unlock()
 
-	return t.Transmit(code, o.Protocol, o.PulseLength)
-}
-
-// String returns the string representation of an Outlet
-func (o *Outlet) String() string {
-	return fmt.Sprintf("Outlet{Identifier: \"%s\", PulseLength: %d, Protocol: %d, CodeOn: %d, CodeOff: %d, State: %d}",
-		o.Identifier, o.PulseLength, o.Protocol, o.CodeOn, o.CodeOff, o.State)
-}
-
-// UnmarshalYAML sets defaults on the raw Outlet before unmarshalling
-func (o *Outlet) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type rawOutlet Outlet
-
-	raw := rawOutlet{
-		PulseLength: gpio.DefaultPulseLength,
-		Protocol:    gpio.DefaultProtocol,
-		State:       StateUnknown,
+	s := make([]*Outlet, 0, len(m.outlets))
+	for _, o := range m.outlets {
+		s = append(s, o)
 	}
 
-	if err := unmarshal(&raw); err != nil {
-		return err
-	}
-
-	*o = Outlet(raw)
-
-	return nil
+	return s
 }

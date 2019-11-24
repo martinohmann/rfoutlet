@@ -1,0 +1,53 @@
+---
+builds:
+  - main: ./cmd/rfoutlet/main.go
+    binary: rfoutlet
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm
+    goarm:
+      - 7
+    hooks:
+      pre: make app pack-app
+      post: packr clean
+  - main: ./cmd/rfsniff/main.go
+    binary: rfsniff
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm
+    goarm:
+      - 7
+  - main: ./cmd/rftransmit/main.go
+    binary: rftransmit
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm
+    goarm:
+      - 7
+release:
+  github:
+    owner: martinohmann
+    name: rfoutlet
+archive:
+  files:
+  - none*
+checksum:
+  name_template: 'checksums.txt'
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'

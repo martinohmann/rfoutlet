@@ -1,86 +1,38 @@
-package outlet_test
+package outlet
 
 import (
 	"testing"
 
-	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewOutletGroup(t *testing.T) {
-	og := outlet.NewOutletGroup("foo")
+func TestRegisterGroup(t *testing.T) {
+	m := NewManager(testStateHandler)
+	_, err := m.GetGroup("foo")
 
-	assert.Equal(t, "foo", og.Identifier)
+	assert.Error(t, err)
+
+	g := &Group{}
+
+	m.RegisterGroup("foo", g)
+
+	r, err := m.GetGroup("foo")
+
+	assert.NoError(t, err)
+	assert.Equal(t, g, r)
 }
 
-func TestAddOutlet(t *testing.T) {
-	og := outlet.NewOutletGroup("foo")
-	o := &outlet.Outlet{}
-
-	og.AddOutlet(o)
-
-	assert.Len(t, og.Outlets, 1)
-	assert.Equal(t, o, og.Outlets[0])
-}
-
-func TestOutlet(t *testing.T) {
-	o := &outlet.Outlet{}
-
-	og := &outlet.OutletGroup{
-		Outlets: []*outlet.Outlet{o},
+func TestGroups(t *testing.T) {
+	m := NewManager(testStateHandler)
+	for _, name := range []string{"foo", "baz", "bar"} {
+		m.RegisterGroup(name, &Group{ID: name})
 	}
 
-	res, err := og.Outlet(0)
+	m.SetGroupOrder([]string{"baz", "bar", "foo"})
 
-	assert.Nil(t, err)
-	assert.Equal(t, o, res)
+	groups := m.Groups()
 
-	res, err = og.Outlet(1)
-
-	assert.Nil(t, res)
-	assert.EqualError(t, err, "invalid offset 1")
-}
-
-func TestOutputGroupSwitchOn(t *testing.T) {
-	o := &outlet.Outlet{State: outlet.StateOff}
-
-	og := &outlet.OutletGroup{
-		Outlets: []*outlet.Outlet{o},
+	if assert.Len(t, groups, 3) {
+		assert.Equal(t, "baz", groups[0].ID)
 	}
-
-	err := og.SwitchOn(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOn, o.State)
-}
-
-func TestOutputGroupSwitchOff(t *testing.T) {
-	o := &outlet.Outlet{State: outlet.StateOn}
-
-	og := &outlet.OutletGroup{
-		Outlets: []*outlet.Outlet{o},
-	}
-
-	err := og.SwitchOff(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOff, o.State)
-}
-
-func TestOutputGroupToggleState(t *testing.T) {
-	o := &outlet.Outlet{State: outlet.StateOff}
-
-	og := &outlet.OutletGroup{
-		Outlets: []*outlet.Outlet{o},
-	}
-
-	err := og.ToggleState(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOn, o.State)
-
-	err = og.ToggleState(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOff, o.State)
 }

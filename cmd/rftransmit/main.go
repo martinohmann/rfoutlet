@@ -1,3 +1,17 @@
+// The rfsniff command can be used send out codes to remote controlled outlets.
+//
+// Mandatory arguments:
+//
+//   <code> // The code to send out
+//
+// Available command line flags:
+//
+//  -gpio-pin uint
+//        gpio pin to transmit on (default 17)
+//  -protocol int
+//        transmission protocol (default 1)
+//  -pulse-length uint
+//        pulse length (default 189)
 package main
 
 import (
@@ -10,8 +24,8 @@ import (
 )
 
 var (
-	pulseLength = flag.Int("pulse-length", gpio.DefaultPulseLength, "pulse length")
-	gpioPin     = flag.Int("gpio-pin", gpio.DefaultTransmitPin, "gpio pin to transmit on")
+	pulseLength = flag.Uint("pulse-length", gpio.DefaultPulseLength, "pulse length")
+	gpioPin     = flag.Uint("gpio-pin", gpio.DefaultTransmitPin, "gpio pin to transmit on")
 	protocol    = flag.Int("protocol", gpio.DefaultProtocol, "transmission protocol")
 	usage       = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s <code>\n", os.Args[0])
@@ -41,16 +55,15 @@ func main() {
 
 	code := uint64(c)
 
-	t, err := gpio.NewTransmitter(*gpioPin)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
+	t := gpio.NewTransmitter(*gpioPin)
 	defer t.Close()
+
+	fmt.Printf("transmitting code=%d pulseLength=%d protocol=%d\n", code, *pulseLength, *protocol)
 
 	if err = t.Transmit(code, *protocol, *pulseLength); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	t.Wait()
 }

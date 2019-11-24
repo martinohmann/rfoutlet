@@ -1,57 +1,50 @@
-package outlet_test
+package outlet
 
 import (
 	"testing"
 
-	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/stretchr/testify/assert"
 )
 
-type mockTransmitter struct{}
+func TestRegister(t *testing.T) {
+	m := NewManager(testStateHandler)
+	_, err := m.Get("foo")
 
-func (t *mockTransmitter) Transmit(code uint64, protocol int, pulseLength int) error { return nil }
-func (t *mockTransmitter) Close() error                                              { return nil }
+	assert.Error(t, err)
 
-var transmitter = &mockTransmitter{}
+	g := &Outlet{}
 
-func TestNewOutlet(t *testing.T) {
-	o := outlet.NewOutlet("foo", 1, 2, 3, 4)
+	m.Register("foo", g)
 
-	assert.Equal(t, "foo", o.Identifier)
-	assert.Equal(t, 1, o.PulseLength)
-	assert.Equal(t, 2, o.Protocol)
-	assert.Equal(t, uint64(3), o.CodeOn)
-	assert.Equal(t, uint64(4), o.CodeOff)
+	r, err := m.Get("foo")
+
+	assert.NoError(t, err)
+	assert.Equal(t, g, r)
 }
 
-func TestOutletSwitchOn(t *testing.T) {
-	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown}
+func TestOutlets(t *testing.T) {
+	m := NewManager(testStateHandler)
+	names := []string{"foo", "baz", "bar"}
 
-	err := o.SwitchOn(transmitter)
+	for _, name := range names {
+		m.Register(name, &Outlet{ID: name})
+	}
 
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOn, o.State)
+	outlets := m.Outlets()
+
+	if assert.Len(t, outlets, 3) {
+		for _, name := range names {
+			assert.True(t, hasOutletWithName(outlets, name))
+		}
+	}
 }
 
-func TestOutletSwitchOff(t *testing.T) {
-	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown}
+func hasOutletWithName(outlets []*Outlet, name string) bool {
+	for _, o := range outlets {
+		if o.ID == name {
+			return true
+		}
+	}
 
-	err := o.SwitchOff(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOff, o.State)
-}
-
-func TestOutletToggleState(t *testing.T) {
-	o := &outlet.Outlet{CodeOn: 1, CodeOff: 2, State: outlet.StateUnknown}
-
-	err := o.ToggleState(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOn, o.State)
-
-	err = o.ToggleState(transmitter)
-
-	assert.Nil(t, err)
-	assert.Equal(t, outlet.StateOff, o.State)
+	return false
 }

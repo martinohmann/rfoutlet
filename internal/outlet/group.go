@@ -1,70 +1,51 @@
 package outlet
 
-import (
-	"fmt"
+import "fmt"
 
-	"github.com/martinohmann/rfoutlet/pkg/gpio"
-)
-
-// OutletGroup type definition
-type OutletGroup struct {
-	Identifier string    `yaml:"identifier" json:"identifier"`
-	Outlets    []*Outlet `yaml:"outlets" json:"outlets"`
+// Group type definition
+type Group struct {
+	ID      string    `json:"id"`
+	Name    string    `json:"name"`
+	Outlets []*Outlet `json:"outlets"`
 }
 
-// NewOutletGroup creates a new outlet group
-func NewOutletGroup(identifier string) *OutletGroup {
-	return &OutletGroup{Identifier: identifier}
+// RegisterGroup registers a group to given name
+func (m *Manager) RegisterGroup(name string, group *Group) {
+	m.Lock()
+	m.groups[name] = group
+	m.Unlock()
 }
 
-// AddOutlet adds an outlet to the group
-func (og *OutletGroup) AddOutlet(outlet *Outlet) {
-	og.Outlets = append(og.Outlets, outlet)
-}
+// GetGroup retieves the group for given name
+func (m *Manager) GetGroup(name string) (*Group, error) {
+	m.Lock()
+	defer m.Unlock()
 
-// Outlet returns the outlet with the given offset in the group
-func (og *OutletGroup) Outlet(offset int) (*Outlet, error) {
-	if offset >= 0 && len(og.Outlets) > offset {
-		return og.Outlets[offset], nil
+	g, ok := m.groups[name]
+	if !ok {
+		return nil, fmt.Errorf("unknown group %q", name)
 	}
 
-	return nil, fmt.Errorf("invalid offset %d", offset)
+	return g, nil
 }
 
-// ToggleState toggles the state of all outlets of the group
-func (og *OutletGroup) ToggleState(t gpio.CodeTransmitter) error {
-	for _, o := range og.Outlets {
-		if err := o.ToggleState(t); err != nil {
-			return err
-		}
+// Groups returns a slice with all registered groups. The slice is ordered by
+// the cofigured group order.
+func (m *Manager) Groups() []*Group {
+	m.Lock()
+	defer m.Unlock()
+
+	s := make([]*Group, 0, len(m.groups))
+	for _, name := range m.groupOrder {
+		s = append(s, m.groups[name])
 	}
 
-	return nil
+	return s
 }
 
-// SwitchOn switches all outlets of the group on
-func (og *OutletGroup) SwitchOn(t gpio.CodeTransmitter) error {
-	for _, o := range og.Outlets {
-		if err := o.SwitchOn(t); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// SwitchOff switches all outlets of the group off
-func (og *OutletGroup) SwitchOff(t gpio.CodeTransmitter) error {
-	for _, o := range og.Outlets {
-		if err := o.SwitchOff(t); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// String returns the string representation of an OutletGroup
-func (og *OutletGroup) String() string {
-	return fmt.Sprintf("OutletGroup{Identifier: \"%s\"}", og.Identifier)
+// SetGroupOrder sets the display order for the groups
+func (m *Manager) SetGroupOrder(order []string) {
+	m.Lock()
+	m.groupOrder = order
+	m.Unlock()
 }
