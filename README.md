@@ -57,6 +57,8 @@ Older software versions may also work, but I did not test that.
 Installation
 ------------
 
+### Using `go get`
+
 Obtain the source, build and install it as follows:
 
 ```sh
@@ -74,8 +76,33 @@ check out the code in [cmd/sniff.go](cmd/sniff.go) and
 [cmd/transmit.go](cmd/transmit.go) for example usage.
 
 ```sh
-go get -u github.com/martinohmann/rfoutlet
+go get -u github.com/martinohmann/rfoutlet/pkg/gpio
 ```
+
+### Using docker
+
+Build the image for armv7:
+
+```sh
+make image-armv7
+```
+
+This will create an image called `mohmann/rfoutlet:armv7`.
+
+Start the container and browse to `<raspberry-ip-address>:3333`:
+
+```sh
+docker run --rm \
+    --privileged \
+    -p 3333:3333 \
+    -v $(pwd)/configs/config.yml:/etc/rfoutlet/config.yml \
+    -v /dev/mem:/dev/mem \
+    -v /dev/gpiomem:/dev/gpiomem \
+    mohmann/rfoutlet:armv7
+```
+
+The container has to run in privileged mode in order to be able to access
+`/dev/mem` and `/dev/gpiomem`.
 
 Commands
 --------

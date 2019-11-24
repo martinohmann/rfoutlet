@@ -2,7 +2,7 @@
 
 .PHONY: help
 help:
-	@grep -E '^[a-zA-Z-]+:.*?## .*$$' Makefile | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "[32m%-12s[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9-]+:.*?## .*$$' Makefile | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "[32m%-23s[0m %s\n", $$1, $$2}'
 
 .PHONY: all
 all: app binary ## install dependencies and build everything
@@ -55,3 +55,14 @@ clean: ## clean dependencies and artifacts
 .PHONY: install
 install: ## install go commands into $GOPATH/bin
 	go install -ldflags="-s -w" main.go
+
+.PHONY: images
+images: image-amd64 image-armv7 ## build docker images
+
+.PHONY: image-amd64
+image-amd64: ## build amd64 image
+	docker build --build-arg GOARCH=amd64 -t mohmann/rfoutlet:amd64 .
+
+.PHONY: image-armv7
+image-armv7: ## build armv7 image
+	docker build -t mohmann/rfoutlet:armv7 .
