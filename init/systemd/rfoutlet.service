@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/rfoutlet -config /etc/rfoutlet/config.yml
+ExecStart=/usr/local/bin/rfoutlet serve --config /etc/rfoutlet/config.yml
 Restart=on-failure
 
 [Install]
