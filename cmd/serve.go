@@ -1,22 +1,7 @@
-// The rfoutlet command starts a server which serves the frontend and connects
-// clients through websockets for controlling outlets via web interface.
-//
-// Available command line flags:
-//
-//  -config string
-//        config filename (default "/etc/rfoutlet/config.yml")
-//  -gpio-pin uint
-//        gpio pin to transmit on (default -1)
-//  -listen-address string
-//        listen address
-//  -state-file string
-//        state filename
-package main
+package cmd
 
 import (
 	"context"
-	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -33,58 +18,70 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/scheduler"
 	"github.com/martinohmann/rfoutlet/internal/state"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
+	"github.com/spf13/cobra"
 )
 
-const (
-	webDir                = "../../web/build"
-	defaultConfigFilename = "/etc/rfoutlet/config.yml"
-)
+const webDir = "../web/build"
 
-var (
-	configFilename = flag.String("config", defaultConfigFilename, "config filename")
-	stateFilename  = flag.String("state-file", "", "state filename")
-	listenAddress  = flag.String("listen-address", "", "listen address")
-	gpioPin        = flag.Int("gpio-pin", -1, "gpio pin to transmit on")
-	usage          = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s\n", os.Args[0])
-		flag.PrintDefaults()
+func NewServeCommand() *cobra.Command {
+	options := &ServeOptions{
+		ConfigFilename: "/etc/rfoutlet/config.yml",
+		GpioPin:        -1,
 	}
-)
 
-func init() {
-	flag.Usage = usage
+	cmd := &cobra.Command{
+		Use:   "serve",
+		Short: "Serve the frontend for controlling outlets",
+		Long:  "The serve command starts a server which serves the frontend and connects clients through websockets for controlling outlets via web interface.",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return options.Run()
+		},
+	}
+
+	options.AddFlags(cmd)
+
+	return cmd
 }
 
-func exitError(err error) {
+type ServeOptions struct {
+	ConfigFilename string
+	StateFilename  string
+	ListenAddress  string
+	GpioPin        int
+}
+
+func (o *ServeOptions) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&o.ConfigFilename, "config", o.ConfigFilename, "config filename")
+	cmd.Flags().StringVar(&o.StateFilename, "state-file", o.StateFilename, "state filename")
+	cmd.Flags().StringVar(&o.ListenAddress, "listen-address", o.ListenAddress, "listen address")
+	cmd.Flags().IntVar(&o.GpioPin, "gpio-pin", o.GpioPin, "gpio pin to transmit on")
+}
+
+func (o *ServeOptions) Run() error {
+	config, err := config.Load(o.ConfigFilename)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
-func main() {
-	flag.Parse()
-
-	config, err := config.Load(*configFilename)
-	exitError(err)
-
-	if *gpioPin >= 0 {
-		config.GpioPin = uint(*gpioPin)
+		return err
 	}
 
-	if *listenAddress != "" {
-		config.ListenAddress = *listenAddress
+	if o.GpioPin >= 0 {
+		config.GpioPin = uint(o.GpioPin)
 	}
 
-	if *stateFilename != "" {
-		config.StateFile = *stateFilename
+	if o.ListenAddress != "" {
+		config.ListenAddress = o.ListenAddress
+	}
+
+	if o.StateFilename != "" {
+		config.StateFile = o.StateFilename
 	}
 
 	manager := outlet.NewManager(state.NewHandler(config.StateFile))
 	defer manager.SaveState()
 
 	err = outlet.RegisterFromConfig(manager, config)
-	exitError(err)
+	if err != nil {
+		return err
+	}
 
 	manager.LoadState()
 
@@ -108,10 +105,10 @@ func main() {
 	router.GET("/ws", handler.Websocket(hub, control))
 	router.StaticFS("/app", packr.NewBox(webDir))
 
-	listenAndServe(router, config.ListenAddress)
+	return listenAndServe(router, config.ListenAddress)
 }
 
-func listenAndServe(handler http.Handler, addr string) {
+func listenAndServe(handler http.Handler, addr string) error {
 	srv := &http.Server{
 		Addr:    addr,
 		Handler: handler,
@@ -132,9 +129,5 @@ func listenAndServe(handler http.Handler, addr string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server Shutdown:", err)
-	}
-
-	log.Println("Server exiting")
+	return srv.Shutdown(ctx)
 }
