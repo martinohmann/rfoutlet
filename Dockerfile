@@ -1,32 +1,32 @@
-FROM node:10-alpine as node-builder
+FROM node:13.1.0-alpine3.10 as node-builder
 
-ADD app/ /app
+ADD web/ /web
 
-WORKDIR /app
+WORKDIR /web
 
 RUN npm install && \
-    yarn build
+    npm run build
 
-FROM golang:1.9-alpine as golang-builder
+FROM golang:1.13.4-alpine3.10 as golang-builder
 
 WORKDIR /go/src/github.com/martinohmann/rfoutlet
 
-ADD glide.lock .
-ADD glide.yaml .
+RUN apk --no-cache add git make
 
-RUN apk --no-cache add git && \
-    go get -u github.com/gobuffalo/packr/packr && \
-	go get -u github.com/Masterminds/glide && \
-	glide install
+ADD go.mod .
+ADD go.sum .
+ADD Makefile .
 
-COPY --from=node-builder /app/build app/build
+RUN make deps
+
+ARG GOARCH=arm
+ARG GOARM=7
+
+COPY --from=node-builder /web/build web/build
 
 ADD cmd/ cmd/
 ADD internal/ internal/
 ADD pkg/ pkg/
-
-ARG GOARCH=arm
-ARG GOARM=7
 
 RUN CGO_ENABLED=0 GOOS=linux packr build ./cmd/rfoutlet
 
