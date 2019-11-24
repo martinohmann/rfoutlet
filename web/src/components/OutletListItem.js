@@ -7,7 +7,7 @@ import Switch from '@material-ui/core/Switch';
 import EditIcon from '@material-ui/icons/Edit';
 
 import ScheduleDialog from './ScheduleDialog';
-import { scheduleToApp } from '../util';
+import { scheduleToApp, formatSchedule } from '../util';
 
 class OutletListItem extends React.Component {
   state = {
@@ -26,12 +26,13 @@ class OutletListItem extends React.Component {
   }
 
   handleToggle = () => {
-    const { id } = this.props;
+    const { id, dispatchMessage } = this.props;
 
-    this.props.dispatchMessage({ type: 'outlet', data: { id, action: 'toggle' } });
+    dispatchMessage({ type: 'outlet', data: { id, action: 'toggle' } });
   }
 
   handleScheduleDialogOpen = open => () => {
+    console.log(open);
     this.setState({ scheduleDialogOpen: open });
   }
 
@@ -41,9 +42,8 @@ class OutletListItem extends React.Component {
 
     return (
       <ListItem>
-        <ListItemText primary={name} secondary={getScheduleText(schedule)} />
+        <ListItemText primary={name} secondary={formatSchedule(schedule)} />
         <ScheduleDialog
-          {...this.props}
           outletId={id}
           schedule={schedule}
           open={scheduleDialogOpen}
@@ -54,7 +54,7 @@ class OutletListItem extends React.Component {
             color="primary"
             onChange={this.handleToggle}
             checked={state === 1}
-            disabled={hasEnabledIntervals(schedule)}
+            disabled={schedule.some(interval => interval.enabled)}
           />
           <IconButton onClick={this.handleScheduleDialogOpen(true)}>
             <EditIcon />
@@ -63,24 +63,6 @@ class OutletListItem extends React.Component {
       </ListItem>
     );
   }
-}
-
-function hasEnabledIntervals(schedule) {
-  return schedule.some(interval => interval.enabled)
-}
-
-function getScheduleText(schedule) {
-  const intervals = schedule.filter(interval => interval.enabled);
-
-  if (intervals.length === 0) {
-    return ''
-  }
-
-  if (intervals.length === 1) {
-    return `1 interval scheduled`
-  }
-
-  return `${intervals.length} intervals scheduled`
 }
 
 export default OutletListItem;

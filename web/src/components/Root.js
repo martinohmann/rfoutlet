@@ -6,7 +6,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
 import GithubLink from './GithubLink';
-import Group from './Group';
+import GroupList from './GroupList';
 import config from '../config';
 import WebSocket from '../websocket';
 
@@ -62,11 +62,7 @@ class Root extends React.Component {
             <GithubLink url={config.project.url} />
           </Toolbar>
         </AppBar>
-        <div className={classes.container}>
-          {groups.map(group =>
-            <Group key={group.id} {...group} dispatchMessage={this.dispatchMessage} />
-          )}
-        </div>
+        <GroupList groups={groups} dispatchMessage={this.dispatchMessage} />
       </div>
     );
   }

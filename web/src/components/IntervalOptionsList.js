@@ -1,59 +1,40 @@
 import React from 'react';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
+import PropTypes from 'prop-types';
+import { List, ListItem } from './List';
 import ListItemText from '@material-ui/core/ListItemText';
-import Divider from '@material-ui/core/Divider';
 
-import { formatTime, weekdaysShort } from '../util';
+import { formatDayTime, formatWeekdays } from '../util';
 
-class IntervalOptionsList extends React.Component {
-  render() {
-    const {
-      className,
-      weekdays,
-      fromDayTime,
-      toDayTime,
-      onWeekdaysClick,
-      onFromDayTimeClick,
-      onToDayTimeClick
-    } = this.props;
+export default function IntervalOptionsList(props) {
+  const {
+    weekdays,
+    fromDayTime,
+    toDayTime,
+    onWeekdaysClick,
+    onFromDayTimeClick,
+    onToDayTimeClick
+  } = props;
 
-    return (
-      <List component="nav" className={className}>
-        <ListItem onClick={onWeekdaysClick}>
-          <ListItemText
-            primary="Weekdays"
-            secondary={this.renderWeekdays(weekdays)}
-          />
-        </ListItem>
-        <Divider />
-        <ListItem onClick={onFromDayTimeClick}>
-          <ListItemText primary="From" secondary={this.renderDayTime(fromDayTime)} />
-        </ListItem>
-        <Divider />
-        <ListItem onClick={onToDayTimeClick}>
-          <ListItemText primary="To" secondary={this.renderDayTime(toDayTime)} />
-        </ListItem>
-        <Divider />
-      </List>
-    );
-  }
-
-  renderDayTime(dayTime) {
-    if (null === dayTime) {
-      return 'unset';
-    }
-
-    return formatTime(dayTime);
-  }
-
-  renderWeekdays(weekdays) {
-    if (weekdays.length === 0) {
-      return 'none';
-    }
-
-    return weekdays.map(i => weekdaysShort[i]).join(', ');
-  }
+  return (
+    <List>
+      <ListItem onClick={onWeekdaysClick}>
+        <ListItemText primary="Weekdays" secondary={formatWeekdays(weekdays)} />
+      </ListItem>
+      <ListItem onClick={onFromDayTimeClick}>
+        <ListItemText primary="From" secondary={formatDayTime(fromDayTime)} />
+      </ListItem>
+      <ListItem onClick={onToDayTimeClick}>
+        <ListItemText primary="To" secondary={formatDayTime(toDayTime)} />
+      </ListItem>
+    </List>
+  );
 }
 
-export default IntervalOptionsList;
+IntervalOptionsList.propTypes = {
+    weekdays: PropTypes.array,
+    fromDayTime: PropTypes.object,
+    toDayTime: PropTypes.object,
+    onWeekdaysClick: PropTypes.func.isRequired,
+    onFromDayTimeClick: PropTypes.func.isRequired,
+    onToDayTimeClick: PropTypes.func.isRequired,
+};

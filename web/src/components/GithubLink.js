@@ -25,5 +25,5 @@ export default function GithubLink({ url }) {
 }
 
 GithubLink.propTypes = {
- url: PropTypes.string.isRequired,
+  url: PropTypes.string.isRequired,
 };

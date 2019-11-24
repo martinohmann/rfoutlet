@@ -1,9 +1,5 @@
 import { DateTime } from 'luxon';
 
-export function formatTime(date) {
-  return date.toFormat('HH:mm');
-}
-
 export const weekdaysLong = [
   'Sunday',
   'Monday',
@@ -23,6 +19,48 @@ export const weekdaysShort = [
   'Fri',
   'Sat',
 ];
+
+export function formatTime(date) {
+  return date.toFormat('HH:mm');
+}
+
+export function formatDayTime(dayTime) {
+  if (null === dayTime) {
+    return 'unset';
+  }
+
+  return formatTime(dayTime);
+}
+
+export function formatDayTimeInterval(interval) {
+  if (null === interval) {
+    return 'unset';
+  }
+
+  return `${formatDayTime(interval.from)} - ${formatDayTime(interval.to)}`;
+}
+
+export function formatWeekdays(weekdays) {
+  if (weekdays.length === 0) {
+    return 'none';
+  }
+
+  return weekdays.map(i => weekdaysShort[i]).join(', ');
+}
+
+export function formatSchedule(schedule) {
+  const intervals = schedule.filter(interval => interval.enabled);
+
+  if (intervals.length === 0) {
+    return '';
+  }
+
+  if (intervals.length === 1) {
+    return `1 interval scheduled`;
+  }
+
+  return `${intervals.length} intervals scheduled`;
+}
 
 function intervalToDateTimes({ from, to }) {
   return {

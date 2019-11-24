@@ -1,23 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import Dialog from '@material-ui/core/Dialog';
 import Fab from '@material-ui/core/Fab';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
+import { List, ListItem } from './List';
 import ListItemText from '@material-ui/core/ListItemText';
-import Divider from '@material-ui/core/Divider';
 import AddIcon from '@material-ui/icons/Add';
 
-import DialogAppBar from './DialogAppBar';
+import ConfigurationDialog from './ConfigurationDialog';
 import IntervalListItem from './IntervalListItem';
 import IntervalDialog from './IntervalDialog';
 import { intervalToApi } from '../util';
 
 const styles = theme => ({
-  container: {
-    marginTop: 64,
-  },
   fab: {
     position: 'absolute',
     bottom: theme.spacing(2),
@@ -48,33 +42,31 @@ class ScheduleDialog extends React.Component {
   }
 
   dispatchMessage = (action, interval) => {
-    const { outletId } = this.props;
-    const data = { action, id: outletId, interval: intervalToApi(interval) }
+    const data = {
+      action: action,
+      id: this.props.outletId,
+      interval: intervalToApi(interval),
+    }
 
     this.props.dispatchMessage({ type: 'interval', data });
   }
 
   render() {
-    const { open, classes, outletId, onClose, schedule } = this.props;
+    const { open, classes, onClose, schedule } = this.props;
     const { intervalDialogOpen, currentInterval } = this.state;
 
     return (
-      <Dialog fullScreen open={open} onClose={onClose}>
-        <DialogAppBar title="Schedule" onClose={onClose} />
-        <List component="nav" className={classes.container}>
-          {schedule.map((interval, key) => {
-            return (
-              <div key={key}>
-                <IntervalListItem
-                  interval={interval}
-                  onToggle={this.handleIntervalToggle(interval)}
-                  onEdit={this.handleIntervalDialogOpen(true, interval)}
-                  onDelete={this.handleIntervalDelete(interval)}
-                />
-                <Divider />
-              </div>
-            )
-          })}
+      <ConfigurationDialog title="Schedule" open={open} onClose={onClose}>
+        <List>
+          {schedule.map((interval, key) => (
+            <IntervalListItem
+              key={key}
+              interval={interval}
+              onToggle={this.handleIntervalToggle(interval)}
+              onEdit={this.handleIntervalDialogOpen(true, interval)}
+              onDelete={this.handleIntervalDelete(interval)}
+            />
+          ))}
           {schedule.length === 0 ? (
             <ListItem>
               <ListItemText primary="No intervals defined yet" />
@@ -89,20 +81,23 @@ class ScheduleDialog extends React.Component {
           <AddIcon />
         </Fab>
         <IntervalDialog
-          outletId={outletId}
           open={intervalDialogOpen}
           onClose={this.handleIntervalDialogOpen(false, null)}
           onIntervalCreate={this.handleIntervalCreate}
           onIntervalUpdate={this.handleIntervalUpdate}
           {...currentInterval}
         />
-      </Dialog>
+      </ConfigurationDialog>
     );
   }
 }
 
 ScheduleDialog.propTypes = {
   classes: PropTypes.object.isRequired,
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  schedule: PropTypes.array.isRequired,
+  outletId: PropTypes.string.isRequired,
 };
 
 export default withStyles(styles)(ScheduleDialog);
