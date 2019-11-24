@@ -1,45 +1,37 @@
 import React from 'react';
-import ListItem from '@material-ui/core/ListItem';
+import PropTypes from 'prop-types';
+import { ListItem } from './List';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import Switch from '@material-ui/core/Switch';
 
 import IntervalActionsMenu from './IntervalActionsMenu';
-import { formatTime, weekdaysShort } from '../util';
+import { formatDayTimeInterval, formatWeekdays } from '../util';
 
-class IntervalListItem extends React.Component {
-  render() {
-    const { onToggle, onEdit, onDelete, interval } = this.props;
+export default function IntervalListItem(props) {
+  const { interval, onDelete, onEdit, onToggle } = props;
 
-    return (
-      <ListItem>
-        <ListItemText
-          primary={this.renderDayTimes()}
-          secondary={this.renderWeekdays()}
+  return (
+    <ListItem onClick={onEdit}>
+      <ListItemText
+        primary={formatDayTimeInterval(interval)}
+        secondary={formatWeekdays(interval.weekdays)}
+      />
+      <ListItemSecondaryAction>
+        <Switch
+          color="primary"
+          checked={interval.enabled}
+          onChange={onToggle}
         />
-        <ListItemSecondaryAction>
-          <Switch
-            color="primary"
-            checked={interval.enabled}
-            onChange={onToggle}
-          />
-          <IntervalActionsMenu onEdit={onEdit} onDelete={onDelete} />
-        </ListItemSecondaryAction>
-      </ListItem>
-    );
-  }
-
-  renderDayTimes() {
-    const { from, to } = this.props.interval;
-
-    return `${formatTime(from)} - ${formatTime(to)}`;
-  }
-
-  renderWeekdays() {
-    const { weekdays } = this.props.interval;
-
-    return weekdays.map(i => weekdaysShort[i]).join(', ');
-  }
+        <IntervalActionsMenu onEdit={onEdit} onDelete={onDelete} />
+      </ListItemSecondaryAction>
+    </ListItem>
+  );
 }
 
-export default IntervalListItem;
+IntervalListItem.propTypes = {
+    interval: PropTypes.object,
+    onDelete: PropTypes.func.isRequired,
+    onEdit: PropTypes.func.isRequired,
+    onToggle: PropTypes.func.isRequired,
+};

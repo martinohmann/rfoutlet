@@ -1,19 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
-import Dialog from '@material-ui/core/Dialog';
-import List from '@material-ui/core/List';
-import Divider from '@material-ui/core/Divider';
+import { List } from './List';
 
-import DialogAppBar from './DialogAppBar';
+import ConfigurationDialog from './ConfigurationDialog';
 import WeekdayListItem from './WeekdayListItem';
 import { weekdaysLong } from '../util';
-
-const styles = theme => ({
-  container: {
-    marginTop: 64,
-  },
-});
 
 class WeekdaysDialog extends React.Component {
   state = {
@@ -44,37 +35,36 @@ class WeekdaysDialog extends React.Component {
   }
 
   render() {
-    const { classes, open, onClose } = this.props;
+    const { open, onClose } = this.props;
     const { selected } = this.state;
 
     return (
-      <Dialog fullScreen open={open} onClose={onClose}>
-        <DialogAppBar
-          title="Select Weekdays"
-          onClose={onClose}
-          onDone={onClose}
-          doneButtonDisabled={selected.length === 0}
-          doneButtonText="Done"
-        />
-        <List component="nav" className={classes.container}>
+      <ConfigurationDialog
+        title="Select Weekdays"
+        open={open}
+        onClose={onClose}
+        onDone={onClose}
+        doneButtonDisabled={selected.length === 0}
+        doneButtonText="Done"
+      >
+        <List>
           {weekdaysLong.map((weekday, key) => (
-            <div key={key}>
-              <WeekdayListItem
-                weekday={weekday}
-                selected={selected.indexOf(key) > -1}
-                onToggle={this.handleWeekdayToggle(key)}
-              />
-              <Divider />
-            </div>
+            <WeekdayListItem
+              key={key}
+              weekday={weekday}
+              selected={selected.indexOf(key) > -1}
+              onToggle={this.handleWeekdayToggle(key)}
+            />
           ))}
         </List>
-      </Dialog>
+      </ConfigurationDialog>
     );
   }
 }
 
 WeekdaysDialog.propTypes = {
-  classes: PropTypes.object.isRequired,
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
-export default withStyles(styles)(WeekdaysDialog);
+export default WeekdaysDialog;

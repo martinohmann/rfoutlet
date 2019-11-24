@@ -1,57 +1,32 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { makeStyles } from '@material-ui/core/styles';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import IconButton from '@material-ui/core/IconButton';
-import PowerIcon from '@material-ui/icons/Power';
-import PowerOffIcon from '@material-ui/icons/PowerOff';
-import SwapHorizIcon from '@material-ui/icons/SwapHoriz';
 
-const useStyles = makeStyles(theme => ({
-  container: {
-    paddingTop: 1,
-    paddingBottom: 1,
-    paddingRight: 6,
-    background: theme.palette.grey[100],
-  },
-  groupName: {
-    flexGrow: 1,
-    fontWeight: 700,
-    color: theme.palette.grey[800],
-  },
-  buttonOn: {
-    color: theme.palette.primary[700],
-  },
-  buttonOff: {
-    color: theme.palette.secondary.light,
-  },
-}));
+import GroupHeader from './GroupHeader';
+import OutletList from './OutletList';
 
 export default function GroupListItem(props) {
-  const classes = useStyles();
+  const { id, name, outlets, dispatchMessage } = props;
 
-  const { name, onActionOn, onActionOff, onActionToggle } = props;
+  const handleAction = (action) => () => {
+    dispatchMessage({ type: 'group', data: { id, action } });
+  }
 
   return (
-    <ListItem className={classes.container}>
-      <ListItemText className={classes.groupName} primary={name} disableTypography={true} />
-      <IconButton className={classes.buttonOff} onClick={onActionOff}>
-        <PowerOffIcon />
-      </IconButton>
-      <IconButton className={classes.buttonOn} onClick={onActionOn}>
-        <PowerIcon />
-      </IconButton>
-      <IconButton onClick={onActionToggle}>
-        <SwapHorizIcon />
-      </IconButton>
-    </ListItem>
+    <React.Fragment>
+      <GroupHeader
+        name={name}
+        onActionOn={handleAction('on')}
+        onActionOff={handleAction('off')}
+        onActionToggle={handleAction('toggle')}
+      />
+      <OutletList outlets={outlets} dispatchMessage={dispatchMessage} />
+    </React.Fragment>
   );
 }
 
 GroupListItem.propTypes = {
-  name: PropTypes.string.isRequired,
-  onActionOn: PropTypes.func.isRequired,
-  onActionOff: PropTypes.func.isRequired,
-  onActionToggle: PropTypes.func.isRequired,
+ id: PropTypes.string.isRequired,
+ name: PropTypes.string.isRequired,
+ outlets: PropTypes.array.isRequired,
+ dispatchMessage: PropTypes.func.isRequired,
 };
