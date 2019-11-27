@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { List, ListItem } from './List';
 import ListItemText from '@material-ui/core/ListItemText';
 
-import { formatDayTime, formatWeekdays } from '../util';
+import { formatDayTime, formatWeekdays } from '../schedule';
 
 export default function IntervalOptionsList(props) {
   const {

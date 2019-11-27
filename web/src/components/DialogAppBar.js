@@ -20,9 +20,6 @@ const useStyles = makeStyles(theme => ({
   toolbarButton: {
     color: theme.palette.common.white,
   },
-  container: {
-    marginTop: 64,
-  },
 }));
 
 export default function DialogAppBar(props) {

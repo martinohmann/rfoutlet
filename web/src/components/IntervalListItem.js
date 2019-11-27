@@ -6,7 +6,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Switch from '@material-ui/core/Switch';
 
 import IntervalActionsMenu from './IntervalActionsMenu';
-import { formatDayTimeInterval, formatWeekdays } from '../util';
+import { formatDayTimeInterval, formatWeekdays } from '../schedule';
 
 export default function IntervalListItem(props) {
   const { interval, onDelete, onEdit, onToggle } = props;

@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import List from '@material-ui/core/List';
 
 import OutletListItem from './OutletListItem';
+import { scheduleToApp } from '../schedule';
 
 const useStyles = makeStyles(theme => ({
   container: {
@@ -14,16 +15,21 @@ const useStyles = makeStyles(theme => ({
 export default function OutletList(props) {
   const classes = useStyles();
 
+  const { outlets } = props;
+
   return (
     <List className={classes.container}>
-      {props.outlets.map(outlet =>
-        <OutletListItem key={outlet.id} {...outlet} dispatchMessage={props.dispatchMessage} />
+      {outlets.map(outlet =>
+        <OutletListItem
+          key={outlet.id}
+          {...outlet}
+          schedule={scheduleToApp(outlet.schedule)}
+        />
       )}
     </List>
   );
 }
 
 OutletList.propTypes = {
- outlets: PropTypes.array.isRequired,
- dispatchMessage: PropTypes.func.isRequired,
+  outlets: PropTypes.array.isRequired,
 };

@@ -3,12 +3,13 @@ import PropTypes from 'prop-types';
 
 import GroupHeader from './GroupHeader';
 import OutletList from './OutletList';
+import websocket from '../websocket';
 
 export default function GroupListItem(props) {
-  const { id, name, outlets, dispatchMessage } = props;
+  const { id, name, outlets } = props;
 
   const handleAction = (action) => () => {
-    dispatchMessage({ type: 'group', data: { id, action } });
+    websocket.sendMessage({ type: 'group', data: { id, action } });
   }
 
   return (
@@ -19,7 +20,7 @@ export default function GroupListItem(props) {
         onActionOff={handleAction('off')}
         onActionToggle={handleAction('toggle')}
       />
-      <OutletList outlets={outlets} dispatchMessage={dispatchMessage} />
+      <OutletList outlets={outlets} />
     </React.Fragment>
   );
 }
@@ -28,5 +29,4 @@ GroupListItem.propTypes = {
  id: PropTypes.string.isRequired,
  name: PropTypes.string.isRequired,
  outlets: PropTypes.array.isRequired,
- dispatchMessage: PropTypes.func.isRequired,
 };
