@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useReducer } from 'react';
 import PropTypes from 'prop-types';
 
 import ConfigurationDialog from './ConfigurationDialog';
@@ -6,114 +6,87 @@ import IntervalOptionsList from './IntervalOptionsList';
 import IntervalTimePicker from './IntervalTimePicker';
 import WeekdaysDialog from './WeekdaysDialog';
 
-class IntervalDialog extends React.Component {
-  state = {
-    weekdays: [],
-    from: null,
-    to: null,
-    weekdaysDialogOpen: false,
+const reduceState = (state, changes) => ({ ...state, ...changes });
+
+const initState = (initialState) => {
+  const dialogState = {
     fromOpen: false,
     toOpen: false,
+    weekdaysOpen: false
   }
 
-  static getDerivedStateFromProps(props, state) {
-    if (props.id) {
-      return { 
-        from: props.from,
-        to: props.to,
-        weekdays: props.weekdays,
-      };
-    }
+  return { ...initialState, ...dialogState };
+}
 
-    return {
-      from: state.from,
-      to: state.to,
+export default function IntervalDialog(props) {
+  const { open, onClose, onDone, interval } = props;
+
+  const [state, setState] = useReducer(reduceState, interval, initState);
+
+  const handleOpen = (name, open) => () => {
+    setState({ [name + 'Open']: open });
+  }
+
+  const handleChange = (name) => (value) => {
+    setState({ [name]: value, [name + 'Open']: false });
+  }
+
+  const handleDone = () => {
+    const newInterval = {
+      ...interval,
       weekdays: state.weekdays,
+      from: state.from,
+      to: state.to
     };
-  }
 
-  isIntervalValid() {
-    const { from, to, weekdays } = this.state;
+    onDone(newInterval);
+  };
 
-    return from !== null && to !== null && weekdays.length > 0;
-  }
+  const isComplete = () => state.from && state.to && state.weekdays.length > 0;
 
-  handlePickerOpen = (name, open) => e => {
-    this.setState({ [name + 'Open']: open });
-  }
-
-  handlePickerChange = name => date => {
-    this.setState({ [name]: date, [name + 'Open']: false });
-  }
-
-  handleWeekdaysDialogOpen = open => () => {
-    this.setState({ weekdaysDialogOpen: open });
-  }
-
-  handleWeekdaysDialogDone = weekdays => {
-    this.setState({ weekdays, weekdaysDialogOpen: false });
-  }
-
-  handleApply = () => {
-    const { id, enabled, onClose } = this.props;
-    const { weekdays, from, to } = this.state;
-    const interval = { id, enabled, weekdays, from, to };
-
-    if (id) {
-      this.props.onIntervalUpdate(interval);
-    } else {
-      this.props.onIntervalCreate(interval);
-    }
-
-    onClose();
-  }
-
-  render() {
-    const { open, onClose, id } = this.props;
-    const { from, fromOpen, to, toOpen, weekdays, weekdaysDialogOpen } = this.state;
-
-    return (
-      <ConfigurationDialog
-        title={id ? 'Edit Interval' : 'Add Interval'}
-        open={open}
-        onClose={onClose}
-        onDone={this.handleApply}
-        doneButtonDisabled={!this.isIntervalValid()}
-        doneButtonText="Apply"
-      >
-        <IntervalOptionsList
-          weekdays={weekdays}
-          fromDayTime={from}
-          toDayTime={to}
-          onWeekdaysClick={this.handleWeekdaysDialogOpen(true)}
-          onFromDayTimeClick={this.handlePickerOpen('from', true)}
-          onToDayTimeClick={this.handlePickerOpen('to', true)}
-        />
-        <IntervalTimePicker
-          open={fromOpen}
-          value={from}
-          onChange={this.handlePickerChange('from')}
-          onClose={this.handlePickerOpen('from', false)}
-        />
-        <IntervalTimePicker
-          open={toOpen}
-          value={to}
-          onChange={this.handlePickerChange('to')}
-          onClose={this.handlePickerOpen('to', false)}
-        />
-        <WeekdaysDialog
-          open={weekdaysDialogOpen}
-          onClose={this.handleWeekdaysDialogOpen(false)}
-          onDone={this.handleWeekdaysDialogDone}
-          selected={weekdays}
-        />
-      </ConfigurationDialog>
-    );
-  }
+  return (
+    <ConfigurationDialog
+      title={state.id ? 'Edit Interval' : 'Add Interval'}
+      open={open}
+      onClose={onClose}
+      onDone={handleDone}
+      doneButtonDisabled={!isComplete()}
+      doneButtonText="Save"
+    >
+      <IntervalOptionsList
+        weekdays={state.weekdays}
+        fromDayTime={state.from}
+        toDayTime={state.to}
+        onWeekdaysClick={handleOpen('weekdays', true)}
+        onFromDayTimeClick={handleOpen('from', true)}
+        onToDayTimeClick={handleOpen('to', true)}
+      />
+      <IntervalTimePicker
+        open={state.fromOpen}
+        value={state.from}
+        onChange={handleChange('from')}
+        onClose={handleOpen('from', false)}
+      />
+      <IntervalTimePicker
+        open={state.toOpen}
+        value={state.to}
+        onChange={handleChange('to')}
+        onClose={handleOpen('to', false)}
+      />
+      <WeekdaysDialog
+        open={state.weekdaysOpen}
+        selected={state.weekdays}
+        key={interval.id}
+        onDone={handleChange('weekdays')}
+        onClose={handleOpen('weekdays', false)}
+      />
+    </ConfigurationDialog>
+  );
 }
 
 IntervalDialog.propTypes = {
+  open: PropTypes.bool.isRequired,
+  interval: PropTypes.object.isRequired,
   onClose: PropTypes.func.isRequired,
+  onDone: PropTypes.func.isRequired,
 };
-
-export default IntervalDialog;

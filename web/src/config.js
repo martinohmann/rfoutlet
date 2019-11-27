@@ -4,6 +4,8 @@ export default {
     url: 'https://github.com/martinohmann/rfoutlet',
   },
   ws: {
+    // While development proxying of websocket connections does not work
+    // properly, so we have to override the url here conditionally.
     url: (() => {
       const l = window.location;
 

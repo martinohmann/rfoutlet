@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import Fab from '@material-ui/core/Fab';
 import { List, ListItem } from './List';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -9,95 +9,106 @@ import AddIcon from '@material-ui/icons/Add';
 import ConfigurationDialog from './ConfigurationDialog';
 import IntervalListItem from './IntervalListItem';
 import IntervalDialog from './IntervalDialog';
-import { intervalToApi } from '../util';
+import { intervalToApi } from '../schedule';
+import websocket from '../websocket';
 
-const styles = theme => ({
+const useStyles = makeStyles(theme => ({
   fab: {
     position: 'absolute',
     bottom: theme.spacing(2),
     right: theme.spacing(2),
   },
-});
+}));
 
-class ScheduleDialog extends React.Component {
-  state = {
-    intervalDialogOpen: false,
-    currentInterval: null,
+const emptyInterval = {
+  id: null,
+  enabled: false,
+  from: null,
+  to: null,
+  weekdays: [],
+}
+
+export default function ScheduleDialog(props) {
+  const { open, onClose, schedule, outletId } = props;
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentInterval, setCurrentInterval] = useState(emptyInterval);
+
+  const handleDialogOpen = (interval) => () => {
+    setDialogOpen(true);
+    setCurrentInterval(interval);
   }
 
-  handleIntervalDialogOpen = (open, currentInterval) => () => {
-    this.setState({ intervalDialogOpen: open, currentInterval })
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setCurrentInterval(emptyInterval);
   }
 
-  handleIntervalCreate = interval => this.dispatchMessage('create', interval);
-
-  handleIntervalUpdate = interval => this.dispatchMessage('update', interval);
-
-  handleIntervalDelete = interval => () => this.dispatchMessage('delete', interval);
-
-  handleIntervalToggle = interval => () => {
+  const handleToggle = (interval) => () => {
     interval.enabled = !interval.enabled;
 
-    this.handleIntervalUpdate(interval);
+    sendMessage('update', interval);
   }
 
-  dispatchMessage = (action, interval) => {
+  const handleDelete = (interval) => () => sendMessage('delete', interval);
+
+  const handleSave = (interval) => {
+    sendMessage(interval.id ? 'update' : 'create', interval);
+
+    handleDialogClose();
+  }
+
+  const sendMessage = (action, interval) => {
     const data = {
       action: action,
-      id: this.props.outletId,
+      id: outletId,
       interval: intervalToApi(interval),
     }
 
-    this.props.dispatchMessage({ type: 'interval', data });
+    websocket.sendMessage({ type: 'interval', data });
   }
 
-  render() {
-    const { open, classes, onClose, schedule } = this.props;
-    const { intervalDialogOpen, currentInterval } = this.state;
+  const classes = useStyles();
 
-    return (
-      <ConfigurationDialog title="Schedule" open={open} onClose={onClose}>
-        <List>
-          {schedule.map((interval, key) => (
-            <IntervalListItem
-              key={key}
-              interval={interval}
-              onToggle={this.handleIntervalToggle(interval)}
-              onEdit={this.handleIntervalDialogOpen(true, interval)}
-              onDelete={this.handleIntervalDelete(interval)}
-            />
-          ))}
-          {schedule.length === 0 ? (
-            <ListItem>
-              <ListItemText primary="No intervals defined yet" />
-            </ListItem>
-          ) : ''}
-        </List>
-        <Fab
-          color="secondary"
-          className={classes.fab}
-          onClick={this.handleIntervalDialogOpen(true, null)}
-        >
-          <AddIcon />
-        </Fab>
-        <IntervalDialog
-          open={intervalDialogOpen}
-          onClose={this.handleIntervalDialogOpen(false, null)}
-          onIntervalCreate={this.handleIntervalCreate}
-          onIntervalUpdate={this.handleIntervalUpdate}
-          {...currentInterval}
-        />
-      </ConfigurationDialog>
-    );
-  }
+  return (
+    <ConfigurationDialog title="Schedule" open={open} onClose={onClose}>
+      <List>
+        {schedule.map((interval, key) => (
+          <IntervalListItem
+            key={key}
+            interval={interval}
+            onToggle={handleToggle(interval)}
+            onEdit={handleDialogOpen(interval)}
+            onDelete={handleDelete(interval)}
+          />
+        ))}
+        {schedule.length === 0 ? (
+          <ListItem>
+            <ListItemText primary="No intervals defined yet" />
+          </ListItem>
+        ) : ''}
+      </List>
+      <Fab
+        color="secondary"
+        className={classes.fab}
+        onClick={handleDialogOpen(emptyInterval)}
+      >
+        <AddIcon />
+      </Fab>
+      <IntervalDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        onDone={handleSave}
+        key={currentInterval.id}
+        interval={currentInterval}
+      />
+    </ConfigurationDialog>
+  );
 }
 
 ScheduleDialog.propTypes = {
-  classes: PropTypes.object.isRequired,
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   schedule: PropTypes.array.isRequired,
   outletId: PropTypes.string.isRequired,
 };
-
-export default withStyles(styles)(ScheduleDialog);
