@@ -53,8 +53,8 @@ clean: ## clean dependencies and artifacts
 	packr clean
 
 .PHONY: install
-install: ## install go commands into $GOPATH/bin
-	go install -ldflags="-s -w" main.go
+install: build ## install rfoutlet into $GOPATH/bin
+	mv rfoutlet $(GOPATH)/bin/rfoutlet
 
 .PHONY: images
 images: image-amd64 image-armv7 ## build docker images
