@@ -1,3 +1,5 @@
+// +build flaky
+
 package gpio_test
 
 import (
