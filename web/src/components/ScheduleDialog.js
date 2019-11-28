@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import Fab from '@material-ui/core/Fab';
-import { List, ListItem } from './List';
-import ListItemText from '@material-ui/core/ListItemText';
 import AddIcon from '@material-ui/icons/Add';
 
 import ConfigurationDialog from './ConfigurationDialog';
-import IntervalListItem from './IntervalListItem';
+import IntervalList from './IntervalList';
 import IntervalDialog from './IntervalDialog';
 import { intervalToApi } from '../schedule';
 import websocket from '../websocket';
@@ -34,7 +32,7 @@ export default function ScheduleDialog(props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentInterval, setCurrentInterval] = useState(emptyInterval);
 
-  const handleDialogOpen = (interval) => () => {
+  const handleDialogOpen = (interval) => {
     setDialogOpen(true);
     setCurrentInterval(interval);
   }
@@ -44,13 +42,13 @@ export default function ScheduleDialog(props) {
     setCurrentInterval(emptyInterval);
   }
 
-  const handleToggle = (interval) => () => {
+  const handleToggle = (interval) => {
     interval.enabled = !interval.enabled;
 
     sendMessage('update', interval);
   }
 
-  const handleDelete = (interval) => () => sendMessage('delete', interval);
+  const handleDelete = (interval) => sendMessage('delete', interval);
 
   const handleSave = (interval) => {
     sendMessage(interval.id ? 'update' : 'create', interval);
@@ -72,26 +70,16 @@ export default function ScheduleDialog(props) {
 
   return (
     <ConfigurationDialog title="Schedule" open={open} onClose={onClose}>
-      <List>
-        {schedule.map((interval, key) => (
-          <IntervalListItem
-            key={key}
-            interval={interval}
-            onToggle={handleToggle(interval)}
-            onEdit={handleDialogOpen(interval)}
-            onDelete={handleDelete(interval)}
-          />
-        ))}
-        {schedule.length === 0 ? (
-          <ListItem>
-            <ListItemText primary="No intervals defined yet" />
-          </ListItem>
-        ) : ''}
-      </List>
+      <IntervalList
+        intervals={schedule}
+        onToggle={handleToggle}
+        onEdit={handleDialogOpen}
+        onDelete={handleDelete}
+      />
       <Fab
         color="secondary"
         className={classes.fab}
-        onClick={handleDialogOpen(emptyInterval)}
+        onClick={() => handleDialogOpen(emptyInterval)}
       >
         <AddIcon />
       </Fab>

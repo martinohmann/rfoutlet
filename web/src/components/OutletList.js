@@ -2,6 +2,7 @@ import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
 import List from '@material-ui/core/List';
+import { NoItemsListItem } from './List';
 
 import OutletListItem from './OutletListItem';
 import { scheduleToApp } from '../schedule';
@@ -26,6 +27,12 @@ export default function OutletList(props) {
           schedule={scheduleToApp(outlet.schedule)}
         />
       )}
+      {outlets.length === 0 ? (
+        <NoItemsListItem
+          primary="No outlets configured for this group."
+          secondary="Check your rfoutlet config."
+        />
+      ) : ''}
     </List>
   );
 }
