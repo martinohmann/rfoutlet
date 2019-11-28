@@ -25,7 +25,7 @@ const useStyles = makeStyles(theme => ({
     color: theme.palette.grey[800],
   },
   buttonOn: {
-    color: theme.palette.primary[700],
+    color: theme.palette.primary.dark,
   },
   buttonOff: {
     color: theme.palette.secondary.light,

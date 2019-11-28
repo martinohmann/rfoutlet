@@ -4,12 +4,17 @@ gpio_pin: 17
 state_file: state.json
 group_order:
   - foo
+  - bar
 groups:
   foo:
     name: Foo
     outlets:
       - baz
       - bar
+  bar:
+    name: Bar
+    outlets:
+      - qux
 outlets:
   bar:
     name: Bar
@@ -23,3 +28,9 @@ outlets:
     code_off: 012
     protocol: 2
     pulse_length: 189
+  qux:
+    name: Qux
+    code_on: 345
+    code_off: 678
+    protocol: 3
+    pulse_length: 305
