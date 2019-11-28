@@ -92,17 +92,18 @@ This will create an image called `mohmann/rfoutlet:armv7`.
 Start the container and browse to `<raspberry-ip-address>:3333`:
 
 ```sh
-docker run --rm \
+docker run \
+    --rm \
     --privileged \
     -p 3333:3333 \
-    -v $(pwd)/configs/config.yml:/etc/rfoutlet/config.yml \
-    -v /dev/mem:/dev/mem \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v $(pwd)/configs/config.yml:/etc/rfoutlet/config.yml:ro \
     -v /dev/gpiomem:/dev/gpiomem \
     mohmann/rfoutlet:armv7
 ```
 
 The container has to run in privileged mode in order to be able to access
-`/dev/mem` and `/dev/gpiomem`.
+`/dev/gpiomem`.
 
 Commands
 --------
@@ -133,7 +134,7 @@ reference.
 
 If you want the outlet switch states to be persisted, pass the `--state-file` flag, e.g:
 
-```
+```sh
 sudo rfoutlet serve --state-file /var/lib/rfoutlet/state.json
 ```
 
@@ -173,10 +174,10 @@ sudo pacman -Sy go nodejs npm make
 On Raspbian the following should do (untested):
 
 ```sh
-wget https://storage.googleapis.com/golang/go1.11.1.linux-armv6l.tar.gz
-sudo tar -C /usr/local -xvf go1.11.1.linux-armv6l.tar.gz
-rm go1.11.1.linux-armv6l.tar.gz
-curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+wget https://storage.googleapis.com/golang/go1.13.1.linux-armv6l.tar.gz
+sudo tar -C /usr/local -xvf go1.13.1.linux-armv6l.tar.gz
+rm go1.13.1.linux-armv6l.tar.gz
+curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
 sudo apt-get install -y build-essential nodejs
 ```
 
