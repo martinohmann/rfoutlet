@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import { List, NoItemsListItem } from './List';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -21,11 +22,15 @@ const useStyles = makeStyles(theme => ({
 
 export default function Root() {
   const [groups, setGroups] = useState([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    websocket.onMessage(groups => {
+      setGroups(groups);
+      setLoaded(true);
+    });
     websocket.sendMessage({ type: 'status' });
-    websocket.onMessage(setGroups);
-  }, [])
+  }, []);
 
   const classes = useStyles();
 
@@ -39,7 +44,16 @@ export default function Root() {
           <GithubLink url={config.project.url} />
         </Toolbar>
       </AppBar>
-      <GroupList groups={groups} />
+      {loaded ? (
+        <GroupList groups={groups} />
+      ) : (
+        <List>
+          <NoItemsListItem
+            primary="Please wait."
+            secondary="Loading outlet states..."
+          />
+        </List>
+      )}
     </div>
   );
 }
