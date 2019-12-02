@@ -5,6 +5,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
 import Switch from '@material-ui/core/Switch';
 import EditIcon from '@material-ui/icons/Edit';
+import { useTranslation } from 'react-i18next';
 
 import ScheduleDialog from './ScheduleDialog';
 import { formatSchedule } from '../schedule';
@@ -23,9 +24,11 @@ export default function OutletListItem(props) {
 
   const hasEnabledIntervals = () => schedule.some(interval => interval.enabled);
 
+  const { t } = useTranslation();
+
   return (
     <ListItem>
-      <ListItemText primary={name} secondary={formatSchedule(schedule)} />
+      <ListItemText primary={name} secondary={formatSchedule(schedule, t)} />
       <ScheduleDialog
         outletId={id}
         schedule={schedule}

@@ -3,6 +3,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
 import List from '@material-ui/core/List';
 import { NoItemsListItem } from './List';
+import { useTranslation } from 'react-i18next';
 
 import OutletListItem from './OutletListItem';
 import { scheduleToApp } from '../schedule';
@@ -17,6 +18,7 @@ export default function OutletList(props) {
   const classes = useStyles();
 
   const { outlets } = props;
+  const { t } = useTranslation();
 
   return (
     <List className={classes.container}>
@@ -29,8 +31,8 @@ export default function OutletList(props) {
       )}
       {outlets.length === 0 ? (
         <NoItemsListItem
-          primary="No outlets configured for this group."
-          secondary="Check your rfoutlet config."
+          primary={t('No outlets configured for this group.')}
+          secondary={t('Check your rfoutlet config.')}
         />
       ) : ''}
     </List>

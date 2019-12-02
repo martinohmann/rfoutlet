@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
+import { useTranslation } from 'react-i18next';
 
 import ConfigurationDialog from './ConfigurationDialog';
 import IntervalList from './IntervalList';
@@ -67,9 +68,10 @@ export default function ScheduleDialog(props) {
   }
 
   const classes = useStyles();
+  const { t } = useTranslation();
 
   return (
-    <ConfigurationDialog title="Schedule" open={open} onClose={onClose}>
+    <ConfigurationDialog title={t('schedule')} open={open} onClose={onClose}>
       <IntervalList
         intervals={schedule}
         onToggle={handleToggle}

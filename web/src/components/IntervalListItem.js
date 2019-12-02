@@ -4,6 +4,7 @@ import { ListItem } from './List';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import Switch from '@material-ui/core/Switch';
+import { useTranslation } from 'react-i18next';
 
 import IntervalActionsMenu from './IntervalActionsMenu';
 import { formatDayTimeInterval, formatWeekdays } from '../schedule';
@@ -11,11 +12,13 @@ import { formatDayTimeInterval, formatWeekdays } from '../schedule';
 export default function IntervalListItem(props) {
   const { interval, onDelete, onEdit, onToggle } = props;
 
+  const { t } = useTranslation();
+
   return (
     <ListItem onClick={onEdit}>
       <ListItemText
         primary={formatDayTimeInterval(interval)}
-        secondary={formatWeekdays(interval.weekdays)}
+        secondary={formatWeekdays(interval.weekdays, t)}
       />
       <ListItemSecondaryAction>
         <Switch

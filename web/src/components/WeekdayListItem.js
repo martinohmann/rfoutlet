@@ -4,13 +4,15 @@ import { ListItem } from './List';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import Checkbox from '@material-ui/core/Checkbox';
+import { useTranslation } from 'react-i18next';
 
 export default function WeekdayListItem(props) {
   const { onToggle, weekday, selected } = props;
+  const { t } = useTranslation();
 
   return (
     <ListItem onClick={onToggle}>
-      <ListItemText primary={weekday} />
+      <ListItemText primary={t(weekday)} />
       <ListItemSecondaryAction>
         <Checkbox
           color="primary"

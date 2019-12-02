@@ -2,9 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { List, NoItemsListItem } from './List';
 import GroupListItem from './GroupListItem';
+import { useTranslation } from 'react-i18next';
 
 export default function GroupList(props) {
   const { groups } = props;
+  const { t } = useTranslation();
 
   return (
     <List>
@@ -13,8 +15,8 @@ export default function GroupList(props) {
       )}
       {groups.length === 0 ? (
         <NoItemsListItem
-          primary="No groups configured."
-          secondary="Check your rfoutlet config."
+          primary={t('no-groups-primary')}
+          secondary={t('no-groups-secondary')}
         />
       ) : ''}
     </List>

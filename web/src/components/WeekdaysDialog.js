@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { List } from './List';
+import { useTranslation } from 'react-i18next';
 
 import ConfigurationDialog from './ConfigurationDialog';
 import WeekdayListItem from './WeekdayListItem';
@@ -35,14 +36,16 @@ export default function WeekdaysDialog(props) {
 
   const handleDone = () => onDone(selected);
 
+  const { t } = useTranslation();
+
   return (
     <ConfigurationDialog
-      title="Select Weekdays"
+      title={t('select-weekdays')}
       open={open}
       onClose={onClose}
       onDone={handleDone}
       doneButtonDisabled={selected.length === 0}
-      doneButtonText="Done"
+      doneButtonText={t('done')}
     >
       <List>
         {weekdaysLong.map((weekday, key) => (

@@ -4,6 +4,7 @@ import { List, NoItemsListItem } from './List';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
+import { useTranslation } from 'react-i18next';
 
 import GithubLink from './GithubLink';
 import GroupList from './GroupList';
@@ -33,6 +34,7 @@ export default function Root() {
   }, []);
 
   const classes = useStyles();
+  const { t } = useTranslation();
 
   return (
     <div className={classes.root}>
@@ -49,8 +51,8 @@ export default function Root() {
       ) : (
         <List>
           <NoItemsListItem
-            primary="Please wait."
-            secondary="Loading outlet states..."
+            primary={t('loading-primary')}
+            secondary={t('loading-secondary')}
           />
         </List>
       )}

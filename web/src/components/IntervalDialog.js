@@ -1,5 +1,6 @@
 import React, { useReducer } from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 
 import ConfigurationDialog from './ConfigurationDialog';
 import IntervalOptionsList from './IntervalOptionsList';
@@ -44,14 +45,16 @@ export default function IntervalDialog(props) {
 
   const isComplete = () => state.from && state.to && state.weekdays.length > 0;
 
+  const { t } = useTranslation();
+
   return (
     <ConfigurationDialog
-      title={state.id ? 'Edit Interval' : 'Add Interval'}
+      title={t(state.id ? 'edit-interval' : 'add-interval')}
       open={open}
       onClose={onClose}
       onDone={handleDone}
       doneButtonDisabled={!isComplete()}
-      doneButtonText="Save"
+      doneButtonText={t('save')}
     >
       <IntervalOptionsList
         weekdays={state.weekdays}
