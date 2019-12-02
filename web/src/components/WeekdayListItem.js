@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ListItem } from './List';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Checkbox from '@material-ui/core/Checkbox';
 import { useTranslation } from 'react-i18next';
@@ -12,14 +12,14 @@ export default function WeekdayListItem(props) {
 
   return (
     <ListItem onClick={onToggle}>
-      <ListItemText primary={t(weekday)} />
-      <ListItemSecondaryAction>
+      <ListItemIcon>
         <Checkbox
           color="primary"
           onChange={onToggle}
           checked={selected}
         />
-      </ListItemSecondaryAction>
+      </ListItemIcon>
+      <ListItemText primary={t(weekday)} />
     </ListItem>
   );
 }
