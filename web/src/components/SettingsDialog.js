@@ -33,7 +33,7 @@ export default function SettingsDialog(props) {
           </ListItemIcon>
           <ListItemText primary={t('language-settings')} secondary={i18n.language !== 'en' ? 'Language Settings' : ''} />
         </ListItem>
-        <ListItem onClick={() => window.location.href = config.project.url}>
+        <ListItem onClick={() => window.open(config.project.url, '_blank')}>
           <ListItemIcon>
             <GitHubIcon />
           </ListItemIcon>

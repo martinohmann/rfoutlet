@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import { TimePicker } from '@material-ui/pickers';
+import { useTranslation } from 'react-i18next';
 
 const useStyles = makeStyles({
   timePicker: {
@@ -13,11 +14,16 @@ const useStyles = makeStyles({
 export default function IntervalTimePicker(props) {
   const classes = useStyles();
 
+  const { t } = useTranslation();
+
   return (
     <TimePicker
       className={classes.timePicker}
       clearable
       ampm={false}
+      okLabel={t('picker-label-ok')}
+      cancelLabel={t('picker-label-cancel')}
+      clearLabel={t('picker-label-clear')}
       {...props}
     />
   );

@@ -30,7 +30,7 @@ export default function LanguageDialog(props) {
                 checked={i18n.language === code}
               />
             </ListItemIcon>
-            <ListItemText primary={languages[code].name} secondary={code} />
+            <ListItemText primary={languages[code].displayName} secondary={code} />
           </ListItem>
         ))}
       </List>
