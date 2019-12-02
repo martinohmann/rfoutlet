@@ -8,6 +8,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
+import { useTranslation } from 'react-i18next';
 
 export default function IntervalActionsMenu(props) {
   const { onDelete, onEdit } = props;
@@ -23,6 +24,8 @@ export default function IntervalActionsMenu(props) {
     setAnchorElement(null);
     onDelete();
   }
+
+  const { t } = useTranslation();
 
   return (
     <span>
@@ -44,7 +47,7 @@ export default function IntervalActionsMenu(props) {
             <EditIcon />
           </ListItemIcon>
           <Typography variant="inherit" noWrap>
-            Edit
+            {t('edit')}
           </Typography>
         </MenuItem>
         <MenuItem onClick={handleDelete}>
@@ -52,7 +55,7 @@ export default function IntervalActionsMenu(props) {
             <DeleteIcon />
           </ListItemIcon>
           <Typography variant="inherit" noWrap>
-            Delete
+            {t('delete')}
           </Typography>
         </MenuItem>
       </Menu>

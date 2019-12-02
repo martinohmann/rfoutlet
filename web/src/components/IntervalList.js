@@ -2,9 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { List, NoItemsListItem } from './List';
 import IntervalListItem from './IntervalListItem';
+import { useTranslation } from 'react-i18next';
 
 export default function IntervalList(props) {
   const { intervals, onDelete, onEdit, onToggle } = props;
+  const { t } = useTranslation();
 
   return (
     <List>
@@ -19,8 +21,8 @@ export default function IntervalList(props) {
       ))}
       {intervals.length === 0 ? (
         <NoItemsListItem
-          primary="No intervals configured yet."
-          secondary="Tap '+' to create one."
+          primary={t('no-intervals-primary')}
+          secondary={t('no-intervals-secondary')}
         />
       ) : ''}
     </List>

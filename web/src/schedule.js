@@ -1,65 +1,61 @@
 import { DateTime } from 'luxon';
 
 export const weekdaysLong = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
 ];
 
 export const weekdaysShort = [
-  'Sun',
-  'Mon',
-  'Tue',
-  'Wed',
-  'Thu',
-  'Fri',
-  'Sat',
+  'sun',
+  'mon',
+  'tue',
+  'wed',
+  'thu',
+  'fri',
+  'sat',
 ];
 
 export function formatTime(date) {
   return date.toFormat('HH:mm');
 }
 
-export function formatDayTime(dayTime) {
+export function formatDayTime(dayTime, trans = ((k) => k)) {
   if (null === dayTime) {
-    return 'unset';
+    return trans('unset');
   }
 
   return formatTime(dayTime);
 }
 
-export function formatDayTimeInterval(interval) {
+export function formatDayTimeInterval(interval, trans = ((k) => k)) {
   if (null === interval) {
-    return 'unset';
+    return trans('unset');
   }
 
   return `${formatDayTime(interval.from)} - ${formatDayTime(interval.to)}`;
 }
 
-export function formatWeekdays(weekdays) {
+export function formatWeekdays(weekdays, trans = ((k) => k)) {
   if (weekdays.length === 0) {
-    return 'none';
+    return trans('unset');
   }
 
-  return weekdays.map(i => weekdaysShort[i]).join(', ');
+  return weekdays.map(i => trans(weekdaysShort[i])).join(', ');
 }
 
-export function formatSchedule(schedule) {
+export function formatSchedule(schedule, trans = ((k) => k)) {
   const intervals = schedule.filter(interval => interval.enabled);
 
   if (intervals.length === 0) {
     return '';
   }
 
-  if (intervals.length === 1) {
-    return `1 interval scheduled`;
-  }
-
-  return `${intervals.length} intervals scheduled`;
+  return trans('intervals-scheduled', { count: intervals.length });
 }
 
 function intervalToDateTimes({ from, to }) {

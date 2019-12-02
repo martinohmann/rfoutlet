@@ -4,9 +4,12 @@ import { List, NoItemsListItem } from './List';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
+import { useTranslation } from 'react-i18next';
+import IconButton from '@material-ui/core/IconButton';
+import SettingsIcon from '@material-ui/icons/Settings';
 
-import GithubLink from './GithubLink';
 import GroupList from './GroupList';
+import SettingsDialog from './SettingsDialog';
 import config from '../config';
 import websocket from '../websocket';
 
@@ -18,11 +21,15 @@ const useStyles = makeStyles(theme => ({
     flexGrow: 1,
     color: theme.palette.common.white,
   },
+  settings: {
+    color: theme.palette.common.white,
+  },
 }));
 
 export default function Root() {
   const [groups, setGroups] = useState([]);
   const [loaded, setLoaded] = useState(false);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
   useEffect(() => {
     websocket.onMessage(groups => {
@@ -32,7 +39,11 @@ export default function Root() {
     websocket.sendMessage({ type: 'status' });
   }, []);
 
+
+  const handleDialogOpen = (open) => () => setSettingsDialogOpen(open);
+
   const classes = useStyles();
+  const { t } = useTranslation();
 
   return (
     <div className={classes.root}>
@@ -41,7 +52,9 @@ export default function Root() {
           <Typography variant="h6" className={classes.title}>
             {config.project.name}
           </Typography>
-          <GithubLink url={config.project.url} />
+          <IconButton className={classes.settings} onClick={handleDialogOpen(true)}>
+            <SettingsIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
       {loaded ? (
@@ -49,11 +62,12 @@ export default function Root() {
       ) : (
         <List>
           <NoItemsListItem
-            primary="Please wait."
-            secondary="Loading outlet states..."
+            primary={t('loading-primary')}
+            secondary={t('loading-secondary')}
           />
         </List>
       )}
+      <SettingsDialog open={settingsDialogOpen} onClose={handleDialogOpen(false)} />
     </div>
   );
 }
