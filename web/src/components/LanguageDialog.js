@@ -7,12 +7,15 @@ import Radio from '@material-ui/core/Radio';
 import { useTranslation } from 'react-i18next';
 
 import ConfigurationDialog from './ConfigurationDialog';
-import { languages } from '../i18n';
+import { languages, fallbackLanguage } from '../i18n';
 
 export default function LanguageDialog(props) {
   const { open, onClose } = props;
 
   const { t, i18n } = useTranslation();
+
+  const codes = Object.keys(languages);
+  const hasTranslations = codes.includes(i18n.language);
 
   return (
     <ConfigurationDialog
@@ -21,13 +24,13 @@ export default function LanguageDialog(props) {
       onClose={onClose}
     >
       <List>
-        {Object.keys(languages).map(code => (
+        {codes.map(code => (
           <ListItem key={code} onClick={() => i18n.changeLanguage(code)}>
             <ListItemIcon>
               <Radio
                 color="primary"
                 onChange={() => i18n.changeLanguage(code)}
-                checked={i18n.language === code}
+                checked={code === i18n.language || (!hasTranslations && code === fallbackLanguage)}
               />
             </ListItemIcon>
             <ListItemText primary={languages[code].displayName} secondary={code} />

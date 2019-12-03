@@ -5,6 +5,8 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import translations_de_DE from './translations/de-DE.json';
 import translations_en_US from './translations/en-US.json';
 
+export const fallbackLanguage = 'en-US';
+
 export const languages = {
   'de-DE': {
     displayName: 'Deutsch',
@@ -18,7 +20,7 @@ export const languages = {
 
 const i18nConfig = {
   resources: languages,
-  fallbackLng: 'en',
+  fallbackLng: fallbackLanguage,
   debug: true,
   interpolation: {
     escapeValue: false,

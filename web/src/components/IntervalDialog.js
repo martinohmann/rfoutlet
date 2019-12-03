@@ -1,6 +1,7 @@
 import React, { useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
+import CheckIcon from '@material-ui/icons/Check';
 
 import ConfigurationDialog from './ConfigurationDialog';
 import IntervalOptionsList from './IntervalOptionsList';
@@ -49,12 +50,12 @@ export default function IntervalDialog(props) {
 
   return (
     <ConfigurationDialog
-      title={t(state.id ? 'edit-interval' : 'add-interval')}
+      title={state.id ? t('edit-interval') : t('add-interval')}
       open={open}
       onClose={onClose}
       onDone={handleDone}
       doneButtonDisabled={!isComplete()}
-      doneButtonText={t('save')}
+      doneButtonText={<CheckIcon />}
     >
       <IntervalOptionsList
         weekdays={state.weekdays}

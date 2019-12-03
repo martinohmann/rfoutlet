@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { List } from './List';
 import { useTranslation } from 'react-i18next';
+import CheckIcon from '@material-ui/icons/Check';
 
 import ConfigurationDialog from './ConfigurationDialog';
 import WeekdayListItem from './WeekdayListItem';
@@ -45,7 +46,7 @@ export default function WeekdaysDialog(props) {
       onClose={onClose}
       onDone={handleDone}
       doneButtonDisabled={selected.length === 0}
-      doneButtonText={t('done')}
+      doneButtonText={<CheckIcon />}
     >
       <List>
         {weekdaysLong.map((weekday, key) => (
