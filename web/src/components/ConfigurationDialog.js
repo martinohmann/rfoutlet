@@ -7,7 +7,6 @@ import DialogAppBar from './DialogAppBar';
 export default function ConfigurationDialog(props) {
   const {
     children,
-    open,
     onClose,
     onDone,
     doneButtonDisabled,
@@ -16,7 +15,7 @@ export default function ConfigurationDialog(props) {
   } = props;
 
   return (
-    <Dialog fullScreen open={open} onClose={onClose}>
+    <Dialog fullScreen open onClose={onClose}>
       <DialogAppBar
         title={title}
         onClose={onClose}
@@ -30,10 +29,9 @@ export default function ConfigurationDialog(props) {
 }
 
 ConfigurationDialog.propTypes = {
-  open: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
   onDone: PropTypes.func,
   title: PropTypes.string.isRequired,
   doneButtonDisabled: PropTypes.bool,
-  doneButtonText: PropTypes.string,
+  doneButtonText: PropTypes.any,
 };

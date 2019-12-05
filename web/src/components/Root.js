@@ -7,6 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import { useTranslation } from 'react-i18next';
 import IconButton from '@material-ui/core/IconButton';
 import SettingsIcon from '@material-ui/icons/Settings';
+import { Route, Switch, useHistory } from 'react-router-dom';
 
 import GroupList from './GroupList';
 import SettingsDialog from './SettingsDialog';
@@ -29,7 +30,7 @@ const useStyles = makeStyles(theme => ({
 export default function Root() {
   const [groups, setGroups] = useState([]);
   const [loaded, setLoaded] = useState(false);
-  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const history = useHistory();
 
   useEffect(() => {
     websocket.onMessage(groups => {
@@ -40,7 +41,7 @@ export default function Root() {
   }, []);
 
 
-  const handleDialogOpen = (open) => () => setSettingsDialogOpen(open);
+  const handleDialogOpen = (open) => () => history.push(open ? '/settings' : '/');
 
   const classes = useStyles();
   const { t } = useTranslation();
@@ -57,17 +58,23 @@ export default function Root() {
           </IconButton>
         </Toolbar>
       </AppBar>
-      {loaded ? (
-        <GroupList groups={groups} />
-      ) : (
-        <List>
-          <NoItemsListItem
-            primary={t('loading-primary')}
-            secondary={t('loading-secondary')}
-          />
-        </List>
-      )}
-      <SettingsDialog open={settingsDialogOpen} onClose={handleDialogOpen(false)} />
+      <Switch>
+        <Route path="/settings">
+          <SettingsDialog onClose={handleDialogOpen(false)} />
+        </Route>
+        <Route path="/">
+          {loaded ? (
+            <GroupList groups={groups} />
+          ) : (
+            <List>
+              <NoItemsListItem
+                primary={t('loading-primary')}
+                secondary={t('loading-secondary')}
+              />
+            </List>
+          )}
+        </Route>
+      </Switch>
     </div>
   );
 }

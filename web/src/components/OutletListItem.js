@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -6,6 +6,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Switch from '@material-ui/core/Switch';
 import SettingsIcon from '@material-ui/icons/Settings';
 import { useTranslation } from 'react-i18next';
+import { Route, useHistory } from 'react-router';
 
 import ScheduleDialog from './ScheduleDialog';
 import { formatSchedule } from '../schedule';
@@ -14,9 +15,9 @@ import websocket from '../websocket';
 export default function OutletListItem(props) {
   const { id, name, state, schedule } = props;
 
-  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const history = useHistory();
 
-  const handleDialogOpen = (open) => () => setScheduleDialogOpen(open);
+  const handleDialogOpen = (open) => () => history.push(open ? `/schedule/${id}` : '/');
 
   const handleToggle = () => {
     websocket.sendMessage({ type: 'outlet', data: { id, action: 'toggle' } });
@@ -29,12 +30,13 @@ export default function OutletListItem(props) {
   return (
     <ListItem>
       <ListItemText primary={name} secondary={formatSchedule(schedule, t)} onClick={handleDialogOpen(true)} />
-      <ScheduleDialog
-        outletId={id}
-        schedule={schedule}
-        open={scheduleDialogOpen}
-        onClose={handleDialogOpen(false)}
-      />
+      <Route path={`/schedule/${id}`}>
+        <ScheduleDialog
+          outletId={id}
+          schedule={schedule}
+          onClose={handleDialogOpen(false)}
+        />
+      </Route>
       <ListItemSecondaryAction>
         <Switch
           color="primary"

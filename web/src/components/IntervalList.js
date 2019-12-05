@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function IntervalList(props) {
   const { intervals, onDelete, onEdit, onToggle } = props;
+
   const { t } = useTranslation();
 
   return (

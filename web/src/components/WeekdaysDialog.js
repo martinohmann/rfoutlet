@@ -9,7 +9,7 @@ import WeekdayListItem from './WeekdayListItem';
 import { weekdaysLong } from '../schedule';
 
 export default function WeekdaysDialog(props) {
-  const { open, onClose, onDone } = props;
+  const { onClose, onChange } = props;
 
   const [selected, setSelected] = useState([...props.selected]);
 
@@ -35,14 +35,16 @@ export default function WeekdaysDialog(props) {
 
   const isSelected = (key) => selected.indexOf(key) !== -1;
 
-  const handleDone = () => onDone(selected);
+  const handleDone = () => {
+    onChange(selected);
+    onClose();
+  }
 
   const { t } = useTranslation();
 
   return (
     <ConfigurationDialog
       title={t('select-weekdays')}
-      open={open}
       onClose={onClose}
       onDone={handleDone}
       doneButtonDisabled={selected.length === 0}
@@ -63,7 +65,6 @@ export default function WeekdaysDialog(props) {
 }
 
 WeekdaysDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onDone: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
 };

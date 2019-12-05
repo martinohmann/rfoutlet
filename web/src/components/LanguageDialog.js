@@ -10,7 +10,7 @@ import ConfigurationDialog from './ConfigurationDialog';
 import { languages, fallbackLanguage } from '../i18n';
 
 export default function LanguageDialog(props) {
-  const { open, onClose } = props;
+  const { onClose } = props;
 
   const { t, i18n } = useTranslation();
 
@@ -20,7 +20,6 @@ export default function LanguageDialog(props) {
   return (
     <ConfigurationDialog
       title={t('choose-language')}
-      open={open}
       onClose={onClose}
     >
       <List>
@@ -42,6 +41,5 @@ export default function LanguageDialog(props) {
 }
 
 LanguageDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
 };

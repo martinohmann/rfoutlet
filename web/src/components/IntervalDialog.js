@@ -2,36 +2,45 @@ import React, { useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import CheckIcon from '@material-ui/icons/Check';
+import { Route, Switch, useHistory, useRouteMatch } from 'react-router';
 
 import ConfigurationDialog from './ConfigurationDialog';
 import IntervalOptionsList from './IntervalOptionsList';
 import IntervalTimePicker from './IntervalTimePicker';
 import WeekdaysDialog from './WeekdaysDialog';
 
-const reduceState = (state, changes) => ({ ...state, ...changes });
-
-const initState = (initialState) => {
-  const dialogState = {
-    fromOpen: false,
-    toOpen: false,
-    weekdaysOpen: false
-  }
-
-  return { ...initialState, ...dialogState };
+const emptyInterval = {
+  id: null,
+  enabled: false,
+  from: null,
+  to: null,
+  weekdays: [],
 }
 
+const findInterval = (intervals, id) => {
+  const interval = intervals.find(interval => interval.id === id);
+  if (interval === undefined) {
+    return emptyInterval;
+  }
+
+  return interval;
+}
+
+const reduceState = (state, changes) => ({ ...state, ...changes });
+
 export default function IntervalDialog(props) {
-  const { open, onClose, onDone, interval } = props;
+  const { onClose, onDone, intervals } = props;
 
-  const [state, setState] = useReducer(reduceState, interval, initState);
+  const history = useHistory();
+  const { path, url, params } = useRouteMatch();
 
-  const handleOpen = (name, open) => () => {
-    setState({ [name + 'Open']: open });
-  }
+  const interval = findInterval(intervals, params.intervalId);
 
-  const handleChange = (name) => (value) => {
-    setState({ [name]: value, [name + 'Open']: false });
-  }
+  const [state, setState] = useReducer(reduceState, interval);
+
+  const handleOpen = (name, open) => () => history.push(open ? `${url}/${name}` : url);
+
+  const handleChange = (name) => (value) => setState({ [name]: value });
 
   const handleDone = () => {
     const newInterval = {
@@ -51,7 +60,6 @@ export default function IntervalDialog(props) {
   return (
     <ConfigurationDialog
       title={state.id ? t('edit-interval') : t('add-interval')}
-      open={open}
       onClose={onClose}
       onDone={handleDone}
       doneButtonDisabled={!isComplete()}
@@ -65,32 +73,36 @@ export default function IntervalDialog(props) {
         onFromDayTimeClick={handleOpen('from', true)}
         onToDayTimeClick={handleOpen('to', true)}
       />
-      <IntervalTimePicker
-        open={state.fromOpen}
-        value={state.from}
-        onChange={handleChange('from')}
-        onClose={handleOpen('from', false)}
-      />
-      <IntervalTimePicker
-        open={state.toOpen}
-        value={state.to}
-        onChange={handleChange('to')}
-        onClose={handleOpen('to', false)}
-      />
-      <WeekdaysDialog
-        open={state.weekdaysOpen}
-        selected={state.weekdays}
-        key={interval.id}
-        onDone={handleChange('weekdays')}
-        onClose={handleOpen('weekdays', false)}
-      />
+      <Switch>
+        <Route path={`${path}/from`}>
+          <IntervalTimePicker
+            value={state.from}
+            onChange={handleChange('from')}
+            onClose={handleOpen('from', false)}
+          />
+        </Route>
+        <Route path={`${path}/to`}>
+          <IntervalTimePicker
+            value={state.to}
+            onChange={handleChange('to')}
+            onClose={handleOpen('to', false)}
+          />
+        </Route>
+        <Route path={`${path}/weekdays`}>
+          <WeekdaysDialog
+            selected={state.weekdays}
+            key={interval.id}
+            onChange={handleChange('weekdays')}
+            onClose={handleOpen('weekdays', false)}
+          />
+        </Route>
+      </Switch>
     </ConfigurationDialog>
   );
 }
 
 IntervalDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
-  interval: PropTypes.object.isRequired,
   onClose: PropTypes.func.isRequired,
   onDone: PropTypes.func.isRequired,
+  intervals: PropTypes.array.isRequired,
 };

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
 import { useTranslation } from 'react-i18next';
+import { Route, useHistory, useRouteMatch } from 'react-router';
 
 import ConfigurationDialog from './ConfigurationDialog';
 import IntervalList from './IntervalList';
@@ -19,29 +20,17 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const emptyInterval = {
-  id: null,
-  enabled: false,
-  from: null,
-  to: null,
-  weekdays: [],
-}
-
 export default function ScheduleDialog(props) {
-  const { open, onClose, schedule, outletId } = props;
+  const { onClose, schedule, outletId } = props;
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [currentInterval, setCurrentInterval] = useState(emptyInterval);
+  const history = useHistory();
+  const { path, url } = useRouteMatch();
 
-  const handleDialogOpen = (interval) => {
-    setDialogOpen(true);
-    setCurrentInterval(interval);
-  }
+  const handleEditDialogOpen = (interval) => history.push(`${url}/interval/${interval.id}`);
 
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-    setCurrentInterval(emptyInterval);
-  }
+  const handleCreateDialogOpen = () => history.push(`${url}/interval/new`);
+
+  const handleDialogClose = () => history.push(url);
 
   const handleToggle = (interval) => {
     interval.enabled = !interval.enabled;
@@ -71,33 +60,32 @@ export default function ScheduleDialog(props) {
   const { t } = useTranslation();
 
   return (
-    <ConfigurationDialog title={t('schedule')} open={open} onClose={onClose}>
+    <ConfigurationDialog title={t('schedule')} onClose={onClose}>
       <IntervalList
         intervals={schedule}
         onToggle={handleToggle}
-        onEdit={handleDialogOpen}
+        onEdit={handleEditDialogOpen}
         onDelete={handleDelete}
       />
       <Fab
         color="secondary"
         className={classes.fab}
-        onClick={() => handleDialogOpen(emptyInterval)}
+        onClick={handleCreateDialogOpen}
       >
         <AddIcon />
       </Fab>
-      <IntervalDialog
-        open={dialogOpen}
-        onClose={handleDialogClose}
-        onDone={handleSave}
-        key={currentInterval.id}
-        interval={currentInterval}
-      />
+      <Route path={`${path}/interval/:intervalId`}>
+        <IntervalDialog
+          onClose={handleDialogClose}
+          onDone={handleSave}
+          intervals={schedule}
+        />
+      </Route>
     </ConfigurationDialog>
   );
 }
 
 ScheduleDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   schedule: PropTypes.array.isRequired,
   outletId: PropTypes.string.isRequired,
