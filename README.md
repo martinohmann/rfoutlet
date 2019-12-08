@@ -79,6 +79,17 @@ check out the code in [cmd/sniff.go](cmd/sniff.go) and
 go get -u github.com/martinohmann/rfoutlet/pkg/gpio
 ```
 
+### Using docker-compose
+
+Simply run:
+
+```sh
+docker-compose up -d
+```
+
+This will build the image and start the `rfoutlet` container listening on port
+`3333`.
+
 ### Using docker
 
 Build the image for armv7:
