@@ -65,4 +65,4 @@ image-amd64: ## build amd64 image
 
 .PHONY: image-armv7
 image-armv7: ## build armv7 image
-	docker build -t mohmann/rfoutlet:armv7 .
+	docker build --build-arg GOARCH=arm --build-arg GOARM=7 -t mohmann/rfoutlet:armv7 .
