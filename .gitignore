@@ -1,4 +1,5 @@
 /.cover
+/.env
 /coverage.txt
 /dist
 /rfoutlet
