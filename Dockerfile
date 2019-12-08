@@ -19,8 +19,8 @@ ADD Makefile .
 
 RUN make deps
 
-ARG GOARCH=arm
-ARG GOARM=7
+ARG GOARCH
+ARG GOARM
 
 COPY --from=node-builder /web/build web/build
 

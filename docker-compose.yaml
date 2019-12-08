@@ -1,0 +1,22 @@
+---
+version: '3'
+services:
+  rfoutlet:
+    container_name: rfoutlet
+    build: .
+    ports:
+      - '3333:3333'
+    devices:
+      - /dev/gpiomem
+    volumes:
+      - /etc/localtime
+      - ${CONFIG_PATH:-./configs/config.yml}:/etc/rfoutlet/config.yml:ro
+      # set "state_file: state.json" in config.yml to store
+      # the outlet state in the state-storage volume to
+      # persist it across container restarts.
+      - state-storage:/state-storage
+    working_dir: /state-storage
+    privileged: true
+    restart: unless-stopped
+volumes:
+  state-storage: {}
