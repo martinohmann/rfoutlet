@@ -84,16 +84,20 @@ function dateTimeToDayTime(dateTime) {
   return { hour, minute };
 }
 
-export function scheduleToApp(schedule) {
-  return (schedule || []).map(interval => {
-    const { from, to } = intervalToDateTimes(interval);
+function intervalToApp(interval) {
+  const { from, to } = intervalToDateTimes(interval);
 
-    return { ...interval, from, to };
-  });
+  return { ...interval, from, to };
 }
 
 export function intervalToApi(interval) {
   const { from, to } = dateTimesToInterval(interval);
 
   return { ...interval, from, to };
+}
+
+export function scheduleToApp(schedule) {
+  const intervals = schedule || [];
+
+  return intervals.map(interval => intervalToApp(interval));
 }

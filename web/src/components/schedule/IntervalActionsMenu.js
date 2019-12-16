@@ -10,9 +10,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import { useTranslation } from 'react-i18next';
 
-export default function IntervalActionsMenu(props) {
-  const { onDelete, onEdit } = props;
-
+export default function IntervalActionsMenu({ onDelete, onEdit }) {
   const [anchorElement, setAnchorElement] = React.useState();
 
   const handleEdit = () => {

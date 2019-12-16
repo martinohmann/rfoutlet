@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { List } from './List';
+import { List, ListItem } from '../List';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import Checkbox from '@material-ui/core/Checkbox';
 import { useTranslation } from 'react-i18next';
 import CheckIcon from '@material-ui/icons/Check';
-
-import ConfigurationDialog from './ConfigurationDialog';
-import WeekdayListItem from './WeekdayListItem';
-import { weekdaysLong } from '../schedule';
+import Dialog from '../Dialog';
+import { weekdaysLong } from '../../schedule';
 
 export default function WeekdaysDialog(props) {
   const { onClose, onChange } = props;
@@ -43,7 +44,7 @@ export default function WeekdaysDialog(props) {
   const { t } = useTranslation();
 
   return (
-    <ConfigurationDialog
+    <Dialog
       title={t('select-weekdays')}
       onClose={onClose}
       onDone={handleDone}
@@ -60,11 +61,35 @@ export default function WeekdaysDialog(props) {
           />
         ))}
       </List>
-    </ConfigurationDialog>
+    </Dialog>
   );
 }
 
 WeekdaysDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
+};
+
+
+const WeekdayListItem = ({ onToggle, weekday, selected }) => {
+  const { t } = useTranslation();
+
+  return (
+    <ListItem onClick={onToggle}>
+      <ListItemIcon>
+        <Checkbox
+          color="primary"
+          onChange={onToggle}
+          checked={selected}
+        />
+      </ListItemIcon>
+      <ListItemText primary={t(weekday)} />
+    </ListItem>
+  );
+};
+
+WeekdayListItem.propTypes = {
+  onToggle: PropTypes.func.isRequired,
+  selected: PropTypes.bool.isRequired,
+  weekday: PropTypes.string.isRequired,
 };

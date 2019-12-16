@@ -1,10 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Dialog from '@material-ui/core/Dialog';
-
+import MaterialDialog from '@material-ui/core/Dialog';
 import DialogAppBar from './DialogAppBar';
 
-export default function ConfigurationDialog(props) {
+export default function Dialog(props) {
   const {
     children,
     onClose,
@@ -15,7 +14,7 @@ export default function ConfigurationDialog(props) {
   } = props;
 
   return (
-    <Dialog fullScreen open onClose={onClose}>
+    <MaterialDialog fullScreen open onClose={onClose}>
       <DialogAppBar
         title={title}
         onClose={onClose}
@@ -24,11 +23,11 @@ export default function ConfigurationDialog(props) {
         doneButtonText={doneButtonText}
       />
       {children}
-    </Dialog>
+    </MaterialDialog>
   );
 }
 
-ConfigurationDialog.propTypes = {
+Dialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   onDone: PropTypes.func,
   title: PropTypes.string.isRequired,

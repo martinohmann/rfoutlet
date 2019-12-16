@@ -3,11 +3,13 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import CheckIcon from '@material-ui/icons/Check';
 import { Route, Switch, useHistory, useRouteMatch } from 'react-router';
-
-import ConfigurationDialog from './ConfigurationDialog';
-import IntervalOptionsList from './IntervalOptionsList';
+import { useCurrentInterval, useCurrentOutlet } from '../../hooks';
+import Dialog from '../Dialog';
+import IntervalSettingsList from './IntervalSettingsList';
 import IntervalTimePicker from './IntervalTimePicker';
 import WeekdaysDialog from './WeekdaysDialog';
+import websocket from '../../websocket';
+import { intervalToApi } from '../../schedule';
 
 const emptyInterval = {
   id: null,
@@ -15,26 +17,15 @@ const emptyInterval = {
   from: null,
   to: null,
   weekdays: [],
-}
-
-const findInterval = (intervals, id) => {
-  const interval = intervals.find(interval => interval.id === id);
-  if (interval === undefined) {
-    return emptyInterval;
-  }
-
-  return interval;
-}
+};
 
 const reduceState = (state, changes) => ({ ...state, ...changes });
 
-export default function IntervalDialog(props) {
-  const { onClose, onDone, intervals } = props;
-
+export default function IntervalSettingsDialog({ onClose }) {
   const history = useHistory();
-  const { path, url, params } = useRouteMatch();
-
-  const interval = findInterval(intervals, params.intervalId);
+  const { path, url } = useRouteMatch();
+  const outlet = useCurrentOutlet();
+  const interval = useCurrentInterval() || emptyInterval;
 
   const [state, setState] = useReducer(reduceState, interval);
 
@@ -50,22 +41,34 @@ export default function IntervalDialog(props) {
       to: state.to
     };
 
-    onDone(newInterval);
-  };
+    sendMessage(newInterval.id ? 'update' : 'create', newInterval);
+
+    onClose();
+  }
+
+  const sendMessage = (action, interval) => {
+    const data = {
+      action: action,
+      id: outlet.id,
+      interval: intervalToApi(interval),
+    }
+
+    websocket.sendMessage({ type: 'interval', data });
+  }
 
   const isComplete = () => state.from && state.to && state.weekdays.length > 0;
 
   const { t } = useTranslation();
 
   return (
-    <ConfigurationDialog
+    <Dialog
       title={state.id ? t('edit-interval') : t('add-interval')}
       onClose={onClose}
       onDone={handleDone}
       doneButtonDisabled={!isComplete()}
       doneButtonText={<CheckIcon />}
     >
-      <IntervalOptionsList
+      <IntervalSettingsList
         weekdays={state.weekdays}
         fromDayTime={state.from}
         toDayTime={state.to}
@@ -97,12 +100,10 @@ export default function IntervalDialog(props) {
           />
         </Route>
       </Switch>
-    </ConfigurationDialog>
+    </Dialog>
   );
 }
 
-IntervalDialog.propTypes = {
+IntervalSettingsDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
-  onDone: PropTypes.func.isRequired,
-  intervals: PropTypes.array.isRequired,
 };

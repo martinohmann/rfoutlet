@@ -4,13 +4,12 @@ import { makeStyles } from '@material-ui/core/styles';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
 import { useTranslation } from 'react-i18next';
-import { Route, useHistory, useRouteMatch } from 'react-router';
-
-import ConfigurationDialog from './ConfigurationDialog';
+import { Redirect, useHistory, useRouteMatch } from 'react-router';
 import IntervalList from './IntervalList';
-import IntervalDialog from './IntervalDialog';
-import { intervalToApi } from '../schedule';
-import websocket from '../websocket';
+import Dialog from '../Dialog';
+import { intervalToApi } from '../../schedule';
+import { useCurrentOutlet } from '../../hooks';
+import websocket from '../../websocket';
 
 const useStyles = makeStyles(theme => ({
   fab: {
@@ -20,17 +19,15 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export default function ScheduleDialog(props) {
-  const { onClose, schedule, outletId } = props;
-
+export default function OutletScheduleDialog({ onClose }) {
   const history = useHistory();
-  const { path, url } = useRouteMatch();
+  const { url } = useRouteMatch();
+
+  const outlet = useCurrentOutlet();
 
   const handleEditDialogOpen = (interval) => history.push(`${url}/interval/${interval.id}`);
 
   const handleCreateDialogOpen = () => history.push(`${url}/interval/new`);
-
-  const handleDialogClose = () => history.push(url);
 
   const handleToggle = (interval) => {
     interval.enabled = !interval.enabled;
@@ -40,16 +37,10 @@ export default function ScheduleDialog(props) {
 
   const handleDelete = (interval) => sendMessage('delete', interval);
 
-  const handleSave = (interval) => {
-    sendMessage(interval.id ? 'update' : 'create', interval);
-
-    handleDialogClose();
-  }
-
   const sendMessage = (action, interval) => {
     const data = {
       action: action,
-      id: outletId,
+      id: outlet.id,
       interval: intervalToApi(interval),
     }
 
@@ -59,10 +50,14 @@ export default function ScheduleDialog(props) {
   const classes = useStyles();
   const { t } = useTranslation();
 
+  if (!outlet) {
+    return <Redirect to="/" />;
+  }
+
   return (
-    <ConfigurationDialog title={t('schedule')} onClose={onClose}>
+    <Dialog title={t('schedule')} onClose={onClose}>
       <IntervalList
-        intervals={schedule}
+        intervals={outlet.schedule}
         onToggle={handleToggle}
         onEdit={handleEditDialogOpen}
         onDelete={handleDelete}
@@ -74,19 +69,10 @@ export default function ScheduleDialog(props) {
       >
         <AddIcon />
       </Fab>
-      <Route path={`${path}/interval/:intervalId`}>
-        <IntervalDialog
-          onClose={handleDialogClose}
-          onDone={handleSave}
-          intervals={schedule}
-        />
-      </Route>
-    </ConfigurationDialog>
+    </Dialog>
   );
 }
 
-ScheduleDialog.propTypes = {
+OutletScheduleDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
-  schedule: PropTypes.array.isRequired,
-  outletId: PropTypes.string.isRequired,
 };
