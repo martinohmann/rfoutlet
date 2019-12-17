@@ -7,9 +7,8 @@ import { HashRouter } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
 import { GroupProvider } from './Context';
 import i18n from './i18n';
-import websocket from './websocket';
-import { convertToApp } from './util';
 import Routes from './components/Routes';
+import dispatcher from './dispatcher';
 
 const theme = createMuiTheme({
   palette: {
@@ -35,11 +34,12 @@ export default function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    websocket.onMessage(groups => {
-      setGroups(convertToApp(groups));
+    dispatcher.addMessageListener(groups => {
+      setGroups(groups);
       setReady(true);
     });
-    websocket.sendMessage({ type: 'status' });
+
+    dispatcher.dispatchStatusMessage();
   }, []);
 
   return (

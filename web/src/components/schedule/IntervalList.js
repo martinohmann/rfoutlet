@@ -6,7 +6,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Switch from '@material-ui/core/Switch';
 import { useTranslation } from 'react-i18next';
 import IntervalActionsMenu from './IntervalActionsMenu';
-import { formatDayTimeInterval, formatWeekdays } from '../../schedule';
+import { formatDayTimeInterval, formatWeekdays } from '../../format';
 
 export default function IntervalList({ intervals, onDelete, onEdit, onToggle }) {
   const { t } = useTranslation();

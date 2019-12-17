@@ -11,8 +11,8 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import { NoItemsListItem } from '../List';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router';
-import { formatSchedule } from '../../schedule';
-import websocket from '../../websocket';
+import { formatSchedule } from '../../format';
+import dispatcher from '../../dispatcher';
 
 const useStyles = makeStyles(theme => ({
   container: {
@@ -52,7 +52,7 @@ const OutletListItem = ({ id, name, state, schedule }) => {
   const history = useHistory();
   const { t } = useTranslation();
 
-  const handleToggle = () => websocket.sendMessage({ type: 'outlet', data: { id, action: 'toggle' } });
+  const handleToggle = () => dispatcher.dispatchOutletMessage(id, 'toggle');
 
   const hasEnabledIntervals = () => schedule.some(interval => interval.enabled);
 

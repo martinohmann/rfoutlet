@@ -7,7 +7,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { useTranslation } from 'react-i18next';
 import CheckIcon from '@material-ui/icons/Check';
 import Dialog from '../Dialog';
-import { weekdaysLong } from '../../schedule';
+import { weekdaysLong } from '../../format';
 
 export default function WeekdaysDialog(props) {
   const { onClose, onChange } = props;

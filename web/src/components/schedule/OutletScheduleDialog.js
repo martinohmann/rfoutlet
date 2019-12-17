@@ -7,9 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { Redirect, useHistory, useRouteMatch } from 'react-router';
 import IntervalList from './IntervalList';
 import Dialog from '../Dialog';
-import { intervalToApi } from '../../schedule';
 import { useCurrentOutlet } from '../../hooks';
-import websocket from '../../websocket';
+import dispatcher from '../../dispatcher';
 
 const useStyles = makeStyles(theme => ({
   fab: {
@@ -32,19 +31,13 @@ export default function OutletScheduleDialog({ onClose }) {
   const handleToggle = (interval) => {
     interval.enabled = !interval.enabled;
 
-    sendMessage('update', interval);
+    dispatchMessage('update', interval);
   }
 
-  const handleDelete = (interval) => sendMessage('delete', interval);
+  const handleDelete = (interval) => dispatchMessage('delete', interval);
 
-  const sendMessage = (action, interval) => {
-    const data = {
-      action: action,
-      id: outlet.id,
-      interval: intervalToApi(interval),
-    }
-
-    websocket.sendMessage({ type: 'interval', data });
+  const dispatchMessage = (action, interval) => {
+    dispatcher.dispatchIntervalMessage(outlet.id, action, interval);
   }
 
   const classes = useStyles();

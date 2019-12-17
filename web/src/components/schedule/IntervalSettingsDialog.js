@@ -8,8 +8,7 @@ import Dialog from '../Dialog';
 import IntervalSettingsList from './IntervalSettingsList';
 import IntervalTimePicker from './IntervalTimePicker';
 import WeekdaysDialog from './WeekdaysDialog';
-import websocket from '../../websocket';
-import { intervalToApi } from '../../schedule';
+import dispatcher from '../../dispatcher';
 
 const emptyInterval = {
   id: null,
@@ -41,19 +40,11 @@ export default function IntervalSettingsDialog({ onClose }) {
       to: state.to
     };
 
-    sendMessage(newInterval.id ? 'update' : 'create', newInterval);
+    const action = newInterval.id ? 'update' : 'create';
+
+    dispatcher.dispatchIntervalMessage(outlet.id, action, newInterval);
 
     onClose();
-  }
-
-  const sendMessage = (action, interval) => {
-    const data = {
-      action: action,
-      id: outlet.id,
-      interval: intervalToApi(interval),
-    }
-
-    websocket.sendMessage({ type: 'interval', data });
   }
 
   const isComplete = () => state.from && state.to && state.weekdays.length > 0;

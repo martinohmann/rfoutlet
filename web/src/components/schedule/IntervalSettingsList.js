@@ -7,7 +7,7 @@ import DateRangeIcon from '@material-ui/icons/DateRange';
 import TimerIcon from '@material-ui/icons/Timer';
 import TimerOffIcon from '@material-ui/icons/TimerOff';
 import { useTranslation } from 'react-i18next';
-import { formatDayTime, formatWeekdays } from '../../schedule';
+import { formatDayTime, formatWeekdays } from '../../format';
 
 export default function IntervalSettingsList(props) {
   const {

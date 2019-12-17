@@ -4,7 +4,7 @@ import { List, NoItemsListItem } from '../List';
 import { useTranslation } from 'react-i18next';
 import GroupHeader from './GroupHeader';
 import OutletList from './OutletList';
-import websocket from '../../websocket';
+import dispatcher from '../../dispatcher';
 
 export default function GroupList({ groups }) {
   const { t } = useTranslation();
@@ -30,8 +30,8 @@ GroupList.propTypes = {
 
 const GroupListItem = ({ id, name, outlets }) => {
   const handleAction = (action) => () => {
-    websocket.sendMessage({ type: 'group', data: { id, action } });
-  }
+    dispatcher.dispatchGroupMessage(id, action);
+  };
 
   return (
     <>
