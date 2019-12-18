@@ -1,5 +1,3 @@
-import { DateTime } from 'luxon';
-
 export const weekdaysLong = [
   'sunday',
   'monday',
@@ -20,16 +18,12 @@ export const weekdaysShort = [
   'sat',
 ];
 
-export function formatTime(date) {
-  return date.toFormat('HH:mm');
-}
-
 export function formatDayTime(dayTime, trans = ((k) => k)) {
   if (null === dayTime) {
     return trans('unset');
   }
 
-  return formatTime(dayTime);
+  return dayTime.toFormat('HH:mm');
 }
 
 export function formatDayTimeInterval(interval, trans = ((k) => k)) {
@@ -56,44 +50,4 @@ export function formatSchedule(schedule, trans = ((k) => k)) {
   }
 
   return trans('intervals-scheduled', { count: intervals.length });
-}
-
-function intervalToDateTimes({ from, to }) {
-  return {
-    from: dayTimeToDateTime(from),
-    to: dayTimeToDateTime(to),
-  };
-}
-
-function dayTimeToDateTime(dayTime) {
-  const { hour, minute } = dayTime;
-
-  return DateTime.local().set({ hour, minute });
-}
-
-function dateTimesToInterval({ from, to }) {
-  return {
-    from: dateTimeToDayTime(from),
-    to: dateTimeToDayTime(to),
-  };
-}
-
-function dateTimeToDayTime(dateTime) {
-  const { hour, minute } = dateTime;
-
-  return { hour, minute };
-}
-
-export function scheduleToApp(schedule) {
-  return (schedule || []).map(interval => {
-    const { from, to } = intervalToDateTimes(interval);
-
-    return { ...interval, from, to };
-  });
-}
-
-export function intervalToApi(interval) {
-  const { from, to } = dateTimesToInterval(interval);
-
-  return { ...interval, from, to };
 }

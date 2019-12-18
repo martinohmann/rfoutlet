@@ -20,6 +20,7 @@ export default function IntervalTimePicker(props) {
     <TimePicker
       className={classes.timePicker}
       clearable
+      open
       ampm={false}
       okLabel={t('picker-label-ok')}
       cancelLabel={t('picker-label-cancel')}
@@ -30,7 +31,6 @@ export default function IntervalTimePicker(props) {
 }
 
 IntervalTimePicker.propTypes = {
-  open: PropTypes.bool.isRequired,
   onChange: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
 };

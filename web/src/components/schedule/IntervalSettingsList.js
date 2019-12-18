@@ -1,16 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { List, ListItem } from './List';
+import { List, ListItem } from '../List';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import DateRangeIcon from '@material-ui/icons/DateRange';
 import TimerIcon from '@material-ui/icons/Timer';
 import TimerOffIcon from '@material-ui/icons/TimerOff';
 import { useTranslation } from 'react-i18next';
+import { formatDayTime, formatWeekdays } from '../../format';
 
-import { formatDayTime, formatWeekdays } from '../schedule';
-
-export default function IntervalOptionsList(props) {
+export default function IntervalSettingsList(props) {
   const {
     weekdays,
     fromDayTime,
@@ -46,7 +45,7 @@ export default function IntervalOptionsList(props) {
   );
 }
 
-IntervalOptionsList.propTypes = {
+IntervalSettingsList.propTypes = {
     weekdays: PropTypes.array,
     fromDayTime: PropTypes.object,
     toDayTime: PropTypes.object,

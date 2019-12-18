@@ -42,11 +42,11 @@ export default function DialogAppBar(props) {
         <Typography variant="h6" className={classes.title}>
           {title}
         </Typography>
-        {onDone !== undefined ? (
+        {onDone !== undefined && (
           <Button disabled={doneButtonDisabled} onClick={onDone} className={classes.toolbarButton}>
             {doneButtonText}
           </Button>
-        ) : null}
+        )}
       </Toolbar>
     </AppBar>
   );

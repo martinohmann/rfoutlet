@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { List } from './List';
+import { List, ListItem } from '../List';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import Checkbox from '@material-ui/core/Checkbox';
 import { useTranslation } from 'react-i18next';
 import CheckIcon from '@material-ui/icons/Check';
-
-import ConfigurationDialog from './ConfigurationDialog';
-import WeekdayListItem from './WeekdayListItem';
-import { weekdaysLong } from '../schedule';
+import Dialog from '../Dialog';
+import { weekdaysLong } from '../../format';
 
 export default function WeekdaysDialog(props) {
-  const { open, onClose, onDone } = props;
+  const { onClose, onChange } = props;
 
   const [selected, setSelected] = useState([...props.selected]);
 
@@ -35,14 +36,16 @@ export default function WeekdaysDialog(props) {
 
   const isSelected = (key) => selected.indexOf(key) !== -1;
 
-  const handleDone = () => onDone(selected);
+  const handleDone = () => {
+    onChange(selected);
+    onClose();
+  }
 
   const { t } = useTranslation();
 
   return (
-    <ConfigurationDialog
+    <Dialog
       title={t('select-weekdays')}
-      open={open}
       onClose={onClose}
       onDone={handleDone}
       doneButtonDisabled={selected.length === 0}
@@ -58,12 +61,35 @@ export default function WeekdaysDialog(props) {
           />
         ))}
       </List>
-    </ConfigurationDialog>
+    </Dialog>
   );
 }
 
 WeekdaysDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onDone: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
+
+const WeekdayListItem = ({ onToggle, weekday, selected }) => {
+  const { t } = useTranslation();
+
+  return (
+    <ListItem onClick={onToggle}>
+      <ListItemIcon>
+        <Checkbox
+          color="primary"
+          onChange={onToggle}
+          checked={selected}
+        />
+      </ListItemIcon>
+      <ListItemText primary={t(weekday)} />
+    </ListItem>
+  );
+};
+
+WeekdayListItem.propTypes = {
+  onToggle: PropTypes.func.isRequired,
+  selected: PropTypes.bool.isRequired,
+  weekday: PropTypes.string.isRequired,
 };

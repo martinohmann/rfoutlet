@@ -18,16 +18,22 @@ const useStyles = makeStyles(theme => ({
 export function List(props) {
   const classes = useStyles();
 
-  return <MaterialList component="nav" className={classes.container} {...props} />
+  return (
+    <MaterialList
+      component="nav"
+      className={classes.container}
+      {...props}
+    />
+  );
 }
 
 export function ListItem(props) {
   return (
-    <React.Fragment>
+    <>
       <MaterialListItem {...props} />
       <Divider />
-    </React.Fragment>
-  )
+    </>
+  );
 }
 
 export function NoItemsListItem(props) {
@@ -35,10 +41,7 @@ export function NoItemsListItem(props) {
 
   return (
     <MaterialListItem>
-      <MaterialListItemText
-        className={classes.noGroupsText}
-        {...props}
-      />
+      <MaterialListItemText className={classes.noGroupsText} {...props} />
     </MaterialListItem>
-  )
+  );
 }
