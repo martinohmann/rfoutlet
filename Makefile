@@ -1,5 +1,7 @@
 .DEFAULT_GOAL := help
 
+TEST_FLAGS ?= -race
+
 .PHONY: help
 help:
 	@grep -E '^[a-zA-Z0-9-]+:.*?## .*$$' Makefile | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "[32m%-23s[0m %s\n", $$1, $$2}'
@@ -36,7 +38,7 @@ pack-app: ## pack app using packr
 
 .PHONY: test
 test: ## run tests
-	go test -race -tags="$(TAGS)" $$(go list ./... | grep -v /vendor/)
+	go test $(TEST_FLAGS) $$(go list ./... | grep -v /vendor/)
 
 .PHONY: vet
 vet: ## run go vet
@@ -44,7 +46,8 @@ vet: ## run go vet
 
 .PHONY: coverage
 coverage: ## generate code coverage
-	scripts/coverage
+	go test $(TEST_FLAGS) -covermode=atomic -coverprofile=coverage.txt $$(go list ./... | grep -v /vendor/)
+	go tool cover -func=coverage.txt
 
 .PHONY: clean
 clean: ## clean dependencies and artifacts
