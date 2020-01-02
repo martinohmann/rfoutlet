@@ -1,6 +1,7 @@
 .DEFAULT_GOAL := help
 
 TEST_FLAGS ?= -race
+PKGS ?= $(shell go list ./... | grep -v /vendor/)
 
 .PHONY: help
 help:
@@ -38,15 +39,15 @@ pack-app: ## pack app using packr
 
 .PHONY: test
 test: ## run tests
-	go test $(TEST_FLAGS) $$(go list ./... | grep -v /vendor/)
+	go test $(TEST_FLAGS) $(PKGS)
 
 .PHONY: vet
 vet: ## run go vet
-	go vet $$(go list ./... | grep -v /vendor/)
+	go vet $(PKGS)
 
 .PHONY: coverage
 coverage: ## generate code coverage
-	go test $(TEST_FLAGS) -covermode=atomic -coverprofile=coverage.txt $$(go list ./... | grep -v /vendor/)
+	go test $(TEST_FLAGS) -covermode=atomic -coverprofile=coverage.txt $(PKGS)
 	go tool cover -func=coverage.txt
 
 .PHONY: clean
