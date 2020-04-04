@@ -31,7 +31,7 @@ build: ## build rfoutlet
 
 .PHONY: build-app
 build-app: ## build node app
-	cd web && npm build
+	cd web && npm run build
 
 .PHONY: pack-app
 pack-app: ## pack app using packr
