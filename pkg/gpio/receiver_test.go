@@ -5,50 +5,33 @@ import (
 
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
+	"github.com/warthog618/gpiod"
 )
 
-type testNotification struct {
-	pin   uint
-	value uint
-}
-
 type testWatcher struct {
-	pin          uint
-	closed       bool
-	notification chan testNotification
+	closed bool
+	events chan gpiod.LineEvent
 }
 
 func newTestWatcher() *testWatcher {
-	return &testWatcher{notification: make(chan testNotification, 32)}
+	return &testWatcher{events: make(chan gpiod.LineEvent)}
 }
 
-func (w *testWatcher) Watch() (uint, uint) {
-	notification := <-w.notification
-	return notification.pin, notification.value
+func (w *testWatcher) Watch() <-chan gpiod.LineEvent {
+	return w.events
 }
 
-func (w *testWatcher) AddPin(pin uint) {
-	w.pin = pin
-}
-
-func (w *testWatcher) Close() {
+func (w *testWatcher) Close() error {
+	defer close(w.events)
 	w.closed = true
+	return nil
 }
 
 func TestReceiverClose(t *testing.T) {
 	watcher := newTestWatcher()
 
-	receiver := gpio.NewNativeReceiver(1, watcher)
+	receiver := gpio.NewNativeReceiver(watcher)
 	assert.Nil(t, receiver.Close())
 
 	assert.True(t, watcher.closed)
-}
-
-func TestReceiverWatcherAddPin(t *testing.T) {
-	watcher := newTestWatcher()
-
-	receiver := gpio.NewNativeReceiver(17, watcher)
-	defer receiver.Close()
-
-	assert.Equal(t, uint(17), watcher.pin)
 }

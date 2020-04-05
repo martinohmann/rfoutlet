@@ -3,7 +3,7 @@ package gpio
 import (
 	"time"
 
-	"github.com/brian-armstrong/gpio"
+	"github.com/warthog618/gpiod"
 )
 
 const (
@@ -28,13 +28,6 @@ type CodeReceiver interface {
 	Close() error
 }
 
-// Watcher defines the interface for a gpio pin watcher
-type Watcher interface {
-	Watch() (uint, uint)
-	AddPin(uint)
-	Close()
-}
-
 // NativeReceiver type definition
 type NativeReceiver struct {
 	gpioPin     uint
@@ -49,15 +42,12 @@ type NativeReceiver struct {
 }
 
 // NewNativeReceiver create a new receiver on the gpio pin using watcher
-func NewNativeReceiver(gpioPin uint, watcher Watcher) *NativeReceiver {
+func NewNativeReceiver(watcher Watcher) *NativeReceiver {
 	r := &NativeReceiver{
-		gpioPin: gpioPin,
 		watcher: watcher,
 		done:    make(chan bool, 1),
 		result:  make(chan ReceiveResult, receiveResultChanLen),
 	}
-
-	r.watcher.AddPin(r.gpioPin)
 
 	go r.watch()
 
@@ -65,21 +55,19 @@ func NewNativeReceiver(gpioPin uint, watcher Watcher) *NativeReceiver {
 }
 
 func (r *NativeReceiver) watch() {
-	var lastVal uint
+	var lastEventType gpiod.LineEventType
 
 	for {
 		select {
 		case <-r.done:
 			close(r.result)
 			return
-		default:
-			pin, val := r.watcher.Watch()
-
-			if pin == r.gpioPin && val != lastVal {
+		case event := <-r.watcher.Watch():
+			if lastEventType != event.Type {
 				r.handleEvent()
 			}
 
-			lastVal = val
+			lastEventType = event.Type
 		}
 	}
 }
@@ -170,10 +158,13 @@ func (r *NativeReceiver) receiveProtocol(protocol int) bool {
 }
 
 // NewReceiver create a new receiver on the gpio pin
-func NewReceiver(gpioPin uint) CodeReceiver {
-	w := gpio.NewWatcher()
+func NewReceiver(chip *gpiod.Chip, offset int) (CodeReceiver, error) {
+	w, err := NewWatcher(chip, offset)
+	if err != nil {
+		return nil, err
+	}
 
-	return NewNativeReceiver(gpioPin, w)
+	return NewNativeReceiver(w), nil
 }
 
 func diff(a, b int64) int64 {

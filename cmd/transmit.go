@@ -7,7 +7,6 @@ import (
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/spf13/cobra"
 	"github.com/warthog618/gpiod"
-	"github.com/warthog618/gpiod/device/rpi"
 )
 
 func NewTransmitCommand() *cobra.Command {
@@ -56,22 +55,20 @@ func (o *TransmitOptions) Run(args []string) error {
 	}
 	defer chip.Close()
 
-	pin, err := rpi.Pin(fmt.Sprintf("gpio%d", o.GpioPin))
+	transmitter, err := gpio.NewTransmitter(chip, int(o.GpioPin))
 	if err != nil {
 		return err
 	}
-
-	t := gpio.NewTransmitter(chip, pin)
-	defer t.Close()
+	defer transmitter.Close()
 
 	fmt.Printf("transmitting code=%d pulseLength=%d protocol=%d\n", code, o.PulseLength, o.Protocol)
 
-	err = t.Transmit(code, o.Protocol, o.PulseLength)
+	err = transmitter.Transmit(code, o.Protocol, o.PulseLength)
 	if err != nil {
 		return err
 	}
 
-	t.Wait()
+	transmitter.Wait()
 
 	return nil
 }

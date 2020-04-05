@@ -8,7 +8,6 @@ import (
 
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
-	"github.com/warthog618/gpiod"
 )
 
 type testPin struct {
@@ -29,10 +28,6 @@ func (p *testPin) SetValue(value int) error {
 	default:
 		panic(fmt.Sprintf("unexpected value: %d", value))
 	}
-	return nil
-}
-
-func (p *testPin) Reconfigure(options ...gpiod.LineConfig) error {
 	return nil
 }
 
@@ -77,15 +72,4 @@ func TestTransmitterClose(t *testing.T) {
 	assert.Nil(t, transmitter.Close())
 
 	assert.True(t, pin.closed)
-}
-
-func TestNullTransmitInvalidProtocol(t *testing.T) {
-	transmitter := gpio.NewNullTransmitter()
-	defer transmitter.Close()
-
-	err := transmitter.Transmit(0x1, 999, 190)
-
-	if assert.Error(t, err) {
-		assert.Equal(t, errors.New("Protocol 999 does not exist"), err)
-	}
 }

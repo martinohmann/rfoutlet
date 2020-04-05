@@ -3,7 +3,6 @@ module github.com/martinohmann/rfoutlet
 go 1.12
 
 require (
-	github.com/brian-armstrong/gpio v0.0.0-20171230005827-3846dfc1984f
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.4.0
 	github.com/gobuffalo/packr v1.30.1

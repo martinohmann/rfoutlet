@@ -7,6 +7,7 @@ import (
 
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/spf13/cobra"
+	"github.com/warthog618/gpiod"
 )
 
 func NewSniffCommand() *cobra.Command {
@@ -18,8 +19,8 @@ func NewSniffCommand() *cobra.Command {
 		Use:   "sniff",
 		Short: "Sniff codes sent out to remote controlled outlets",
 		Long:  "The sniff command can be used to sniff codes sent out to remote controlled outlets.",
-		Run: func(cmd *cobra.Command, _ []string) {
-			options.Run()
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return options.Run()
 		},
 	}
 
@@ -36,11 +37,20 @@ func (o *SniffOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().UintVar(&o.GpioPin, "gpio-pin", o.GpioPin, "gpio pin to sniff on")
 }
 
-func (o *SniffOptions) Run() {
+func (o *SniffOptions) Run() error {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	receiver := gpio.NewReceiver(o.GpioPin)
+	chip, err := gpiod.NewChip("gpiochip0")
+	if err != nil {
+		return err
+	}
+	defer chip.Close()
+
+	receiver, err := gpio.NewReceiver(chip, int(o.GpioPin))
+	if err != nil {
+		return err
+	}
 	defer receiver.Close()
 
 	for {
@@ -50,7 +60,9 @@ func (o *SniffOptions) Run() {
 				res.Code, res.PulseLength, res.BitLength, res.Protocol)
 		case <-interrupt:
 			fmt.Println("received interrupt")
-			return
+			return nil
 		}
 	}
+
+	return nil
 }

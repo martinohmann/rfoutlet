@@ -3,42 +3,54 @@
 package gpio_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
+	"github.com/warthog618/gpiod"
 )
 
 type testWatcherPin struct {
-	p uint
-	w *testWatcher
+	offset int
+	w      *testWatcher
 }
 
-func newTestWatcherPin(pin uint, watcher *testWatcher) *testWatcherPin {
-	return &testWatcherPin{pin, watcher}
+func newTestWatcherPin(offset int, watcher *testWatcher) *testWatcherPin {
+	return &testWatcherPin{offset, watcher}
 }
 
-func (p *testWatcherPin) High() error {
-	p.w.notification <- testNotification{p.p, 1}
+func (p *testWatcherPin) SetValue(value int) error {
+	var eventType gpiod.LineEventType
+	switch value {
+	case 0:
+		eventType = gpiod.LineEventFallingEdge
+	case 1:
+		eventType = gpiod.LineEventRisingEdge
+	default:
+		panic(fmt.Sprintf("invalid value: %d", value))
+	}
+
+	p.w.events <- gpiod.LineEvent{
+		Offset: p.offset,
+		Type:   eventType,
+	}
+
 	return nil
 }
 
-func (p *testWatcherPin) Low() error {
-	p.w.notification <- testNotification{p.p, 0}
+func (p *testWatcherPin) Close() error {
 	return nil
 }
-
-func (p *testWatcherPin) Close() {}
 
 func TestTransmitReceive(t *testing.T) {
-	var gpioPin uint = 17
 	gpio.TransmitRetries = 15
 
 	watcher := newTestWatcher()
-	pin := newTestWatcherPin(gpioPin, watcher)
+	pin := newTestWatcherPin(10, watcher)
 
-	receiver := gpio.NewNativeReceiver(gpioPin, watcher)
+	receiver := gpio.NewNativeReceiver(watcher)
 	defer receiver.Close()
 
 	transmitter := gpio.NewNativeTransmitter(pin)

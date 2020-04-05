@@ -2,7 +2,6 @@ package gpio
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/warthog618/gpiod"
@@ -36,6 +35,12 @@ type transmission struct {
 	pulseLength uint
 }
 
+// Pin defines the interface for a pin that can be sent on.
+type Pin interface {
+	SetValue(value int) error
+	Close() error
+}
+
 // CodeTransmitter defines the interface for a rf code transmitter.
 type CodeTransmitter interface {
 	Transmit(uint64, int, uint) error
@@ -53,8 +58,6 @@ type NativeTransmitter struct {
 
 // NewNativeTransmitter create a native transmitter on the gpio pin.
 func NewNativeTransmitter(pin Pin) *NativeTransmitter {
-	pin.Reconfigure(gpiod.AsOutput(0))
-
 	t := &NativeTransmitter{
 		pin:          pin,
 		transmission: make(chan transmission, transmissionChanLen),
@@ -114,7 +117,6 @@ func (t *NativeTransmitter) transmit(trans transmission) {
 // Close stops started goroutines and closes the gpio pin
 func (t *NativeTransmitter) Close() error {
 	t.done <- true
-	t.pin.Reconfigure(gpiod.AsInput)
 	t.pin.Close()
 
 	return nil
@@ -196,15 +198,11 @@ func (t *NullTransmitter) Wait() {}
 
 // NewTransmitter creates a NativeTransmitter when /dev/gpiochip0 is available,
 // NullTransmitter otherwise.
-func NewTransmitter(chip *gpiod.Chip, offset int) CodeTransmitter {
-	if _, err := os.Stat("/dev/gpiochip0"); os.IsNotExist(err) {
-		return NewNullTransmitter()
-	}
-
-	line, err := chip.RequestLine(offset)
+func NewTransmitter(chip *gpiod.Chip, offset int) (CodeTransmitter, error) {
+	line, err := chip.RequestLine(offset, gpiod.AsOutput(0))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return NewNativeTransmitter(line)
+	return NewNativeTransmitter(line), nil
 }
