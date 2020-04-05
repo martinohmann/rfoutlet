@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/spf13/cobra"
 	"github.com/warthog618/gpiod"
@@ -12,7 +13,7 @@ import (
 
 func NewSniffCommand() *cobra.Command {
 	options := &SniffOptions{
-		GpioPin: gpio.DefaultReceivePin,
+		GpioPin: config.DefaultReceivePin,
 	}
 
 	cmd := &cobra.Command{

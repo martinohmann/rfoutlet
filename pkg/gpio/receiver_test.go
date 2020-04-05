@@ -30,7 +30,7 @@ func (w *testWatcher) Close() error {
 func TestReceiverClose(t *testing.T) {
 	watcher := newTestWatcher()
 
-	receiver := gpio.NewNativeReceiver(watcher)
+	receiver := gpio.NewWatcherReceiver(watcher)
 	assert.Nil(t, receiver.Close())
 
 	assert.True(t, watcher.closed)

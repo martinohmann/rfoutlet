@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/spf13/cobra"
 	"github.com/warthog618/gpiod"
@@ -11,9 +12,9 @@ import (
 
 func NewTransmitCommand() *cobra.Command {
 	options := &TransmitOptions{
-		PulseLength: gpio.DefaultPulseLength,
-		GpioPin:     gpio.DefaultReceivePin,
-		Protocol:    gpio.DefaultProtocol,
+		PulseLength: config.DefaultPulseLength,
+		GpioPin:     config.DefaultReceivePin,
+		Protocol:    config.DefaultProtocol,
 	}
 
 	cmd := &cobra.Command{

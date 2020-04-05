@@ -2,17 +2,12 @@ package gpio
 
 import "github.com/warthog618/gpiod"
 
-// Watcher defines the interface for a gpio pin watcher
-type Watcher interface {
-	Watch() <-chan gpiod.LineEvent
-	Close() error
-}
-
 type watcher struct {
-	pin    *gpiod.Line
+	pin    Closer
 	events chan gpiod.LineEvent
 }
 
+// NewWatcher creates a new Watcher for the given pin offset of chip.
 func NewWatcher(chip *gpiod.Chip, offset int) (Watcher, error) {
 	w := &watcher{
 		events: make(chan gpiod.LineEvent),
@@ -35,10 +30,12 @@ func (w *watcher) handleEvent(event gpiod.LineEvent) {
 	}
 }
 
+// Watch implements Watcher.
 func (w *watcher) Watch() <-chan gpiod.LineEvent {
 	return w.events
 }
 
+// Close implements Watcher.
 func (w *watcher) Close() error {
 	defer close(w.events)
 	return w.pin.Close()

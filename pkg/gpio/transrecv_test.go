@@ -45,15 +45,13 @@ func (p *testWatcherPin) Close() error {
 }
 
 func TestTransmitReceive(t *testing.T) {
-	gpio.TransmitRetries = 15
-
 	watcher := newTestWatcher()
 	pin := newTestWatcherPin(10, watcher)
 
-	receiver := gpio.NewNativeReceiver(watcher)
+	receiver := gpio.NewWatcherReceiver(watcher)
 	defer receiver.Close()
 
-	transmitter := gpio.NewNativeTransmitter(pin)
+	transmitter := gpio.NewPinTransmitter(pin, gpio.TransmissionRetries(15))
 	defer transmitter.Close()
 
 	tests := []struct {

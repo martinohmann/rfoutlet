@@ -8,26 +8,26 @@ import (
 )
 
 const (
-	// DefaultTransmitPin defines the default gpio pin for transmitting rf codes
-	DefaultTransmitPin uint = 17
-
-	// DefaultReceivePin defines the default gpio pin for receiving rf codes
-	DefaultReceivePin uint = 27
-
-	// DefaultProtocol defines the default rf protocol
-	DefaultProtocol int = 1
-
-	// DefaultPulseLength defines the default pulse length
-	DefaultPulseLength uint = 189
+	// DefaultTransmissionRetries defines how many times a code should be
+	// transmitted in a row by default.
+	DefaultTransmissionRetries = 10
 
 	transmissionChanLen = 32
 	bitLength           = 24
 )
 
-// TransmitRetries defines how many times a code should be transmitted in a
-// row. The higher the value, the more likely it is that an outlet actually
-// received the code.
-var TransmitRetries int = 10
+// TransmitterOption is the signature of funcs that are used to configure a
+// *Transmitter.
+type TransmitterOption func(*Transmitter)
+
+// TransmissionRetries configures how many times a code should be transmitted
+// in a row. The higher the value, the more likely it is that an outlet
+// actually received the code.
+func TransmissionRetries(retries int) func(*Transmitter) {
+	return func(t *Transmitter) {
+		t.retries = retries
+	}
+}
 
 type transmission struct {
 	code        uint64
@@ -35,34 +35,42 @@ type transmission struct {
 	pulseLength uint
 }
 
-// Pin defines the interface for a pin that can be sent on.
-type Pin interface {
-	SetValue(value int) error
-	Close() error
-}
-
-// CodeTransmitter defines the interface for a rf code transmitter.
-type CodeTransmitter interface {
-	Transmit(uint64, int, uint) error
-	Wait()
-	Close() error
-}
-
-// NativeTransmitter type definition.
-type NativeTransmitter struct {
-	pin          Pin
+// Transmitter type definition.
+type Transmitter struct {
+	pin          OutputPin
 	transmission chan transmission
 	transmitted  chan bool
 	done         chan bool
+	retries      int
 }
 
-// NewNativeTransmitter create a native transmitter on the gpio pin.
-func NewNativeTransmitter(pin Pin) *NativeTransmitter {
-	t := &NativeTransmitter{
+// NewTransmitter creates a Transmitter which attaches to the chip's pin at
+// offset.
+func NewTransmitter(chip *gpiod.Chip, offset int, options ...TransmitterOption) (*Transmitter, error) {
+	line, err := chip.RequestLine(offset, gpiod.AsOutput(0))
+	if err != nil {
+		return nil, err
+	}
+
+	return NewPinTransmitter(line, options...), nil
+}
+
+// NewTransmitter creates a *Transmitter that sends on pin.
+func NewPinTransmitter(pin OutputPin, options ...TransmitterOption) *Transmitter {
+	t := &Transmitter{
 		pin:          pin,
 		transmission: make(chan transmission, transmissionChanLen),
 		transmitted:  make(chan bool, transmissionChanLen),
 		done:         make(chan bool, 1),
+		retries:      DefaultTransmissionRetries,
+	}
+
+	for _, option := range options {
+		option(t)
+	}
+
+	if t.retries <= 0 {
+		t.retries = 1
 	}
 
 	go t.watch()
@@ -76,7 +84,7 @@ func NewNativeTransmitter(pin Pin) *NativeTransmitter {
 // This method returns immediately. The code is transmitted in the background.
 // If you need to ensure that a code has been fully transmitted, call Wait()
 // after calling Transmit().
-func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength uint) error {
+func (t *Transmitter) Transmit(code uint64, protocol int, pulseLength uint) error {
 	if protocol < 1 || protocol > len(Protocols) {
 		return fmt.Errorf("Protocol %d does not exist", protocol)
 	}
@@ -96,8 +104,8 @@ func (t *NativeTransmitter) Transmit(code uint64, protocol int, pulseLength uint
 }
 
 // transmit performs the acutal transmission of the remote control code.
-func (t *NativeTransmitter) transmit(trans transmission) {
-	for retry := 0; retry < TransmitRetries; retry++ {
+func (t *Transmitter) transmit(trans transmission) {
+	for retry := 0; retry < t.retries; retry++ {
 		for j := bitLength - 1; j >= 0; j-- {
 			if trans.code&(1<<uint64(j)) > 0 {
 				t.send(trans.protocol.One, trans.pulseLength)
@@ -115,7 +123,7 @@ func (t *NativeTransmitter) transmit(trans transmission) {
 }
 
 // Close stops started goroutines and closes the gpio pin
-func (t *NativeTransmitter) Close() error {
+func (t *Transmitter) Close() error {
 	t.done <- true
 	t.pin.Close()
 
@@ -123,12 +131,12 @@ func (t *NativeTransmitter) Close() error {
 }
 
 // Wait blocks until a code is fully transmitted.
-func (t *NativeTransmitter) Wait() {
+func (t *Transmitter) Wait() {
 	<-t.transmitted
 }
 
 // watch listens on a channel and processes incoming transmissions.
-func (t *NativeTransmitter) watch() {
+func (t *Transmitter) watch() {
 	for {
 		select {
 		case <-t.done:
@@ -141,11 +149,16 @@ func (t *NativeTransmitter) watch() {
 }
 
 // send sends a sequence of high and low pulses on the gpio pin.
-func (t *NativeTransmitter) send(pulses HighLow, pulseLength uint) {
+func (t *Transmitter) send(pulses HighLow, pulseLength uint) {
 	t.pin.SetValue(1)
 	sleepFor(time.Microsecond * time.Duration(pulseLength*pulses.High))
 	t.pin.SetValue(0)
 	sleepFor(time.Microsecond * time.Duration(pulseLength*pulses.Low))
+}
+
+// NewDiscardingTransmitter creates a *Transmitter that does not send anything.
+func NewDiscardingTransmitter() *Transmitter {
+	return NewPinTransmitter(&FakeOutputPin{})
 }
 
 // sleepFor sleeps for given duration using busy waiting. The godoc for
@@ -167,42 +180,4 @@ func sleepFor(duration time.Duration) {
 			break
 		}
 	}
-}
-
-// NullTransmitter type definition.
-type NullTransmitter struct{}
-
-// NewNullTransmitter create a transmitter that does nothing except logging the
-// transmissions. This is mainly useful for development on systems where
-// /dev/gpiomem is not available.
-func NewNullTransmitter() *NullTransmitter {
-	return &NullTransmitter{}
-}
-
-// Transmit does nothing.
-func (t *NullTransmitter) Transmit(code uint64, protocol int, pulseLength uint) error {
-	if protocol < 1 || protocol > len(Protocols) {
-		return fmt.Errorf("Protocol %d does not exist", protocol)
-	}
-
-	return nil
-}
-
-// Close does nothing.
-func (t *NullTransmitter) Close() error {
-	return nil
-}
-
-// Wait does nothing.
-func (t *NullTransmitter) Wait() {}
-
-// NewTransmitter creates a NativeTransmitter when /dev/gpiochip0 is available,
-// NullTransmitter otherwise.
-func NewTransmitter(chip *gpiod.Chip, offset int) (CodeTransmitter, error) {
-	line, err := chip.RequestLine(offset, gpiod.AsOutput(0))
-	if err != nil {
-		return nil, err
-	}
-
-	return NewNativeTransmitter(line), nil
 }

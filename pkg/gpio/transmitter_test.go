@@ -37,10 +37,9 @@ func (p *testPin) Close() error {
 }
 
 func TestTransmitterTransmit(t *testing.T) {
-	gpio.TransmitRetries = 1
 	pin := newTestPin()
 
-	transmitter := gpio.NewNativeTransmitter(pin)
+	transmitter := gpio.NewPinTransmitter(pin, gpio.TransmissionRetries(1))
 	defer transmitter.Close()
 
 	err := transmitter.Transmit(0x1, 1, 190)
@@ -55,7 +54,7 @@ func TestTransmitterTransmit(t *testing.T) {
 func TestTransmitInvalidProtocol(t *testing.T) {
 	pin := newTestPin()
 
-	transmitter := gpio.NewNativeTransmitter(pin)
+	transmitter := gpio.NewPinTransmitter(pin)
 	defer transmitter.Close()
 
 	err := transmitter.Transmit(0x1, 999, 190)
@@ -68,7 +67,7 @@ func TestTransmitInvalidProtocol(t *testing.T) {
 func TestTransmitterClose(t *testing.T) {
 	pin := newTestPin()
 
-	transmitter := gpio.NewNativeTransmitter(pin)
+	transmitter := gpio.NewPinTransmitter(pin)
 	assert.Nil(t, transmitter.Close())
 
 	assert.True(t, pin.closed)

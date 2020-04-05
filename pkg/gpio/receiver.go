@@ -14,23 +14,8 @@ const (
 	receiveResultChanLen = 32
 )
 
-// ReceiveResult type definition
-type ReceiveResult struct {
-	Code        uint64
-	BitLength   uint
-	PulseLength int64
-	Protocol    int
-}
-
-// CodeReceiver defines the interface for a rf code receiver.
-type CodeReceiver interface {
-	Receive() <-chan ReceiveResult
-	Close() error
-}
-
-// NativeReceiver type definition
-type NativeReceiver struct {
-	gpioPin     uint
+// Receiver type definition
+type Receiver struct {
 	lastEvent   int64
 	changeCount uint
 	repeatCount uint
@@ -41,9 +26,21 @@ type NativeReceiver struct {
 	result  chan ReceiveResult
 }
 
-// NewNativeReceiver create a new receiver on the gpio pin using watcher
-func NewNativeReceiver(watcher Watcher) *NativeReceiver {
-	r := &NativeReceiver{
+// NewReceiver creates a *Receiver which listens on the chip's pin at offset
+// for rf codes.
+func NewReceiver(chip *gpiod.Chip, offset int) (*Receiver, error) {
+	w, err := NewWatcher(chip, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewWatcherReceiver(w), nil
+}
+
+// NewWatcherReceiver create a new receiver which uses given Watcher to detect
+// sent rf codes.
+func NewWatcherReceiver(watcher Watcher) *Receiver {
+	r := &Receiver{
 		watcher: watcher,
 		done:    make(chan bool, 1),
 		result:  make(chan ReceiveResult, receiveResultChanLen),
@@ -54,7 +51,7 @@ func NewNativeReceiver(watcher Watcher) *NativeReceiver {
 	return r
 }
 
-func (r *NativeReceiver) watch() {
+func (r *Receiver) watch() {
 	var lastEventType gpiod.LineEventType
 
 	for {
@@ -73,19 +70,19 @@ func (r *NativeReceiver) watch() {
 }
 
 // Receive blocks until there is a result on the receive channel
-func (r *NativeReceiver) Receive() <-chan ReceiveResult {
+func (r *Receiver) Receive() <-chan ReceiveResult {
 	return r.result
 }
 
 // Close stops the watcher and receiver goroutines and perform cleanup
-func (r *NativeReceiver) Close() error {
+func (r *Receiver) Close() error {
 	r.done <- true
 	r.watcher.Close()
 
 	return nil
 }
 
-func (r *NativeReceiver) handleEvent() {
+func (r *Receiver) handleEvent() {
 	event := time.Now().UnixNano() / int64(time.Microsecond)
 	duration := event - r.lastEvent
 
@@ -118,7 +115,7 @@ func (r *NativeReceiver) handleEvent() {
 }
 
 // receiveProtocol tries to receive a code using the provided protocol
-func (r *NativeReceiver) receiveProtocol(protocol int) bool {
+func (r *Receiver) receiveProtocol(protocol int) bool {
 	p := Protocols[protocol-1]
 
 	var code uint64
@@ -155,16 +152,6 @@ func (r *NativeReceiver) receiveProtocol(protocol int) bool {
 	}
 
 	return true
-}
-
-// NewReceiver create a new receiver on the gpio pin
-func NewReceiver(chip *gpiod.Chip, offset int) (CodeReceiver, error) {
-	w, err := NewWatcher(chip, offset)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewNativeReceiver(w), nil
 }
 
 func diff(a, b int64) int64 {

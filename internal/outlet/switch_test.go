@@ -8,7 +8,7 @@ import (
 )
 
 func TestSwitch(t *testing.T) {
-	s := NewSwitch(gpio.NewNullTransmitter())
+	s := NewSwitch(gpio.NewDiscardingTransmitter())
 	o := &Outlet{State: StateOn, Protocol: 1}
 
 	assert.NoError(t, s.Switch(o, StateOff))
