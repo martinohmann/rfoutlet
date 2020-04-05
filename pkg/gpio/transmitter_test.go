@@ -3,10 +3,12 @@ package gpio_test
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
+	"github.com/warthog618/gpiod"
 )
 
 type testPin struct {
@@ -18,19 +20,25 @@ func newTestPin() *testPin {
 	return &testPin{}
 }
 
-func (p *testPin) High() error {
-	p.sequence.WriteRune('1')
+func (p *testPin) SetValue(value int) error {
+	switch value {
+	case 1:
+		p.sequence.WriteRune('1')
+	case 0:
+		p.sequence.WriteRune('0')
+	default:
+		panic(fmt.Sprintf("unexpected value: %d", value))
+	}
 	return nil
 }
 
-func (p *testPin) Low() error {
-	p.sequence.WriteRune('0')
-
+func (p *testPin) Reconfigure(options ...gpiod.LineConfig) error {
 	return nil
 }
 
-func (p *testPin) Close() {
+func (p *testPin) Close() error {
 	p.closed = true
+	return nil
 }
 
 func TestTransmitterTransmit(t *testing.T) {

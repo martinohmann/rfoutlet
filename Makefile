@@ -70,3 +70,7 @@ image-amd64: ## build amd64 image
 .PHONY: image-armv7
 image-armv7: ## build armv7 image
 	docker build --build-arg GOARCH=arm --build-arg GOARM=7 -t mohmann/rfoutlet:armv7 .
+
+.PHONY: gpio-mockup
+gpio-mockup: ## create a mock /dev/gpiochip0 using the gpio-mockup kernel module
+	sudo modprobe gpio-mockup gpio_mockup_ranges=0,40

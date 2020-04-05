@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/brian-armstrong/gpio"
+	"github.com/warthog618/gpiod"
 )
 
 const (
@@ -43,25 +43,20 @@ type CodeTransmitter interface {
 	Close() error
 }
 
-// Pin defines an interface for a gpio pin
-type Pin interface {
-	High() error
-	Low() error
-	Close()
-}
-
 // NativeTransmitter type definition.
 type NativeTransmitter struct {
-	gpioPin      Pin
+	pin          Pin
 	transmission chan transmission
 	transmitted  chan bool
 	done         chan bool
 }
 
 // NewNativeTransmitter create a native transmitter on the gpio pin.
-func NewNativeTransmitter(gpioPin Pin) *NativeTransmitter {
+func NewNativeTransmitter(pin Pin) *NativeTransmitter {
+	pin.Reconfigure(gpiod.AsOutput(0))
+
 	t := &NativeTransmitter{
-		gpioPin:      gpioPin,
+		pin:          pin,
 		transmission: make(chan transmission, transmissionChanLen),
 		transmitted:  make(chan bool, transmissionChanLen),
 		done:         make(chan bool, 1),
@@ -119,7 +114,8 @@ func (t *NativeTransmitter) transmit(trans transmission) {
 // Close stops started goroutines and closes the gpio pin
 func (t *NativeTransmitter) Close() error {
 	t.done <- true
-	t.gpioPin.Close()
+	t.pin.Reconfigure(gpiod.AsInput)
+	t.pin.Close()
 
 	return nil
 }
@@ -144,9 +140,9 @@ func (t *NativeTransmitter) watch() {
 
 // send sends a sequence of high and low pulses on the gpio pin.
 func (t *NativeTransmitter) send(pulses HighLow, pulseLength uint) {
-	t.gpioPin.High()
+	t.pin.SetValue(1)
 	sleepFor(time.Microsecond * time.Duration(pulseLength*pulses.High))
-	t.gpioPin.Low()
+	t.pin.SetValue(0)
 	sleepFor(time.Microsecond * time.Duration(pulseLength*pulses.Low))
 }
 
@@ -198,14 +194,17 @@ func (t *NullTransmitter) Close() error {
 // Wait does nothing.
 func (t *NullTransmitter) Wait() {}
 
-// NewTransmitter creates a NativeTransmitter when /dev/gpiomem is available,
+// NewTransmitter creates a NativeTransmitter when /dev/gpiochip0 is available,
 // NullTransmitter otherwise.
-func NewTransmitter(gpioPin uint) CodeTransmitter {
-	if _, err := os.Stat("/dev/gpiomem"); os.IsNotExist(err) {
+func NewTransmitter(chip *gpiod.Chip, offset int) CodeTransmitter {
+	if _, err := os.Stat("/dev/gpiochip0"); os.IsNotExist(err) {
 		return NewNullTransmitter()
 	}
 
-	pin := gpio.NewOutput(gpioPin, false)
+	line, err := chip.RequestLine(offset)
+	if err != nil {
+		panic(err)
+	}
 
-	return NewNativeTransmitter(pin)
+	return NewNativeTransmitter(line)
 }

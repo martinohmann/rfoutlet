@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -19,6 +20,8 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/state"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/spf13/cobra"
+	"github.com/warthog618/gpiod"
+	"github.com/warthog618/gpiod/device/rpi"
 )
 
 const webDir = "../web/build"
@@ -75,6 +78,17 @@ func (o *ServeOptions) Run() error {
 		config.StateFile = o.StateFilename
 	}
 
+	chip, err := gpiod.NewChip("gpiochip0")
+	if err != nil {
+		return err
+	}
+	defer chip.Close()
+
+	pin, err := rpi.Pin(fmt.Sprintf("gpio%d", config.GpioPin))
+	if err != nil {
+		return err
+	}
+
 	manager := outlet.NewManager(state.NewHandler(config.StateFile))
 	defer manager.SaveState()
 
@@ -85,7 +99,7 @@ func (o *ServeOptions) Run() error {
 
 	manager.LoadState()
 
-	transmitter := gpio.NewTransmitter(config.GpioPin)
+	transmitter := gpio.NewTransmitter(chip, pin)
 	defer transmitter.Close()
 
 	switcher := outlet.NewSwitch(transmitter)
