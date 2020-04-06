@@ -12,16 +12,18 @@ import (
 	"github.com/warthog618/gpiod"
 )
 
-type testWatcherPin struct {
+type fakeWatcherOutputPin struct {
+	*gpio.FakeOutputPin
 	offset int
-	w      *testWatcher
+	w      *gpio.FakeWatcher
 }
 
-func newTestWatcherPin(offset int, watcher *testWatcher) *testWatcherPin {
-	return &testWatcherPin{offset, watcher}
-}
+func (p *fakeWatcherOutputPin) SetValue(value int) error {
+	err := p.FakeOutputPin.SetValue(value)
+	if err != nil {
+		return err
+	}
 
-func (p *testWatcherPin) SetValue(value int) error {
 	var eventType gpiod.LineEventType
 	switch value {
 	case 0:
@@ -32,7 +34,7 @@ func (p *testWatcherPin) SetValue(value int) error {
 		panic(fmt.Sprintf("invalid value: %d", value))
 	}
 
-	p.w.events <- gpiod.LineEvent{
+	p.w.Events <- gpiod.LineEvent{
 		Offset: p.offset,
 		Type:   eventType,
 	}
@@ -40,13 +42,14 @@ func (p *testWatcherPin) SetValue(value int) error {
 	return nil
 }
 
-func (p *testWatcherPin) Close() error {
-	return nil
-}
-
 func TestTransmitReceive(t *testing.T) {
-	watcher := newTestWatcher()
-	pin := newTestWatcherPin(10, watcher)
+	watcher := gpio.NewFakeWatcher()
+
+	pin := &fakeWatcherOutputPin{
+		FakeOutputPin: gpio.NewFakeOutputPin(),
+		w:             watcher,
+		offset:        10,
+	}
 
 	receiver := gpio.NewWatcherReceiver(watcher)
 	defer receiver.Close()
@@ -67,8 +70,7 @@ func TestTransmitReceive(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		transmitter.Transmit(tc.code, tc.protocol, tc.pulseLength)
-		transmitter.Wait()
+		<-transmitter.Transmit(tc.code, gpio.DefaultProtocols[tc.protocol-1], tc.pulseLength)
 	}
 
 	var i int

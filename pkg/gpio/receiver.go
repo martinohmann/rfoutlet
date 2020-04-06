@@ -21,29 +21,35 @@ type Receiver struct {
 	repeatCount uint
 	timings     [maxChanges]int64
 
-	watcher Watcher
-	done    chan bool
-	result  chan ReceiveResult
+	watcher   Watcher
+	protocols []Protocol
+	done      chan struct{}
+	result    chan ReceiveResult
 }
 
 // NewReceiver creates a *Receiver which listens on the chip's pin at offset
 // for rf codes.
-func NewReceiver(chip *gpiod.Chip, offset int) (*Receiver, error) {
-	w, err := NewWatcher(chip, offset)
+func NewReceiver(chip *gpiod.Chip, offset int, options ...ReceiverOption) (*Receiver, error) {
+	watcher, err := NewWatcher(chip, offset)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewWatcherReceiver(w), nil
+	return NewWatcherReceiver(watcher, options...), nil
 }
 
 // NewWatcherReceiver create a new receiver which uses given Watcher to detect
 // sent rf codes.
-func NewWatcherReceiver(watcher Watcher) *Receiver {
+func NewWatcherReceiver(watcher Watcher, options ...ReceiverOption) *Receiver {
 	r := &Receiver{
-		watcher: watcher,
-		done:    make(chan bool, 1),
-		result:  make(chan ReceiveResult, receiveResultChanLen),
+		watcher:   watcher,
+		done:      make(chan struct{}),
+		result:    make(chan ReceiveResult, receiveResultChanLen),
+		protocols: DefaultProtocols,
+	}
+
+	for _, option := range options {
+		option(r)
 	}
 
 	go r.watch()
@@ -76,10 +82,8 @@ func (r *Receiver) Receive() <-chan ReceiveResult {
 
 // Close stops the watcher and receiver goroutines and perform cleanup
 func (r *Receiver) Close() error {
-	r.done <- true
-	r.watcher.Close()
-
-	return nil
+	close(r.done)
+	return r.watcher.Close()
 }
 
 func (r *Receiver) handleEvent() {
@@ -91,7 +95,7 @@ func (r *Receiver) handleEvent() {
 			r.repeatCount++
 
 			if r.repeatCount == 2 {
-				for i := 1; i <= len(Protocols); i++ {
+				for i := 0; i < len(r.protocols); i++ {
 					if r.receiveProtocol(i) {
 						break
 					}
@@ -116,7 +120,7 @@ func (r *Receiver) handleEvent() {
 
 // receiveProtocol tries to receive a code using the provided protocol
 func (r *Receiver) receiveProtocol(protocol int) bool {
-	p := Protocols[protocol-1]
+	p := r.protocols[protocol]
 
 	var code uint64
 	var delay int64 = r.timings[0] / int64(p.Sync.Low)
@@ -142,7 +146,7 @@ func (r *Receiver) receiveProtocol(protocol int) bool {
 			Code:        code,
 			BitLength:   (r.changeCount - 1) / 2,
 			PulseLength: delay,
-			Protocol:    protocol,
+			Protocol:    protocol + 1,
 		}
 
 		select {

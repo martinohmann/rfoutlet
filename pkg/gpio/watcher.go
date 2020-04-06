@@ -23,6 +23,8 @@ func NewWatcher(chip *gpiod.Chip, offset int) (Watcher, error) {
 	return w, nil
 }
 
+// handleEvent is the event handler that is invoked by gpiod whether the signal
+// edge changes.
 func (w *watcher) handleEvent(event gpiod.LineEvent) {
 	select {
 	case w.events <- event:
@@ -35,7 +37,7 @@ func (w *watcher) Watch() <-chan gpiod.LineEvent {
 	return w.events
 }
 
-// Close implements Watcher.
+// Close implements Closer.
 func (w *watcher) Close() error {
 	defer close(w.events)
 	return w.pin.Close()

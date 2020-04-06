@@ -13,7 +13,7 @@ import (
 func NewTransmitCommand() *cobra.Command {
 	options := &TransmitOptions{
 		PulseLength: config.DefaultPulseLength,
-		GpioPin:     config.DefaultReceivePin,
+		GpioPin:     config.DefaultTransmitPin,
 		Protocol:    config.DefaultProtocol,
 	}
 
@@ -56,6 +56,12 @@ func (o *TransmitOptions) Run(args []string) error {
 	}
 	defer chip.Close()
 
+	if o.Protocol < 1 || o.Protocol > len(gpio.DefaultProtocols) {
+		return fmt.Errorf("Protocol %d does not exist", o.Protocol)
+	}
+
+	proto := gpio.DefaultProtocols[o.Protocol-1]
+
 	transmitter, err := gpio.NewTransmitter(chip, int(o.GpioPin))
 	if err != nil {
 		return err
@@ -64,12 +70,7 @@ func (o *TransmitOptions) Run(args []string) error {
 
 	fmt.Printf("transmitting code=%d pulseLength=%d protocol=%d\n", code, o.PulseLength, o.Protocol)
 
-	err = transmitter.Transmit(code, o.Protocol, o.PulseLength)
-	if err != nil {
-		return err
-	}
-
-	transmitter.Wait()
+	<-transmitter.Transmit(code, proto, o.PulseLength)
 
 	return nil
 }

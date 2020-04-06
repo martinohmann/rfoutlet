@@ -26,16 +26,12 @@ type OutputPin interface {
 // CodeTransmitter defines the interface for a rf code transmitter.
 type CodeTransmitter interface {
 	Closer
-	// Transmit transmits a code using given protocol and pulse length. It will
-	// return an error if the provided protocol is does not exist.
+	// Transmit transmits a code using given protocol and pulse length.
 	//
 	// This method returns immediately. The code is transmitted in the background.
-	// If you need to ensure that a code has been fully transmitted, call Wait()
-	// after calling Transmit().
-	Transmit(uint64, int, uint) error
-
-	// Wait blocks until a code is fully transmitted.
-	Wait()
+	// If you need to ensure that a code has been fully transmitted, wait for the
+	// returned channel to be closed.
+	Transmit(code uint64, protocol Protocol, pulseLength uint) <-chan struct{}
 }
 
 // CodeReceiver defines the interface for a rf code receiver.
@@ -57,29 +53,8 @@ type ReceiveResult struct {
 	// PulseLength is the detected pulse length.
 	PulseLength int64
 
-	// Protocol is the detected protocol.
+	// Protocol is the detected protocol. The protocol is 1-indexed.
 	Protocol int
-}
-
-// HighLow type definition
-type HighLow struct {
-	High, Low uint
-}
-
-// Protocol type definition
-type Protocol struct {
-	PulseLength     uint
-	Sync, Zero, One HighLow
-}
-
-// Protocols defines known remote control protocols. These are exported to give
-// users the ability to add more protocols if needed.
-var Protocols = []Protocol{
-	{350, HighLow{1, 31}, HighLow{1, 3}, HighLow{3, 1}},
-	{650, HighLow{1, 10}, HighLow{1, 2}, HighLow{2, 1}},
-	{100, HighLow{30, 71}, HighLow{4, 11}, HighLow{9, 6}},
-	{380, HighLow{1, 6}, HighLow{1, 3}, HighLow{3, 1}},
-	{500, HighLow{6, 14}, HighLow{1, 2}, HighLow{2, 1}},
 }
 
 // FakeWatcher can be used in tests as a Watcher.
@@ -94,6 +69,14 @@ type FakeWatcher struct {
 	Closed bool
 }
 
+// NewFakeWatcher creates a new *FakeWatcher that can be used in tests as a
+// Watcher.
+func NewFakeWatcher() *FakeWatcher {
+	return &FakeWatcher{
+		Events: make(chan gpiod.LineEvent),
+	}
+}
+
 // Watch implements Watcher.
 func (w *FakeWatcher) Watch() <-chan gpiod.LineEvent {
 	return w.Events
@@ -101,15 +84,15 @@ func (w *FakeWatcher) Watch() <-chan gpiod.LineEvent {
 
 // Close implements Closer.
 func (w *FakeWatcher) Close() error {
-	defer close(w.Events)
+	close(w.Events)
 	w.Closed = true
 	return w.Err
 }
 
 // FakeOutputPin can be used in tests as an OutputPin.
 type FakeOutputPin struct {
-	// Value holds the value the was set via SetValue.
-	Value int
+	// Values holds the sequence of values the were set via SetValue.
+	Values []int
 
 	// Err controls the error returned by Close.
 	Err error
@@ -118,9 +101,17 @@ type FakeOutputPin struct {
 	Closed bool
 }
 
+// NewFakeOutputPin creates a new *FakeOutputPin that can be used in tests as
+// an OutputPin.
+func NewFakeOutputPin() *FakeOutputPin {
+	return &FakeOutputPin{
+		Values: make([]int, 0),
+	}
+}
+
 // SetValue implements OutputPin.
 func (p *FakeOutputPin) SetValue(value int) error {
-	p.Value = value
+	p.Values = append(p.Values, value)
 	return p.Err
 }
 
