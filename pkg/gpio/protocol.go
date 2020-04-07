@@ -1,11 +1,14 @@
 package gpio
 
-// HighLow type definition
+// HighLow defines the number of high pulses followed by a number of low pulses
+// to send.
 type HighLow struct {
 	High, Low uint
 }
 
-// Protocol type definition
+// Protocol defines the HighLow sequences to send to emit ones (One) and zeros
+// (Zero) and the sync sequence (Sync) which signals the end of a code
+// transmission.
 type Protocol struct {
 	Sync, Zero, One HighLow
 }

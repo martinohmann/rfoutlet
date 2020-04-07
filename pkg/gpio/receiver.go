@@ -14,7 +14,7 @@ const (
 	receiveResultChanLen = 32
 )
 
-// Receiver type definition
+// Receiver can detect and unserialize rf codes received on a gpio pin.
 type Receiver struct {
 	lastEvent   int64
 	changeCount uint
@@ -80,9 +80,9 @@ func (r *Receiver) Receive() <-chan ReceiveResult {
 	return r.result
 }
 
-// Close stops the watcher and receiver goroutines and perform cleanup
+// Close stops the watcher and receiver goroutines and perform cleanup.
 func (r *Receiver) Close() error {
-	close(r.done)
+	defer close(r.done)
 	return r.watcher.Close()
 }
 

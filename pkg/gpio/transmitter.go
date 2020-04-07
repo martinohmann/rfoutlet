@@ -23,7 +23,7 @@ type transmission struct {
 	done        chan struct{}
 }
 
-// Transmitter type definition.
+// Transmitter can serialize and transmit rf codes.
 type Transmitter struct {
 	pin          OutputPin
 	transmission chan transmission
