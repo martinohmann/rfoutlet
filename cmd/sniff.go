@@ -64,6 +64,4 @@ func (o *SniffOptions) Run() error {
 			return nil
 		}
 	}
-
-	return nil
 }
