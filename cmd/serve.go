@@ -82,7 +82,7 @@ func (o *ServeOptions) Run() error {
 	}
 	defer chip.Close()
 
-	transmitter, err := gpio.NewTransmitter(chip, o.GpioPin)
+	transmitter, err := gpio.NewTransmitter(chip, int(config.GpioPin))
 	if err != nil {
 		return err
 	}
