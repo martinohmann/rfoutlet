@@ -5,12 +5,25 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	yaml "gopkg.in/yaml.v2"
 )
 
-// DefaultListenAddress defines the default address to listen on
-const DefaultListenAddress = ":3333"
+const (
+	// DefaultListenAddress defines the default address to listen on
+	DefaultListenAddress = ":3333"
+
+	// DefaultTransmitPin defines the default gpio pin for transmitting rf codes
+	DefaultTransmitPin uint = 17
+
+	// DefaultReceivePin defines the default gpio pin for receiving rf codes
+	DefaultReceivePin uint = 27
+
+	// DefaultProtocol defines the default rf protocol
+	DefaultProtocol int = 1
+
+	// DefaultPulseLength defines the default pulse length
+	DefaultPulseLength uint = 189
+)
 
 // Config type definition
 type Config struct {
@@ -28,7 +41,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	raw := rawConfig{
 		ListenAddress: DefaultListenAddress,
-		GpioPin:       gpio.DefaultTransmitPin,
+		GpioPin:       DefaultTransmitPin,
 	}
 
 	if err := unmarshal(&raw); err != nil {
@@ -60,8 +73,8 @@ func (o *Outlet) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type rawOutlet Outlet
 
 	raw := rawOutlet{
-		PulseLength: gpio.DefaultPulseLength,
-		Protocol:    gpio.DefaultProtocol,
+		PulseLength: DefaultPulseLength,
+		Protocol:    DefaultProtocol,
 	}
 
 	if err := unmarshal(&raw); err != nil {

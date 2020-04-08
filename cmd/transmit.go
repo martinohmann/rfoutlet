@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/spf13/cobra"
+	"github.com/warthog618/gpiod"
 )
 
 func NewTransmitCommand() *cobra.Command {
 	options := &TransmitOptions{
-		PulseLength: gpio.DefaultPulseLength,
-		GpioPin:     gpio.DefaultReceivePin,
-		Protocol:    gpio.DefaultProtocol,
+		PulseLength: config.DefaultPulseLength,
+		GpioPin:     config.DefaultTransmitPin,
+		Protocol:    config.DefaultProtocol,
 	}
 
 	cmd := &cobra.Command{
@@ -43,24 +45,32 @@ func (o *TransmitOptions) AddFlags(cmd *cobra.Command) {
 }
 
 func (o *TransmitOptions) Run(args []string) error {
-	c, err := strconv.Atoi(args[0])
+	code, err := strconv.ParseUint(args[0], 10, 64)
 	if err != nil {
 		return err
 	}
 
-	code := uint64(c)
+	chip, err := gpiod.NewChip("gpiochip0")
+	if err != nil {
+		return err
+	}
+	defer chip.Close()
 
-	t := gpio.NewTransmitter(o.GpioPin)
-	defer t.Close()
+	if o.Protocol < 1 || o.Protocol > len(gpio.DefaultProtocols) {
+		return fmt.Errorf("Protocol %d does not exist", o.Protocol)
+	}
+
+	proto := gpio.DefaultProtocols[o.Protocol-1]
+
+	transmitter, err := gpio.NewTransmitter(chip, int(o.GpioPin))
+	if err != nil {
+		return err
+	}
+	defer transmitter.Close()
 
 	fmt.Printf("transmitting code=%d pulseLength=%d protocol=%d\n", code, o.PulseLength, o.Protocol)
 
-	err = t.Transmit(code, o.Protocol, o.PulseLength)
-	if err != nil {
-		return err
-	}
-
-	t.Wait()
+	<-transmitter.Transmit(code, proto, o.PulseLength)
 
 	return nil
 }

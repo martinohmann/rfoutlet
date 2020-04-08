@@ -1,22 +1,26 @@
 package gpio
 
-// HighLow type definition
+// HighLow defines the number of high pulses followed by a number of low pulses
+// to send.
 type HighLow struct {
 	High, Low uint
 }
 
-// Protocol type definition
+// Protocol defines the HighLow sequences to send to emit ones (One) and zeros
+// (Zero) and the sync sequence (Sync) which signals the end of a code
+// transmission.
 type Protocol struct {
-	PulseLength     uint
 	Sync, Zero, One HighLow
 }
 
-// Protocols defines known remote control protocols. These are exported to give
-// users the ability to add more protocols if needed.
-var Protocols = []Protocol{
-	{350, HighLow{1, 31}, HighLow{1, 3}, HighLow{3, 1}},
-	{650, HighLow{1, 10}, HighLow{1, 2}, HighLow{2, 1}},
-	{100, HighLow{30, 71}, HighLow{4, 11}, HighLow{9, 6}},
-	{380, HighLow{1, 6}, HighLow{1, 3}, HighLow{3, 1}},
-	{500, HighLow{6, 14}, HighLow{1, 2}, HighLow{2, 1}},
+// DefaultProtocols defines known remote control protocols. These are exported
+// to give users the ability to add more protocols if needed. However, it is
+// advised to use the ReceiverProtocols ReceiverOption to configure a *Receiver
+// with custom protocols.
+var DefaultProtocols = []Protocol{
+	{HighLow{1, 31}, HighLow{1, 3}, HighLow{3, 1}},
+	{HighLow{1, 10}, HighLow{1, 2}, HighLow{2, 1}},
+	{HighLow{30, 71}, HighLow{4, 11}, HighLow{9, 6}},
+	{HighLow{1, 6}, HighLow{1, 3}, HighLow{3, 1}},
+	{HighLow{6, 14}, HighLow{1, 2}, HighLow{2, 1}},
 }

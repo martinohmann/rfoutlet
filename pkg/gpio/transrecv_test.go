@@ -3,45 +3,58 @@
 package gpio_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
+	"github.com/warthog618/gpiod"
 )
 
-type testWatcherPin struct {
-	p uint
-	w *testWatcher
+type fakeWatcherOutputPin struct {
+	*gpio.FakeOutputPin
+	offset int
+	w      *gpio.FakeWatcher
 }
 
-func newTestWatcherPin(pin uint, watcher *testWatcher) *testWatcherPin {
-	return &testWatcherPin{pin, watcher}
-}
+func (p *fakeWatcherOutputPin) SetValue(value int) error {
+	err := p.FakeOutputPin.SetValue(value)
+	if err != nil {
+		return err
+	}
 
-func (p *testWatcherPin) High() error {
-	p.w.notification <- testNotification{p.p, 1}
+	var eventType gpiod.LineEventType
+	switch value {
+	case 0:
+		eventType = gpiod.LineEventFallingEdge
+	case 1:
+		eventType = gpiod.LineEventRisingEdge
+	default:
+		panic(fmt.Sprintf("invalid value: %d", value))
+	}
+
+	p.w.Events <- gpiod.LineEvent{
+		Offset: p.offset,
+		Type:   eventType,
+	}
+
 	return nil
 }
-
-func (p *testWatcherPin) Low() error {
-	p.w.notification <- testNotification{p.p, 0}
-	return nil
-}
-
-func (p *testWatcherPin) Close() {}
 
 func TestTransmitReceive(t *testing.T) {
-	var gpioPin uint = 17
-	gpio.TransmitRetries = 15
+	watcher := gpio.NewFakeWatcher()
 
-	watcher := newTestWatcher()
-	pin := newTestWatcherPin(gpioPin, watcher)
+	pin := &fakeWatcherOutputPin{
+		FakeOutputPin: gpio.NewFakeOutputPin(),
+		w:             watcher,
+		offset:        10,
+	}
 
-	receiver := gpio.NewNativeReceiver(gpioPin, watcher)
+	receiver := gpio.NewWatcherReceiver(watcher)
 	defer receiver.Close()
 
-	transmitter := gpio.NewNativeTransmitter(pin)
+	transmitter := gpio.NewPinTransmitter(pin, gpio.TransmissionRetries(15))
 	defer transmitter.Close()
 
 	tests := []struct {
@@ -57,8 +70,7 @@ func TestTransmitReceive(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		transmitter.Transmit(tc.code, tc.protocol, tc.pulseLength)
-		transmitter.Wait()
+		<-transmitter.Transmit(tc.code, gpio.DefaultProtocols[tc.protocol-1], tc.pulseLength)
 	}
 
 	var i int

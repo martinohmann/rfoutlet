@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -11,12 +12,15 @@ import (
 )
 
 type testSwitcher struct {
-	count int64
+	count    int64
+	switched chan struct{}
 }
 
 func (ts *testSwitcher) Switch(o *outlet.Outlet, s outlet.State) error {
 	atomic.AddInt64(&ts.count, 1)
 	o.SetState(s)
+
+	ts.switched <- struct{}{}
 
 	return nil
 }
@@ -79,14 +83,20 @@ func TestScheduler(t *testing.T) {
 }
 
 func testScheduler(t *testing.T, o *outlet.Outlet, expectedState outlet.State, expectedStateChanges int64) {
-	ts := &testSwitcher{}
+	ts := &testSwitcher{switched: make(chan struct{})}
 
 	s := NewWithInterval(ts, 5*time.Millisecond)
 	defer s.ticker.Stop()
 
 	s.Register(o)
 
-	time.Sleep(10 * time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	select {
+	case <-ts.switched:
+	case <-ctx.Done():
+	}
 
 	assert.Equal(t, expectedState, o.GetState())
 	assert.Equal(t, expectedStateChanges, atomic.LoadInt64(&ts.count))

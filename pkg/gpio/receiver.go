@@ -3,7 +3,7 @@ package gpio
 import (
 	"time"
 
-	"github.com/brian-armstrong/gpio"
+	"github.com/warthog618/gpiod"
 )
 
 const (
@@ -14,90 +14,79 @@ const (
 	receiveResultChanLen = 32
 )
 
-// ReceiveResult type definition
-type ReceiveResult struct {
-	Code        uint64
-	BitLength   uint
-	PulseLength int64
-	Protocol    int
-}
-
-// CodeReceiver defines the interface for a rf code receiver.
-type CodeReceiver interface {
-	Receive() <-chan ReceiveResult
-	Close() error
-}
-
-// Watcher defines the interface for a gpio pin watcher
-type Watcher interface {
-	Watch() (uint, uint)
-	AddPin(uint)
-	Close()
-}
-
-// NativeReceiver type definition
-type NativeReceiver struct {
-	gpioPin     uint
+// Receiver can detect and unserialize rf codes received on a gpio pin.
+type Receiver struct {
 	lastEvent   int64
 	changeCount uint
 	repeatCount uint
 	timings     [maxChanges]int64
 
-	watcher Watcher
-	done    chan bool
-	result  chan ReceiveResult
+	watcher   Watcher
+	protocols []Protocol
+	done      chan struct{}
+	result    chan ReceiveResult
 }
 
-// NewNativeReceiver create a new receiver on the gpio pin using watcher
-func NewNativeReceiver(gpioPin uint, watcher Watcher) *NativeReceiver {
-	r := &NativeReceiver{
-		gpioPin: gpioPin,
-		watcher: watcher,
-		done:    make(chan bool, 1),
-		result:  make(chan ReceiveResult, receiveResultChanLen),
+// NewReceiver creates a *Receiver which listens on the chip's pin at offset
+// for rf codes.
+func NewReceiver(chip *gpiod.Chip, offset int, options ...ReceiverOption) (*Receiver, error) {
+	watcher, err := NewWatcher(chip, offset)
+	if err != nil {
+		return nil, err
 	}
 
-	r.watcher.AddPin(r.gpioPin)
+	return NewWatcherReceiver(watcher, options...), nil
+}
+
+// NewWatcherReceiver create a new receiver which uses given Watcher to detect
+// sent rf codes.
+func NewWatcherReceiver(watcher Watcher, options ...ReceiverOption) *Receiver {
+	r := &Receiver{
+		watcher:   watcher,
+		done:      make(chan struct{}),
+		result:    make(chan ReceiveResult, receiveResultChanLen),
+		protocols: DefaultProtocols,
+	}
+
+	for _, option := range options {
+		option(r)
+	}
 
 	go r.watch()
 
 	return r
 }
 
-func (r *NativeReceiver) watch() {
-	var lastVal uint
+func (r *Receiver) watch() {
+	var lastEventType gpiod.LineEventType
 
 	for {
 		select {
 		case <-r.done:
 			close(r.result)
 			return
-		default:
-			pin, val := r.watcher.Watch()
-
-			if pin == r.gpioPin && val != lastVal {
+		case event := <-r.watcher.Watch():
+			if lastEventType != event.Type {
 				r.handleEvent()
 			}
 
-			lastVal = val
+			lastEventType = event.Type
 		}
 	}
 }
 
 // Receive blocks until there is a result on the receive channel
-func (r *NativeReceiver) Receive() <-chan ReceiveResult {
+func (r *Receiver) Receive() <-chan ReceiveResult {
 	return r.result
 }
 
-// Close stops the watcher and receiver goroutines and perform cleanup
-func (r *NativeReceiver) Close() error {
-	r.done <- true
-	r.watcher.Close()
-
-	return nil
+// Close stops the watcher and receiver goroutines and perform cleanup.
+func (r *Receiver) Close() error {
+	defer close(r.done)
+	return r.watcher.Close()
 }
 
-func (r *NativeReceiver) handleEvent() {
+func (r *Receiver) handleEvent() {
 	event := time.Now().UnixNano() / int64(time.Microsecond)
 	duration := event - r.lastEvent
 
@@ -106,7 +95,7 @@ func (r *NativeReceiver) handleEvent() {
 			r.repeatCount++
 
 			if r.repeatCount == 2 {
-				for i := 1; i <= len(Protocols); i++ {
+				for i := 0; i < len(r.protocols); i++ {
 					if r.receiveProtocol(i) {
 						break
 					}
@@ -130,8 +119,8 @@ func (r *NativeReceiver) handleEvent() {
 }
 
 // receiveProtocol tries to receive a code using the provided protocol
-func (r *NativeReceiver) receiveProtocol(protocol int) bool {
-	p := Protocols[protocol-1]
+func (r *Receiver) receiveProtocol(protocol int) bool {
+	p := r.protocols[protocol]
 
 	var code uint64
 	var delay int64 = r.timings[0] / int64(p.Sync.Low)
@@ -157,7 +146,7 @@ func (r *NativeReceiver) receiveProtocol(protocol int) bool {
 			Code:        code,
 			BitLength:   (r.changeCount - 1) / 2,
 			PulseLength: delay,
-			Protocol:    protocol,
+			Protocol:    protocol + 1,
 		}
 
 		select {
@@ -167,13 +156,6 @@ func (r *NativeReceiver) receiveProtocol(protocol int) bool {
 	}
 
 	return true
-}
-
-// NewReceiver create a new receiver on the gpio pin
-func NewReceiver(gpioPin uint) CodeReceiver {
-	w := gpio.NewWatcher()
-
-	return NewNativeReceiver(gpioPin, w)
 }
 
 func diff(a, b int64) int64 {
