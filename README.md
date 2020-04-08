@@ -17,16 +17,23 @@ Screenshot                           | Raspberry PI Setup
 Contents
 --------
 
+- [Stability note](#stability-note)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Commands](#commands)
 - [Raspberry PI Setup](#raspberry-pi-setup)
 - [Outlets](#outlets)
 - [Running rfoutlet as systemd service](#running-rfoutlet-as-systemd-service)
-- [Development / Testing](#development-testing)
+- [Development / Testing](#development--testing)
 - [Todo](#todo)
 - [License](#license)
 - [Resources](#resources)
+
+Stability note
+--------------
+
+The *master* branch may be broken at any time. Please check out the latest tag
+or use the latest [release](https://github.com/martinohmann/rfoutlet/releases).
 
 Prerequisites
 -------------
@@ -109,17 +116,16 @@ docker run \
     -p 3333:3333 \
     -v /etc/localtime:/etc/localtime:ro \
     -v $(pwd)/configs/config.yml:/etc/rfoutlet/config.yml:ro \
-    -v /dev/gpiomem:/dev/gpiomem \
     mohmann/rfoutlet:armv7
 ```
 
 The container has to run in privileged mode in order to be able to access
-`/dev/gpiomem`.
+`/dev/gpiochip0`.
 
 Commands
 --------
 
-Note: all commands requires `sudo` in order to access `/dev/gpiomem`.
+Note: all commands requires `sudo` in order to access `/dev/gpiochip0`.
 
 ### `serve` command
 
@@ -235,8 +241,13 @@ Development / Testing
 ---------------------
 
 rfoutlet is meant to run on a Raspberry PI 2/3 to work properly. However, for
-development purposes you can also run it on your local machine. In this case the
-transmission of the rf codes is stubbed with a NullTransmitter.
+development purposes you can also run it on your local machine. If your
+development box does not have `/dev/gpiochip0`, you can load the `gpio-mockup`
+kernel module to create a mockup:
+
+```bash
+make load-gpio-mockup
+```
 
 Run `make` without arguments to see available commands for building and testing.
 
