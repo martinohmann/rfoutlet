@@ -20,14 +20,14 @@ const (
 
 // Control type definition
 type Control struct {
-	manager  *outlet.Manager
+	registry *outlet.Registry
 	switcher outlet.Switcher
 	hub      *Hub
 }
 
 // New creates a new controller
-func New(manager *outlet.Manager, switcher outlet.Switcher, hub *Hub) *Control {
-	return &Control{manager, switcher, hub}
+func New(registry *outlet.Registry, switcher outlet.Switcher, hub *Hub) *Control {
+	return &Control{registry, switcher, hub}
 }
 
 // Switch implements the outlet.Switcher interface
@@ -37,11 +37,7 @@ func (c *Control) Switch(o *outlet.Outlet, newState outlet.State) error {
 		return err
 	}
 
-	if err = c.broadcastState(); err != nil {
-		return err
-	}
-
-	return c.manager.SaveState()
+	return c.broadcastState()
 }
 
 // Dispatch implements the messsage.Dispatcher interface
@@ -52,19 +48,19 @@ func (c *Control) Dispatch(envelope message.Envelope) error {
 	}
 
 	switch data := msg.(type) {
-	case *message.Unknown:
+	case *message.StatusMessage:
 		return c.broadcastState()
-	case *message.OutletAction:
-		o, err := c.manager.Get(data.ID)
-		if err != nil {
-			return err
+	case *message.OutletMessage:
+		o, ok := c.registry.GetOutlet(data.ID)
+		if !ok {
+			return fmt.Errorf("outlet %q does not exist", data.ID)
 		}
 
 		return c.outletAction(o, data.Action)
-	case *message.GroupAction:
-		g, err := c.manager.GetGroup(data.ID)
-		if err != nil {
-			return err
+	case *message.GroupMessage:
+		g, ok := c.registry.GetGroup(data.ID)
+		if !ok {
+			return fmt.Errorf("outlet group %q does not exist", data.ID)
 		}
 
 		for _, o := range g.Outlets {
@@ -72,10 +68,10 @@ func (c *Control) Dispatch(envelope message.Envelope) error {
 				return err
 			}
 		}
-	case *message.IntervalAction:
-		o, err := c.manager.Get(data.ID)
-		if err != nil {
-			return err
+	case *message.IntervalMessage:
+		o, ok := c.registry.GetOutlet(data.ID)
+		if !ok {
+			return fmt.Errorf("outlet %q does not exist", data.ID)
 		}
 
 		return c.intervalAction(o, data.Interval, data.Action)
@@ -88,7 +84,7 @@ func (c *Control) Dispatch(envelope message.Envelope) error {
 // clients. the is called whenever switch states or outlet schedules are
 // changed.
 func (c *Control) broadcastState() error {
-	b, err := json.Marshal(c.manager.Groups())
+	b, err := json.Marshal(c.registry.GetGroups())
 	if err != nil {
 		return err
 	}

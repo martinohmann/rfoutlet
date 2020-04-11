@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/packr"
+	"github.com/imdario/mergo"
 	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/martinohmann/rfoutlet/internal/control"
 	"github.com/martinohmann/rfoutlet/internal/handler"
@@ -27,7 +29,6 @@ const webDir = "../web/build"
 func NewServeCommand() *cobra.Command {
 	options := &ServeOptions{
 		ConfigFilename: "/etc/rfoutlet/config.yml",
-		GpioPin:        -1,
 	}
 
 	cmd := &cobra.Command{
@@ -45,35 +46,26 @@ func NewServeCommand() *cobra.Command {
 }
 
 type ServeOptions struct {
+	Config         config.Config
 	ConfigFilename string
-	StateFilename  string
-	ListenAddress  string
-	GpioPin        int
 }
 
 func (o *ServeOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.ConfigFilename, "config", o.ConfigFilename, "config filename")
-	cmd.Flags().StringVar(&o.StateFilename, "state-file", o.StateFilename, "state filename")
-	cmd.Flags().StringVar(&o.ListenAddress, "listen-address", o.ListenAddress, "listen address")
-	cmd.Flags().IntVar(&o.GpioPin, "gpio-pin", o.GpioPin, "gpio pin to transmit on")
+	cmd.Flags().StringVar(&o.Config.StateFile, "state-file", o.Config.StateFile, "state filename")
+	cmd.Flags().StringVar(&o.Config.ListenAddress, "listen-address", o.Config.ListenAddress, "listen address")
+	cmd.Flags().UintVar(&o.Config.TransmitPin, "transmit-pin", o.Config.TransmitPin, "gpio pin to transmit on")
 }
 
 func (o *ServeOptions) Run() error {
-	config, err := config.Load(o.ConfigFilename)
+	config, err := config.LoadWithDefaults(o.ConfigFilename)
 	if err != nil {
 		return err
 	}
 
-	if o.GpioPin >= 0 {
-		config.GpioPin = uint(o.GpioPin)
-	}
-
-	if o.ListenAddress != "" {
-		config.ListenAddress = o.ListenAddress
-	}
-
-	if o.StateFilename != "" {
-		config.StateFile = o.StateFilename
+	err = mergo.Merge(config, o.Config, mergo.WithOverride)
+	if err != nil {
+		return err
 	}
 
 	chip, err := gpiod.NewChip("gpiochip0")
@@ -82,30 +74,47 @@ func (o *ServeOptions) Run() error {
 	}
 	defer chip.Close()
 
-	transmitter, err := gpio.NewTransmitter(chip, int(config.GpioPin))
+	transmitter, err := gpio.NewTransmitter(chip, int(config.TransmitPin))
 	if err != nil {
 		return err
 	}
 	defer transmitter.Close()
 
-	manager := outlet.NewManager(state.NewHandler(config.StateFile))
-	defer manager.SaveState()
+	registry := outlet.NewRegistry()
 
-	err = outlet.RegisterFromConfig(manager, config)
+	err = registry.RegisterGroups(config.BuildOutletGroups()...)
 	if err != nil {
 		return err
 	}
 
-	manager.LoadState()
+	if config.StateFile != "" {
+		outletState, err := state.Load(config.StateFile)
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+
+		outletState.Apply(registry.GetOutlets())
+
+		defer func() {
+			outletState := state.Collect(registry.GetOutlets())
+
+			err := state.Save(config.StateFile, outletState)
+			if err != nil {
+				log.Println(err)
+			}
+		}()
+	}
+
+	stopCh := make(chan struct{})
+
+	go handleSignals(stopCh)
 
 	switcher := outlet.NewSwitch(transmitter)
 	hub := control.NewHub()
-	control := control.New(manager, switcher, hub)
-	scheduler := scheduler.New(control)
+	control := control.New(registry, switcher, hub)
 
-	for _, o := range manager.Outlets() {
-		scheduler.Register(o)
-	}
+	scheduler := scheduler.New(control)
+	scheduler.Register(registry.GetOutlets()...)
 
 	router := gin.Default()
 	router.Use(cors.Default())
@@ -115,10 +124,10 @@ func (o *ServeOptions) Run() error {
 	router.GET("/ws", handler.Websocket(hub, control))
 	router.StaticFS("/app", packr.NewBox(webDir))
 
-	return listenAndServe(router, config.ListenAddress)
+	return listenAndServe(stopCh, router, config.ListenAddress)
 }
 
-func listenAndServe(handler http.Handler, addr string) error {
+func listenAndServe(stopCh <-chan struct{}, handler http.Handler, addr string) error {
 	srv := &http.Server{
 		Addr:    addr,
 		Handler: handler,
@@ -130,14 +139,20 @@ func listenAndServe(handler http.Handler, addr string) error {
 		}
 	}()
 
-	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
+	<-stopCh
 
-	log.Println("Shutdown Server...")
+	log.Println("shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	return srv.Shutdown(ctx)
+}
+
+func handleSignals(stopCh chan struct{}) {
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+	log.Println("received signal, terminating...")
+	close(stopCh)
 }

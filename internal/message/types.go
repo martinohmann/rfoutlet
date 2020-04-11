@@ -6,10 +6,14 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 )
 
+// Type is the type of a message.
+type Type string
+
 const (
-	OutletActionType   = "outlet"
-	GroupActionType    = "group"
-	IntervalActionType = "interval"
+	GroupType    Type = "group"
+	IntervalType Type = "interval"
+	OutletType   Type = "outlet"
+	StatusType   Type = "status"
 )
 
 // Dispatcher defines the interface for a message dispatcher
@@ -17,32 +21,35 @@ type Dispatcher interface {
 	Dispatch(Envelope) error
 }
 
-// Unknown defines an unknown message
-type Unknown struct{}
+// Message is the interface for a message.
+type Message interface{}
 
-// OutletAction defines an outlet action message
-type OutletAction struct {
-	ID     string
-	Action string
+// StatusMessage...
+type StatusMessage struct{}
+
+// OutletMessage...
+type OutletMessage struct {
+	ID     string `json:"id"`
+	Action string `json:"action"`
 }
 
-// GroupAction defines a group action message
-type GroupAction struct {
-	ID     string
-	Action string
+// GroupMessage...
+type GroupMessage struct {
+	ID     string `json:"id"`
+	Action string `json:"action"`
 }
 
-// IntervalAction defines an interval message
-type IntervalAction struct {
-	ID       string
-	Interval schedule.Interval
-	Action   string
+// IntervalMessage...
+type IntervalMessage struct {
+	ID       string            `json:"id"`
+	Action   string            `json:"action"`
+	Interval schedule.Interval `json:"interval"`
 }
 
 // Envelope defines a message envelope which hold the message type and the raw
 // json data of the message that gets unmarshalled into the correct type by
 // Decode.
 type Envelope struct {
-	Type string
+	Type Type
 	Data *json.RawMessage
 }

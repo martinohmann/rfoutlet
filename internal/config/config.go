@@ -5,85 +5,97 @@ import (
 	"io/ioutil"
 	"os"
 
-	yaml "gopkg.in/yaml.v2"
+	"github.com/ghodss/yaml"
+	"github.com/imdario/mergo"
+	"github.com/martinohmann/rfoutlet/internal/outlet"
 )
 
 const (
-	// DefaultListenAddress defines the default address to listen on
+	// DefaultListenAddress defines the default address to listen on.
 	DefaultListenAddress = ":3333"
 
-	// DefaultTransmitPin defines the default gpio pin for transmitting rf codes
+	// DefaultTransmitPin defines the default gpio pin for transmitting rf codes.
 	DefaultTransmitPin uint = 17
 
-	// DefaultReceivePin defines the default gpio pin for receiving rf codes
+	// DefaultReceivePin defines the default gpio pin for receiving rf codes.
 	DefaultReceivePin uint = 27
 
-	// DefaultProtocol defines the default rf protocol
+	// DefaultProtocol defines the default rf protocol.
 	DefaultProtocol int = 1
 
-	// DefaultPulseLength defines the default pulse length
+	// DefaultPulseLength defines the default pulse length.
 	DefaultPulseLength uint = 189
 )
 
-// Config type definition
+var DefaultConfig = Config{
+	ListenAddress: DefaultListenAddress,
+	ReceivePin:    DefaultReceivePin,
+	TransmitPin:   DefaultTransmitPin,
+}
+
 type Config struct {
-	ListenAddress string             `yaml:"listen_address"`
-	GpioPin       uint               `yaml:"gpio_pin"`
-	StateFile     string             `yaml:"state_file"`
-	GroupOrder    []string           `yaml:"group_order"`
-	Groups        map[string]*Group  `yaml:"groups"`
-	Outlets       map[string]*Outlet `yaml:"outlets"`
+	ListenAddress string              `json:"listenAddress"`
+	StateFile     string              `json:"stateFile"`
+	ReceivePin    uint                `json:"receivePin"`
+	TransmitPin   uint                `json:"transmitPin"`
+	OutletGroups  []OutletGroupConfig `json:"outletGroups"`
 }
 
-// UnmarshalYAML sets defaults on the raw Config before unmarshalling
-func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type rawConfig Config
-
-	raw := rawConfig{
-		ListenAddress: DefaultListenAddress,
-		GpioPin:       DefaultTransmitPin,
-	}
-
-	if err := unmarshal(&raw); err != nil {
-		return err
-	}
-
-	*c = Config(raw)
-
-	return nil
+type OutletGroupConfig struct {
+	ID          string         `json:"id"`
+	DisplayName string         `json:"displayName"`
+	Outlets     []OutletConfig `outlets`
 }
 
-// Group config type definition
-type Group struct {
-	Name    string   `yaml:"name"`
-	Outlets []string `yaml:"outlets"`
+type OutletConfig struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"displayName"`
+	CodeOn      uint64 `json:"codeOn"`
+	CodeOff     uint64 `json:"codeOff"`
+	Protocol    int    `json:"protocol"`
+	PulseLength uint   `json:"pulseLength"`
 }
 
-// Outlet config type definition
-type Outlet struct {
-	Name        string `yaml:"name"`
-	CodeOn      uint64 `yaml:"code_on"`
-	CodeOff     uint64 `yaml:"code_off"`
-	Protocol    int    `yaml:"protocol"`
-	PulseLength uint   `yaml:"pulse_length"`
+// BuildOutletGroups builds outlet groups from c.
+func (c Config) BuildOutletGroups() []*outlet.Group {
+	groups := make([]*outlet.Group, len(c.OutletGroups))
+
+	for i, gc := range c.OutletGroups {
+		outlets := make([]*outlet.Outlet, len(gc.Outlets))
+
+		for j, oc := range gc.Outlets {
+			outlets[j] = &outlet.Outlet{
+				ID:          oc.ID,
+				DisplayName: oc.DisplayName,
+				CodeOn:      oc.CodeOn,
+				CodeOff:     oc.CodeOff,
+				Protocol:    oc.Protocol,
+				PulseLength: oc.PulseLength,
+			}
+		}
+
+		groups[i] = &outlet.Group{
+			ID:          gc.ID,
+			DisplayName: gc.DisplayName,
+			Outlets:     outlets,
+		}
+	}
+
+	return groups
 }
 
-// UnmarshalYAML sets defaults on the raw Outlet before unmarshalling
-func (o *Outlet) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type rawOutlet Outlet
-
-	raw := rawOutlet{
-		PulseLength: DefaultPulseLength,
-		Protocol:    DefaultProtocol,
+func LoadWithDefaults(file string) (*Config, error) {
+	config, err := Load(file)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := unmarshal(&raw); err != nil {
-		return err
+	err = mergo.Merge(config, DefaultConfig)
+	if err != nil {
+		return nil, err
 	}
 
-	*o = Outlet(raw)
-
-	return nil
+	return config, nil
 }
 
 // Load loads the config from a file
@@ -105,7 +117,10 @@ func LoadWithReader(r io.Reader) (*Config, error) {
 
 	config := &Config{}
 
-	err = yaml.UnmarshalStrict(c, config)
+	err = yaml.Unmarshal(c, &config)
+	if err != nil {
+		return nil, err
+	}
 
-	return config, err
+	return config, nil
 }

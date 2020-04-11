@@ -13,7 +13,7 @@ import (
 func NewTransmitCommand() *cobra.Command {
 	options := &TransmitOptions{
 		PulseLength: config.DefaultPulseLength,
-		GpioPin:     config.DefaultTransmitPin,
+		Pin:         config.DefaultTransmitPin,
 		Protocol:    config.DefaultProtocol,
 	}
 
@@ -33,14 +33,15 @@ func NewTransmitCommand() *cobra.Command {
 }
 
 type TransmitOptions struct {
+	config.Config
 	PulseLength uint
-	GpioPin     uint
+	Pin         uint
 	Protocol    int
 }
 
 func (o *TransmitOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().UintVar(&o.PulseLength, "pulse-length", o.PulseLength, "pulse length")
-	cmd.Flags().UintVar(&o.GpioPin, "gpio-pin", o.GpioPin, "gpio pin to transmit on")
+	cmd.Flags().UintVar(&o.Pin, "pin", o.Pin, "gpio pin to transmit on")
 	cmd.Flags().IntVar(&o.Protocol, "protocol", o.Protocol, "transmission protocl")
 }
 
@@ -62,7 +63,7 @@ func (o *TransmitOptions) Run(args []string) error {
 
 	proto := gpio.DefaultProtocols[o.Protocol-1]
 
-	transmitter, err := gpio.NewTransmitter(chip, int(o.GpioPin))
+	transmitter, err := gpio.NewTransmitter(chip, int(o.Pin))
 	if err != nil {
 		return err
 	}

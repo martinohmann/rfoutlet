@@ -35,8 +35,10 @@ func NewWithInterval(switcher outlet.Switcher, interval time.Duration) *Schedule
 }
 
 // Register registers an outlet to the scheduler
-func (s *Scheduler) Register(outlet *outlet.Outlet) {
-	s.outlet <- outlet
+func (s *Scheduler) Register(outlets ...*outlet.Outlet) {
+	for _, outlet := range outlets {
+		s.outlet <- outlet
+	}
 }
 
 func (s *Scheduler) run() {

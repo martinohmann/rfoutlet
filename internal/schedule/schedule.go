@@ -22,7 +22,9 @@ func New() *Schedule {
 
 // NewWithIntervals create a new schedule seeded with intervals
 func NewWithIntervals(intervals []Interval) *Schedule {
-	return &Schedule{intervals: intervals}
+	return &Schedule{
+		intervals: intervals,
+	}
 }
 
 // Enabled returns true if any of the intervals is enabled

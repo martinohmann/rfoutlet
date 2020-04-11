@@ -1,9 +1,9 @@
 ---
-listenAddress: 0.0.0.0:3333
+listenAddress: 0.0.0.0:1234
 stateFile: state.json
 receivePin: 27
 transmitPin: 17
-groups:
+outletGroups:
   - id: foo
     displayName: Foo
     outlets:

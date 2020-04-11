@@ -1,18 +1,8 @@
 ---
-listenAddress: 0.0.0.0:3333
-stateFile: state.json
-receivePin: 27
-transmitPin: 17
-groups:
+receivePin: 42
+outletGroups:
   - id: foo
-    displayName: Foo
     outlets:
-      - id: bar
-        displayName: Bar
-        codeOn: 123
-        codeOff: 456
-        protocol: 1
-        pulseLength: 189
       - id: baz
         name: Baz
         codeOn: 789

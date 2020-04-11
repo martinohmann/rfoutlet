@@ -13,7 +13,7 @@ import (
 
 func NewSniffCommand() *cobra.Command {
 	options := &SniffOptions{
-		GpioPin: config.DefaultReceivePin,
+		Pin: config.DefaultReceivePin,
 	}
 
 	cmd := &cobra.Command{
@@ -31,11 +31,11 @@ func NewSniffCommand() *cobra.Command {
 }
 
 type SniffOptions struct {
-	GpioPin uint
+	Pin uint
 }
 
 func (o *SniffOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().UintVar(&o.GpioPin, "gpio-pin", o.GpioPin, "gpio pin to sniff on")
+	cmd.Flags().UintVar(&o.Pin, "pin", o.Pin, "gpio pin to sniff on")
 }
 
 func (o *SniffOptions) Run() error {
@@ -48,7 +48,7 @@ func (o *SniffOptions) Run() error {
 	}
 	defer chip.Close()
 
-	receiver, err := gpio.NewReceiver(chip, int(o.GpioPin))
+	receiver, err := gpio.NewReceiver(chip, int(o.Pin))
 	if err != nil {
 		return err
 	}

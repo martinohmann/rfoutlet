@@ -1,43 +1,58 @@
-package config_test
+package config
 
 import (
 	"fmt"
 	"strings"
 	"testing"
 
-	"github.com/martinohmann/rfoutlet/internal/config"
+	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoad(t *testing.T) {
-	c, err := config.Load("testdata/full.yml")
+	c, err := Load("testdata/full.yaml")
 
-	assert.NoError(t, err)
-	assert.Len(t, c.GroupOrder, 1)
-	assert.Len(t, c.Groups, 1)
-	assert.Len(t, c.Outlets, 2)
+	require.NoError(t, err)
+	assert.Equal(t, "0.0.0.0:1234", c.ListenAddress)
+	require.Len(t, c.OutletGroups, 2)
+	assert.Len(t, c.OutletGroups[0].Outlets, 2)
+	assert.Len(t, c.OutletGroups[1].Outlets, 1)
+}
+
+func TestLoadWithDefaults(t *testing.T) {
+	c, err := LoadWithDefaults("testdata/partial.yaml")
+
+	require.NoError(t, err)
+	assert.Equal(t, DefaultConfig.ListenAddress, c.ListenAddress)
+	assert.Empty(t, c.StateFile)
+	assert.Equal(t, uint(42), c.ReceivePin)
+	assert.Equal(t, DefaultConfig.TransmitPin, c.TransmitPin)
+	require.Len(t, c.OutletGroups, 2)
 }
 
 func TestLoadInvalid(t *testing.T) {
-	_, err := config.Load("testdata/invalid.yml")
+	_, err := Load("testdata/invalid.yml")
 	assert.Error(t, err)
 }
 
 func TestLoadNonexistent(t *testing.T) {
-	_, err := config.Load("testdata/idonotexist.yml")
+	_, err := Load("testdata/idonotexist.yml")
 	assert.Error(t, err)
 }
 
 func TestLoadWithReader(t *testing.T) {
 	cfg := `
-groups:
-  foo:
-    name: Foo`
+outletGroups:
+  - id: foo
+    displayName: Foo`
 
 	r := strings.NewReader(cfg)
-	c, err := config.LoadWithReader(r)
-	assert.NoError(t, err)
-	assert.Equal(t, "Foo", c.Groups["foo"].Name)
+	c, err := LoadWithReader(r)
+	require.NoError(t, err)
+	require.Len(t, c.OutletGroups, 1)
+	assert.Equal(t, "foo", c.OutletGroups[0].ID)
+	assert.Equal(t, "Foo", c.OutletGroups[0].DisplayName)
 }
 
 type errorReader struct{}
@@ -47,22 +62,40 @@ func (errorReader) Read(p []byte) (n int, err error) {
 }
 
 func TestLoadWithBadReader(t *testing.T) {
-	_, err := config.LoadWithReader(errorReader{})
+	_, err := LoadWithReader(errorReader{})
 	assert.Error(t, err)
 }
 
-var errorUnmarshal = func(interface{}) error {
-	return fmt.Errorf("error")
-}
+func TestConfig_BuildOutletGroups(t *testing.T) {
+	config := Config{
+		OutletGroups: []OutletGroupConfig{
+			{
+				ID:          "foo",
+				DisplayName: "Foo",
+				Outlets: []OutletConfig{
+					{
+						ID:      "bar",
+						CodeOn:  1,
+						CodeOff: 2,
+					},
+				},
+			},
+		},
+	}
 
-func TestBadConfigUnmarshalYAML(t *testing.T) {
-	c := &config.Config{}
+	expected := []*outlet.Group{
+		{
+			ID:          "foo",
+			DisplayName: "Foo",
+			Outlets: []*outlet.Outlet{
+				{
+					ID:      "bar",
+					CodeOn:  1,
+					CodeOff: 2,
+				},
+			},
+		},
+	}
 
-	assert.Error(t, c.UnmarshalYAML(errorUnmarshal))
-}
-
-func TestBadOutletUnmarshalYAML(t *testing.T) {
-	o := &config.Outlet{}
-
-	assert.Error(t, o.UnmarshalYAML(errorUnmarshal))
+	assert.Equal(t, expected, config.BuildOutletGroups())
 }

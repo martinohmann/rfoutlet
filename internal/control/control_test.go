@@ -6,51 +6,39 @@ import (
 
 	"github.com/martinohmann/rfoutlet/internal/message"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-var (
-	testStateHandler = new(nopStateHandler)
-	testSwitcher     = new(nopSwitcher)
-)
-
-type nopStateHandler int
-
-func (nopStateHandler) LoadState(o []*outlet.Outlet) error {
-	return nil
-}
-
-func (nopStateHandler) SaveState(o []*outlet.Outlet) error {
-	return nil
-}
-
-type nopSwitcher int
-
-func (nopSwitcher) Switch(o *outlet.Outlet, s outlet.State) error {
-	return nil
-}
-
-func createControl(m *outlet.Manager) *Control {
-	return New(m, testSwitcher, NewHub())
+func createControl(r *outlet.Registry) *Control {
+	return New(r, outlet.NewSwitch(gpio.NewDiscardingTransmitter()), NewHub())
 }
 
 func TestSwitch(t *testing.T) {
-	m := outlet.NewManager(testStateHandler)
-	c := createControl(m)
+	c := createControl(outlet.NewRegistry())
 	o := &outlet.Outlet{ID: "foo", Protocol: 1}
 
 	assert.NoError(t, c.Switch(o, outlet.StateOn))
 }
 
 func TestDispatch(t *testing.T) {
-	m := outlet.NewManager(testStateHandler)
-	c := createControl(m)
-	o := &outlet.Outlet{ID: "foo", Protocol: 1}
-	m.Register("foo", o)
+	r := outlet.NewRegistry()
+
+	err := r.RegisterGroups(&outlet.Group{
+		ID:          "group",
+		DisplayName: "Group",
+		Outlets: []*outlet.Outlet{
+			{ID: "foo", DisplayName: "Foo", Protocol: 1, PulseLength: 1},
+		},
+	})
+	require.NoError(t, err)
+
+	c := createControl(r)
 
 	data := json.RawMessage([]byte(`{"id":"foo","action":"on"}`))
 	env := message.Envelope{
-		Type: message.OutletActionType,
+		Type: message.OutletType,
 		Data: &data,
 	}
 
@@ -58,11 +46,10 @@ func TestDispatch(t *testing.T) {
 }
 
 func TestDispatchError(t *testing.T) {
-	m := outlet.NewManager(testStateHandler)
-	c := createControl(m)
+	c := createControl(outlet.NewRegistry())
 
 	env := message.Envelope{
-		Type: message.OutletActionType,
+		Type: message.OutletType,
 		Data: &json.RawMessage{},
 	}
 

@@ -29,7 +29,7 @@ func (s *Switch) Switch(o *Outlet, state State) error {
 
 	proto := gpio.DefaultProtocols[o.Protocol-1]
 
-	s.t.Transmit(o.CodeForState(state), proto, o.PulseLength)
+	s.t.Transmit(o.getCodeForState(state), proto, o.PulseLength)
 	o.SetState(state)
 
 	return nil

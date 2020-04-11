@@ -2,6 +2,7 @@ package message
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,14 +10,16 @@ import (
 
 func TestDecodeMessage(t *testing.T) {
 	tests := []struct {
-		t        string
-		data     string
-		expected interface{}
+		t             Type
+		data          string
+		expected      interface{}
+		expectedError error
 	}{
-		{t: OutletActionType, data: `{"id": "foo","action":"on"}`, expected: &OutletAction{}},
-		{t: GroupActionType, data: `{"id": "bar","action":"toggle"}`, expected: &GroupAction{}},
-		{t: IntervalActionType, data: `{"id":"baz","action":"create","interval":{"ID":"foo"}}`, expected: &IntervalAction{}},
-		{t: "foo", expected: &Unknown{}},
+		{t: OutletType, data: `{"id": "foo","action":"on"}`, expected: &OutletMessage{}},
+		{t: GroupType, data: `{"id": "bar","action":"toggle"}`, expected: &GroupMessage{}},
+		{t: IntervalType, data: `{"id":"baz","action":"create","interval":{"ID":"foo"}}`, expected: &IntervalMessage{}},
+		{t: StatusType, data: `{}`, expected: &StatusMessage{}},
+		{t: "foo", expectedError: errors.New(`unknown message type "foo"`)},
 	}
 
 	for _, tt := range tests {
@@ -28,15 +31,20 @@ func TestDecodeMessage(t *testing.T) {
 
 		msg, err := Decode(env)
 
-		assert.NoError(t, err)
-		assert.IsType(t, tt.expected, msg)
+		if tt.expectedError != nil {
+			assert.Error(t, err)
+			assert.Equal(t, tt.expectedError, err)
+		} else {
+			assert.NoError(t, err)
+			assert.IsType(t, tt.expected, msg)
+		}
 	}
 }
 
 func TestDecodeInvalidMessage(t *testing.T) {
 	data := json.RawMessage([]byte(`{`))
 	env := Envelope{
-		Type: OutletActionType,
+		Type: OutletType,
 		Data: &data,
 	}
 
