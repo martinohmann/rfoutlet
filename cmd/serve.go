@@ -89,11 +89,11 @@ func (o *ServeOptions) Run() error {
 
 	if config.StateFile != "" {
 		outletState, err := state.Load(config.StateFile)
-		if err != nil && !os.IsNotExist(err) {
+		if err == nil {
+			outletState.Apply(registry.GetOutlets())
+		} else if !os.IsNotExist(err) {
 			return err
 		}
-
-		outletState.Apply(registry.GetOutlets())
 
 		defer func() {
 			outletState := state.Collect(registry.GetOutlets())

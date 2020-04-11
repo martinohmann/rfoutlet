@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoadInvalid(t *testing.T) {
@@ -21,11 +23,41 @@ func TestLoadNonexistent(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestLoadValid(t *testing.T) {
+	s, err := Load("testdata/valid.json")
+	require.NoError(t, err)
+
+	expected := State{
+		"foo": OutletState{
+			State: outlet.StateOn,
+			Schedule: schedule.NewWithIntervals([]schedule.Interval{
+				{
+					Enabled: true,
+					From: schedule.DayTime{
+						Hour:   0,
+						Minute: 59,
+					},
+					To: schedule.DayTime{
+						Hour:   2,
+						Minute: 1,
+					},
+					Weekdays: []time.Weekday{time.Monday},
+				},
+			}),
+		},
+	}
+
+	assert.Equal(t, expected, s)
+}
+
 func TestLoadWithReader(t *testing.T) {
-	r := strings.NewReader(`{"switch_states":{"foo":1}}`)
+	r := strings.NewReader(`{"foo":{"state":1}}`)
 	s, err := LoadWithReader(r)
-	assert.NoError(t, err)
-	assert.Equal(t, outlet.StateOn, s.SwitchStates["foo"])
+	require.NoError(t, err)
+
+	outletState, ok := s["foo"]
+	require.True(t, ok)
+	assert.Equal(t, outlet.StateOn, outletState.State)
 }
 
 type errorReader struct{}
@@ -40,8 +72,7 @@ func TestLoadWithBadReader(t *testing.T) {
 }
 
 func TestSaveInNonexistentDir(t *testing.T) {
-	s := New()
-	assert.Error(t, Save("testdata/thisdoesnotexist/json", s))
+	assert.Error(t, Save("testdata/thisdoesnotexist/json", State{}))
 }
 
 type errorWriter struct{}
@@ -55,12 +86,12 @@ func TestSaveWithWriter(t *testing.T) {
 
 	w := bytes.NewBuffer(buf)
 
-	assert.NoError(t, SaveWithWriter(w, New()))
-	assert.Equal(t, "{\"switch_states\":{},\"schedules\":{}}\n", w.String())
+	assert.NoError(t, SaveWithWriter(w, State{}))
+	assert.Equal(t, "{}\n", w.String())
 }
 
 func TestSaveWithBadWriter(t *testing.T) {
-	assert.Error(t, SaveWithWriter(errorWriter{}, New()))
+	assert.Error(t, SaveWithWriter(errorWriter{}, State{}))
 }
 
 func TestCollect(t *testing.T) {
@@ -69,22 +100,21 @@ func TestCollect(t *testing.T) {
 
 	s := Collect(outlets)
 
-	if assert.Len(t, s.Schedules, 1) {
-		assert.Equal(t, s.Schedules["foo"], schedule)
-	}
-
-	if assert.Len(t, s.SwitchStates, 1) {
-		assert.Equal(t, s.SwitchStates["foo"], outlet.StateOn)
-	}
+	outletState, ok := s["foo"]
+	require.True(t, ok)
+	assert.Equal(t, schedule, outletState.Schedule)
+	assert.Equal(t, outlet.StateOn, outletState.State)
 }
 
 func TestApply(t *testing.T) {
 	outlets := []*outlet.Outlet{{ID: "foo", State: outlet.StateOn}}
 	sch := schedule.New()
 
-	s := &State{
-		SwitchStates: map[string]outlet.State{"foo": outlet.StateOff},
-		Schedules:    map[string]*schedule.Schedule{"foo": sch},
+	s := State{
+		"foo": OutletState{
+			State:    outlet.StateOff,
+			Schedule: sch,
+		},
 	}
 
 	s.Apply(outlets)

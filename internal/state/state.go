@@ -10,46 +10,44 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 )
 
-// State type definition
-type State struct {
-	SwitchStates map[string]outlet.State       `json:"switch_states"`
-	Schedules    map[string]*schedule.Schedule `json:"schedules"`
-}
+// State holds the state and schedule of each configured outlet.
+type State map[string]OutletState
 
-// New create a new empty state
-func New() *State {
-	return &State{
-		SwitchStates: make(map[string]outlet.State),
-		Schedules:    make(map[string]*schedule.Schedule),
-	}
+// OutletState represents the state of a single outlet.
+type OutletState struct {
+	State    outlet.State       `json:"state"`
+	Schedule *schedule.Schedule `json:"schedule,omitempty"`
 }
 
 // Load loads the state from a file
-func Load(file string) (*State, error) {
+func Load(file string) (State, error) {
 	f, err := os.Open(file)
 	if err != nil {
-		return New(), err
+		return nil, err
 	}
 
 	return LoadWithReader(f)
 }
 
 // LoadWithReader loads the state using reader
-func LoadWithReader(r io.Reader) (*State, error) {
+func LoadWithReader(r io.Reader) (State, error) {
 	c, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
 
-	state := New()
+	state := State{}
 
-	err = json.Unmarshal(c, state)
+	err = json.Unmarshal(c, &state)
+	if err != nil {
+		return nil, err
+	}
 
-	return state, err
+	return state, nil
 }
 
 // Save saves the state to a file
-func Save(file string, state *State) error {
+func Save(file string, state State) error {
 	f, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE, 0664)
 	if err != nil {
 		return err
@@ -61,33 +59,32 @@ func Save(file string, state *State) error {
 }
 
 // SaveWithWriter saves the state using writer
-func SaveWithWriter(w io.Writer, state *State) error {
+func SaveWithWriter(w io.Writer, state State) error {
 	return json.NewEncoder(w).Encode(state)
 }
 
-// Apply applies the state to outlets
-func (s *State) Apply(outlets []*outlet.Outlet) {
+// Apply applies the state to outlets.
+func (s State) Apply(outlets []*outlet.Outlet) {
 	for _, o := range outlets {
-		if state, ok := s.SwitchStates[o.ID]; ok {
-			o.SetState(state)
+		outletState, ok := s[o.ID]
+		if !ok {
+			continue
 		}
 
-		if schedule := s.Schedules[o.ID]; schedule != nil {
-			o.Schedule = schedule
-		}
+		o.SetState(outletState.State)
+		o.Schedule = outletState.Schedule
 	}
 }
 
-// Collect collects the states of passed outlets
-func Collect(outlets []*outlet.Outlet) *State {
-	s := New()
+// Collect collects the states of passed outlets.
+func Collect(outlets []*outlet.Outlet) State {
+	s := State{}
 
 	for _, o := range outlets {
-		if o.Schedule != nil {
-			s.Schedules[o.ID] = o.Schedule
+		s[o.ID] = OutletState{
+			State:    o.GetState(),
+			Schedule: o.Schedule,
 		}
-
-		s.SwitchStates[o.ID] = o.GetState()
 	}
 
 	return s
