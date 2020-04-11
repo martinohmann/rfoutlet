@@ -1,77 +1,61 @@
 package scheduler
 
 import (
-	"log"
 	"time"
 
+	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 )
 
-// Scheduler type definition
 type Scheduler struct {
-	outlets  map[*outlet.Outlet]bool
-	switcher outlet.Switcher
-	ticker   *time.Ticker
-	outlet   chan *outlet.Outlet
+	Interval     time.Duration
+	Registry     *outlet.Registry
+	CommandQueue chan<- command.Command
 }
 
-// New creates a new scheduler
-func New(switcher outlet.Switcher) *Scheduler {
-	return NewWithInterval(switcher, time.Second)
-}
-
-// NewWithInterval create a new scheduler with user defined check interval
-func NewWithInterval(switcher outlet.Switcher, interval time.Duration) *Scheduler {
-	s := &Scheduler{
-		outlets:  make(map[*outlet.Outlet]bool),
-		switcher: switcher,
-		ticker:   time.NewTicker(interval),
-		outlet:   make(chan *outlet.Outlet),
-	}
-
-	go s.run()
-
-	return s
-}
-
-// Register registers an outlet to the scheduler
-func (s *Scheduler) Register(outlets ...*outlet.Outlet) {
-	for _, outlet := range outlets {
-		s.outlet <- outlet
+func New(registry *outlet.Registry, queue chan<- command.Command) *Scheduler {
+	return &Scheduler{
+		Interval:     10 * time.Second,
+		Registry:     registry,
+		CommandQueue: queue,
 	}
 }
 
-func (s *Scheduler) run() {
+func (s *Scheduler) Run(stopCh <-chan struct{}) {
+	ticker := time.NewTicker(s.Interval)
+
 	for {
 		select {
-		case outlet := <-s.outlet:
-			s.outlets[outlet] = true
-		case <-s.ticker.C:
-			s.check()
+		case <-ticker.C:
+			s.schedule()
+		case <-stopCh:
+			ticker.Stop()
+			return
 		}
 	}
 }
 
-func (s *Scheduler) check() {
-	for o := range s.outlets {
-		if o.Schedule == nil || !o.Schedule.Enabled() {
+func (s *Scheduler) schedule() {
+	for _, outlet := range s.Registry.GetOutlets() {
+		if !outlet.Schedule.Enabled() {
 			continue
 		}
 
-		if o.Schedule.Contains(time.Now()) {
-			s.applyState(o, outlet.StateOn)
-		} else {
-			s.applyState(o, outlet.StateOff)
+		desiredState := getDesiredState(outlet)
+
+		if outlet.GetState() != desiredState {
+			s.CommandQueue <- command.ScheduleCommand{
+				Outlet:       outlet,
+				DesiredState: desiredState,
+			}
 		}
 	}
 }
 
-func (s *Scheduler) applyState(o *outlet.Outlet, newState outlet.State) {
-	if o.GetState() == newState {
-		return
+func getDesiredState(o *outlet.Outlet) outlet.State {
+	if o.Schedule.Contains(time.Now()) {
+		return outlet.StateOn
 	}
 
-	if err := s.switcher.Switch(o, newState); err != nil {
-		log.Println(err)
-	}
+	return outlet.StateOff
 }

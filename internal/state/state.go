@@ -16,7 +16,7 @@ type State map[string]OutletState
 // OutletState represents the state of a single outlet.
 type OutletState struct {
 	State    outlet.State       `json:"state"`
-	Schedule *schedule.Schedule `json:"schedule,omitempty"`
+	Schedule *schedule.Schedule `json:"schedule"`
 }
 
 // Load loads the state from a file
@@ -73,6 +73,9 @@ func (s State) Apply(outlets []*outlet.Outlet) {
 
 		o.SetState(outletState.State)
 		o.Schedule = outletState.Schedule
+		if o.Schedule == nil {
+			o.Schedule = schedule.New()
+		}
 	}
 }
 

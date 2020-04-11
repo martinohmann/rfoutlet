@@ -1,6 +1,5 @@
-package control
+package websocket
 
-// Hub type definition
 type Hub struct {
 	clients    map[*Client]bool
 	register   chan *Client
@@ -9,7 +8,7 @@ type Hub struct {
 }
 
 // NewHub creates a new hub for handling communicating between connected
-// websocket clients
+// websocket clients.
 func NewHub() *Hub {
 	h := &Hub{
 		clients:    make(map[*Client]bool),
@@ -18,30 +17,40 @@ func NewHub() *Hub {
 		broadcast:  make(chan []byte),
 	}
 
-	go h.run()
-
 	return h
 }
 
-// run runs the main loop
-func (h *Hub) run() {
+// Run runs the control loop. If stopCh is closed, the hub will disconnect all
+// clients and stop the control loop.
+func (h *Hub) Run(stopCh <-chan struct{}) {
 	for {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
 				close(client.send)
+				delete(h.clients, client)
 			}
-		case message := <-h.broadcast:
+		case msg := <-h.broadcast:
 			for client := range h.clients {
 				select {
-				case client.send <- message:
+				case client.send <- msg:
 				default:
 					h.unregister <- client
 				}
 			}
+		case <-stopCh:
+			for client := range h.clients {
+				close(client.send)
+				delete(h.clients, client)
+			}
+			return
 		}
 	}
+}
+
+// Broadcast broadcasts msg to all connected clients.
+func (h *Hub) Broadcast(msg []byte) {
+	h.broadcast <- msg
 }

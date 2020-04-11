@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
-	"github.com/martinohmann/rfoutlet/internal/control"
-	"github.com/martinohmann/rfoutlet/internal/message"
+	ws "github.com/gorilla/websocket"
+	"github.com/martinohmann/rfoutlet/internal/command"
+	"github.com/martinohmann/rfoutlet/internal/websocket"
 )
 
-var upgrader = websocket.Upgrader{
+var upgrader = ws.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
@@ -19,7 +19,7 @@ var upgrader = websocket.Upgrader{
 }
 
 // Websocket accepts websocket connections and creates a clients to handle them
-func Websocket(hub *control.Hub, dispatcher message.Dispatcher) gin.HandlerFunc {
+func Websocket(hub *websocket.Hub, queue chan<- command.Command) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
@@ -27,7 +27,7 @@ func Websocket(hub *control.Hub, dispatcher message.Dispatcher) gin.HandlerFunc 
 			return
 		}
 
-		client := control.NewClient(hub, dispatcher, conn)
+		client := websocket.NewClient(hub, conn, queue)
 		client.Listen()
 	}
 }

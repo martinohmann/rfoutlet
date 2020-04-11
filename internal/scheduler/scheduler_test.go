@@ -2,102 +2,182 @@ package scheduler
 
 import (
 	"context"
-	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 	"github.com/stretchr/testify/assert"
 )
-
-type testSwitcher struct {
-	count    int64
-	switched chan struct{}
-}
-
-func (ts *testSwitcher) Switch(o *outlet.Outlet, s outlet.State) error {
-	atomic.AddInt64(&ts.count, 1)
-	o.SetState(s)
-
-	ts.switched <- struct{}{}
-
-	return nil
-}
 
 func TestScheduler(t *testing.T) {
 	now := time.Now()
 	plus1 := now.Add(time.Hour)
 
 	tests := []struct {
-		outlet               *outlet.Outlet
-		intervals            []schedule.Interval
-		expectedState        outlet.State
-		expectedStateChanges int64
+		name             string
+		outlets          []*outlet.Outlet
+		expectedCommands []command.Command
 	}{
 		{
-			outlet: &outlet.Outlet{},
-			intervals: []schedule.Interval{
-				{
-					Enabled:  true,
-					Weekdays: []time.Weekday{now.Weekday()},
-					From:     schedule.NewDayTime(now.Hour(), now.Minute()),
-					To:       schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
-				},
-			},
-			expectedState:        outlet.StateOn,
-			expectedStateChanges: 1,
+			name: "no outlets",
 		},
 		{
-			outlet: &outlet.Outlet{State: outlet.StateOn},
-			intervals: []schedule.Interval{
-				{
-					Enabled:  true,
-					Weekdays: []time.Weekday{now.Weekday()},
-					From:     schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
-					To:       schedule.NewDayTime(now.Hour(), now.Minute()),
-				},
+			name: "outlet with no schedule",
+			outlets: []*outlet.Outlet{
+				{Schedule: schedule.New()},
 			},
-			expectedState:        outlet.StateOff,
-			expectedStateChanges: 1,
 		},
 		{
-			outlet: &outlet.Outlet{State: outlet.StateOn},
-			intervals: []schedule.Interval{
+			name: "outlet with disabled interval",
+			outlets: []*outlet.Outlet{
 				{
-					Enabled:  false,
-					Weekdays: []time.Weekday{now.Weekday()},
-					From:     schedule.NewDayTime(now.Hour(), now.Minute()),
-					To:       schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+					Schedule: schedule.NewWithIntervals([]schedule.Interval{
+						{
+							Enabled:  false,
+							Weekdays: []time.Weekday{now.Weekday()},
+							From:     schedule.NewDayTime(now.Hour(), now.Minute()),
+							To:       schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+						},
+					}),
 				},
 			},
-			expectedState:        outlet.StateOn,
-			expectedStateChanges: 0,
+		},
+		{
+			name: "disabled outlet should be enabled",
+			outlets: []*outlet.Outlet{
+				{
+					State: outlet.StateOff,
+					Schedule: schedule.NewWithIntervals([]schedule.Interval{
+						{
+							Enabled:  true,
+							Weekdays: []time.Weekday{now.Weekday()},
+							From:     schedule.NewDayTime(now.Hour(), now.Minute()),
+							To:       schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+						},
+					}),
+				},
+			},
+			expectedCommands: []command.Command{
+				command.ScheduleCommand{
+					DesiredState: outlet.StateOn,
+					Outlet: &outlet.Outlet{
+						State: outlet.StateOff,
+						Schedule: schedule.NewWithIntervals([]schedule.Interval{
+							{
+								Enabled:  true,
+								Weekdays: []time.Weekday{now.Weekday()},
+								From:     schedule.NewDayTime(now.Hour(), now.Minute()),
+								To:       schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+							},
+						}),
+					},
+				},
+			},
+		},
+		{
+			name: "enabled outlet should not be enabled again",
+			outlets: []*outlet.Outlet{
+				{
+					State: outlet.StateOn,
+					Schedule: schedule.NewWithIntervals([]schedule.Interval{
+						{
+							Enabled:  true,
+							Weekdays: []time.Weekday{now.Weekday()},
+							From:     schedule.NewDayTime(now.Hour(), now.Minute()),
+							To:       schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+						},
+					}),
+				},
+			},
+		},
+		{
+			name: "enabled outlet should be switched off",
+			outlets: []*outlet.Outlet{
+				{
+					State: outlet.StateOn,
+					Schedule: schedule.NewWithIntervals([]schedule.Interval{
+						{
+							Enabled:  true,
+							Weekdays: []time.Weekday{now.Weekday()},
+							From:     schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+							To:       schedule.NewDayTime(now.Hour(), now.Minute()),
+						},
+					}),
+				},
+			},
+			expectedCommands: []command.Command{
+				command.ScheduleCommand{
+					DesiredState: outlet.StateOff,
+					Outlet: &outlet.Outlet{
+						State: outlet.StateOn,
+						Schedule: schedule.NewWithIntervals([]schedule.Interval{
+							{
+								Enabled:  true,
+								Weekdays: []time.Weekday{now.Weekday()},
+								From:     schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+								To:       schedule.NewDayTime(now.Hour(), now.Minute()),
+							},
+						}),
+					},
+				},
+			},
+		},
+		{
+			name: "disabled outlet should not be switched off again",
+			outlets: []*outlet.Outlet{
+				{
+					State: outlet.StateOff,
+					Schedule: schedule.NewWithIntervals([]schedule.Interval{
+						{
+							Enabled:  true,
+							Weekdays: []time.Weekday{now.Weekday()},
+							From:     schedule.NewDayTime(plus1.Hour(), plus1.Minute()),
+							To:       schedule.NewDayTime(now.Hour(), now.Minute()),
+						},
+					}),
+				},
+			},
 		},
 	}
 
-	for _, tt := range tests {
-		tt.outlet.Schedule = schedule.NewWithIntervals(tt.intervals)
-		testScheduler(t, tt.outlet, tt.expectedState, tt.expectedStateChanges)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			reg := outlet.NewRegistry()
+			reg.RegisterOutlets(test.outlets...)
+
+			queue := make(chan command.Command)
+			defer close(queue)
+
+			sched := New(reg, queue)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+			defer cancel()
+
+			var commands []command.Command
+			doneCh := make(chan struct{})
+
+			go func() {
+				defer close(doneCh)
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case cmd, ok := <-queue:
+						if !ok {
+							return
+						}
+						commands = append(commands, cmd)
+					}
+				}
+			}()
+
+			sched.schedule()
+
+			<-doneCh
+
+			assert.Equal(t, test.expectedCommands, commands)
+		})
 	}
-}
-
-func testScheduler(t *testing.T, o *outlet.Outlet, expectedState outlet.State, expectedStateChanges int64) {
-	ts := &testSwitcher{switched: make(chan struct{})}
-
-	s := NewWithInterval(ts, 5*time.Millisecond)
-	defer s.ticker.Stop()
-
-	s.Register(o)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
-	defer cancel()
-
-	select {
-	case <-ts.switched:
-	case <-ctx.Done():
-	}
-
-	assert.Equal(t, expectedState, o.GetState())
-	assert.Equal(t, expectedStateChanges, atomic.LoadInt64(&ts.count))
 }

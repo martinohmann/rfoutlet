@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/martinohmann/rfoutlet/internal/schedule"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -89,9 +90,10 @@ func TestConfig_BuildOutletGroups(t *testing.T) {
 			DisplayName: "Foo",
 			Outlets: []*outlet.Outlet{
 				{
-					ID:      "bar",
-					CodeOn:  1,
-					CodeOff: 2,
+					ID:       "bar",
+					CodeOn:   1,
+					CodeOff:  2,
+					Schedule: schedule.New(),
 				},
 			},
 		},

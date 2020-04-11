@@ -13,12 +13,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/packr"
 	"github.com/imdario/mergo"
+	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/config"
-	"github.com/martinohmann/rfoutlet/internal/control"
+	"github.com/martinohmann/rfoutlet/internal/controller"
 	"github.com/martinohmann/rfoutlet/internal/handler"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/internal/scheduler"
 	"github.com/martinohmann/rfoutlet/internal/state"
+	"github.com/martinohmann/rfoutlet/internal/websocket"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/spf13/cobra"
 	"github.com/warthog618/gpiod"
@@ -46,7 +48,7 @@ func NewServeCommand() *cobra.Command {
 }
 
 type ServeOptions struct {
-	Config         config.Config
+	config.Config
 	ConfigFilename string
 }
 
@@ -106,22 +108,30 @@ func (o *ServeOptions) Run() error {
 	}
 
 	stopCh := make(chan struct{})
+	commandQueue := make(chan command.Command)
 
+	hub := websocket.NewHub()
+
+	controller := controller.Controller{
+		Registry:     registry,
+		Switcher:     outlet.NewSwitch(transmitter),
+		Broadcaster:  hub,
+		CommandQueue: commandQueue,
+	}
+
+	sched := scheduler.New(registry, commandQueue)
+
+	go controller.Run(stopCh)
+	go sched.Run(stopCh)
+	go hub.Run(stopCh)
 	go handleSignals(stopCh)
-
-	switcher := outlet.NewSwitch(transmitter)
-	hub := control.NewHub()
-	control := control.New(registry, switcher, hub)
-
-	scheduler := scheduler.New(control)
-	scheduler.Register(registry.GetOutlets()...)
 
 	router := gin.Default()
 	router.Use(cors.Default())
 
 	router.GET("/", handler.Redirect("/app"))
 	router.GET("/healthz", handler.Healthz)
-	router.GET("/ws", handler.Websocket(hub, control))
+	router.GET("/ws", handler.Websocket(hub, commandQueue))
 	router.StaticFS("/app", packr.NewBox(webDir))
 
 	return listenAndServe(stopCh, router, config.ListenAddress)

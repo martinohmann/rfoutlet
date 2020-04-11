@@ -8,6 +8,7 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/imdario/mergo"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/martinohmann/rfoutlet/internal/schedule"
 )
 
 const (
@@ -71,6 +72,8 @@ func (c Config) BuildOutletGroups() []*outlet.Group {
 				CodeOff:     oc.CodeOff,
 				Protocol:    oc.Protocol,
 				PulseLength: oc.PulseLength,
+				Schedule:    schedule.New(),
+				State:       outlet.StateOff,
 			}
 		}
 
