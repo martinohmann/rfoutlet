@@ -120,6 +120,11 @@ func (c *Client) listenWrite() {
 				return
 			}
 
+			log.WithFields(logrus.Fields{
+				"length": len(message),
+				"uuid":   c.uuid,
+			}).Debug("sending message")
+
 			if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
 				log.Errorf("websocket write error: %v", err)
 				return
