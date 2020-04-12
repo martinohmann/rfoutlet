@@ -29,17 +29,21 @@ const (
 )
 
 var DefaultConfig = Config{
-	ListenAddress: DefaultListenAddress,
-	ReceivePin:    DefaultReceivePin,
-	TransmitPin:   DefaultTransmitPin,
+	ListenAddress:      DefaultListenAddress,
+	ReceivePin:         DefaultReceivePin,
+	TransmitPin:        DefaultTransmitPin,
+	DefaultPulseLength: DefaultPulseLength,
+	DefaultProtocol:    DefaultProtocol,
 }
 
 type Config struct {
-	ListenAddress string              `json:"listenAddress"`
-	StateFile     string              `json:"stateFile"`
-	ReceivePin    uint                `json:"receivePin"`
-	TransmitPin   uint                `json:"transmitPin"`
-	OutletGroups  []OutletGroupConfig `json:"outletGroups"`
+	ListenAddress      string              `json:"listenAddress"`
+	StateFile          string              `json:"stateFile"`
+	ReceivePin         uint                `json:"receivePin"`
+	TransmitPin        uint                `json:"transmitPin"`
+	DefaultPulseLength uint                `json:"defaultPulseLength"`
+	DefaultProtocol    int                 `json:"DefaultProtocol"`
+	OutletGroups       []OutletGroupConfig `json:"outletGroups"`
 }
 
 type OutletGroupConfig struct {
@@ -65,7 +69,7 @@ func (c Config) BuildOutletGroups() []*outlet.Group {
 		outlets := make([]*outlet.Outlet, len(gc.Outlets))
 
 		for j, oc := range gc.Outlets {
-			outlets[j] = &outlet.Outlet{
+			o := &outlet.Outlet{
 				ID:          oc.ID,
 				DisplayName: oc.DisplayName,
 				CodeOn:      oc.CodeOn,
@@ -75,13 +79,33 @@ func (c Config) BuildOutletGroups() []*outlet.Group {
 				Schedule:    schedule.New(),
 				State:       outlet.StateOff,
 			}
+
+			if o.DisplayName == "" {
+				o.DisplayName = o.ID
+			}
+
+			if o.PulseLength == 0 {
+				o.PulseLength = c.DefaultPulseLength
+			}
+
+			if o.Protocol == 0 {
+				o.Protocol = c.DefaultProtocol
+			}
+
+			outlets[j] = o
 		}
 
-		groups[i] = &outlet.Group{
+		g := &outlet.Group{
 			ID:          gc.ID,
 			DisplayName: gc.DisplayName,
 			Outlets:     outlets,
 		}
+
+		if g.DisplayName == "" {
+			g.DisplayName = g.ID
+		}
+
+		groups[i] = g
 	}
 
 	return groups

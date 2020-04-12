@@ -22,7 +22,9 @@ func NewRegistry() *Registry {
 }
 
 func (r *Registry) RegisterGroups(groups ...*Group) error {
-	for _, group := range groups {
+	ids := make([]string, len(groups))
+
+	for i, group := range groups {
 		_, ok := r.groupMap[group.ID]
 		if ok {
 			return fmt.Errorf("duplicate group ID %q", group.ID)
@@ -35,13 +37,18 @@ func (r *Registry) RegisterGroups(groups ...*Group) error {
 
 		r.groupMap[group.ID] = group
 		r.groups = append(r.groups, group)
+		ids[i] = group.ID
 	}
+
+	log.WithField("groupIDs", ids).Infof("registered %d outlet groups", len(groups))
 
 	return nil
 }
 
 func (r *Registry) RegisterOutlets(outlets ...*Outlet) error {
-	for _, outlet := range outlets {
+	ids := make([]string, len(outlets))
+
+	for i, outlet := range outlets {
 		_, ok := r.outletMap[outlet.ID]
 		if ok {
 			return fmt.Errorf("duplicate outlet ID %q", outlet.ID)
@@ -49,7 +56,10 @@ func (r *Registry) RegisterOutlets(outlets ...*Outlet) error {
 
 		r.outletMap[outlet.ID] = outlet
 		r.outlets = append(r.outlets, outlet)
+		ids[i] = outlet.ID
 	}
+
+	log.WithField("outletIDs", ids).Infof("registered %d outlets", len(outlets))
 
 	return nil
 }

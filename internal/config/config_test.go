@@ -69,6 +69,8 @@ func TestLoadWithBadReader(t *testing.T) {
 
 func TestConfig_BuildOutletGroups(t *testing.T) {
 	config := Config{
+		DefaultProtocol:    1,
+		DefaultPulseLength: 123,
 		OutletGroups: []OutletGroupConfig{
 			{
 				ID:          "foo",
@@ -90,10 +92,13 @@ func TestConfig_BuildOutletGroups(t *testing.T) {
 			DisplayName: "Foo",
 			Outlets: []*outlet.Outlet{
 				{
-					ID:       "bar",
-					CodeOn:   1,
-					CodeOff:  2,
-					Schedule: schedule.New(),
+					ID:          "bar",
+					DisplayName: "bar",
+					CodeOn:      1,
+					CodeOff:     2,
+					Schedule:    schedule.New(),
+					Protocol:    1,
+					PulseLength: 123,
 				},
 			},
 		},

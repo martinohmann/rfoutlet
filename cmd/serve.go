@@ -152,6 +152,8 @@ func listenAndServe(stopCh <-chan struct{}, handler http.Handler, addr string) e
 	}
 
 	go func() {
+		log.Infof("listening on %s", addr)
+
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Listen: %s\n", err)
 		}
