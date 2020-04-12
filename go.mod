@@ -11,6 +11,7 @@ require (
 	github.com/imdario/mergo v0.3.9
 	github.com/posener/wstest v0.0.0-20180217133618-28272a7ea048
 	github.com/satori/go.uuid v1.2.0
+	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/ugorji/go v1.1.7 // indirect

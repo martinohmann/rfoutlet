@@ -176,7 +176,7 @@ func decodeCommand(envelope Envelope) (command.Command, error) {
 	case StatusType:
 		return &StatusCommand{}, nil
 	default:
-		return nil, fmt.Errorf("unknown message type %q", envelope.Type)
+		return nil, fmt.Errorf("unknown command type %q", envelope.Type)
 	}
 }
 

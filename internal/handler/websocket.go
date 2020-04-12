@@ -1,14 +1,16 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	ws "github.com/gorilla/websocket"
 	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/websocket"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.WithField("component", "handler")
 
 // Websocket accepts websocket connections and creates a clients to handle them
 func Websocket(hub *websocket.Hub, queue chan<- command.Command) gin.HandlerFunc {
@@ -23,7 +25,7 @@ func Websocket(hub *websocket.Hub, queue chan<- command.Command) gin.HandlerFunc
 	return func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			log.Println(err)
+			log.Errorf("failed to upgrade websocket connection: %v", err)
 			return
 		}
 

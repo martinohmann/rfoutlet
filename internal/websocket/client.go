@@ -1,12 +1,15 @@
 package websocket
 
 import (
-	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/martinohmann/rfoutlet/internal/command"
+	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.WithField("component", "websocket")
 
 const (
 	// Time allowed to write a message to the peer.
@@ -26,6 +29,7 @@ const (
 
 // Client is a connected websocket client.
 type Client struct {
+	uuid         string
 	hub          *Hub
 	conn         *websocket.Conn
 	send         chan []byte
@@ -36,6 +40,7 @@ type Client struct {
 // NewClient creates a new *Client to handle a websocket connection.
 func NewClient(hub *Hub, conn *websocket.Conn, queue chan<- command.Command) *Client {
 	return &Client{
+		uuid:         uuid.NewV4().String(),
 		hub:          hub,
 		conn:         conn,
 		send:         make(chan []byte, sendBufSize),
@@ -73,14 +78,14 @@ func (c *Client) listenRead() {
 
 			if err := c.conn.ReadJSON(&envelope); err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-					log.Println(err)
+					log.Errorf("websocket read error: %v", err)
 				}
 				return
 			}
 
 			cmd, err := decodeCommand(envelope)
 			if err != nil {
-				log.Println(err)
+				log.Errorf("failed to decode command: %v", err)
 				continue
 			}
 
@@ -116,11 +121,13 @@ func (c *Client) listenWrite() {
 			}
 
 			if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
+				log.Errorf("websocket write error: %v", err)
 				return
 			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Errorf("websocket write error: %v", err)
 				return
 			}
 		}

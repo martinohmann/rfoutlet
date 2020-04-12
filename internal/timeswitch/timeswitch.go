@@ -5,7 +5,10 @@ import (
 
 	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.WithField("component", "timeswitch")
 
 // TimeSwitch checks if outlets should be enabled or disabled based on their
 // schedule and send out commands to bring them to the desired state.
@@ -37,6 +40,7 @@ func (s *TimeSwitch) Run(stopCh <-chan struct{}) {
 			s.check()
 		case <-stopCh:
 			ticker.Stop()
+			log.Info("shutting down time switch")
 			return
 		}
 	}

@@ -4,7 +4,10 @@ import (
 	"fmt"
 
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.WithField("component", "outlet")
 
 // Switcher defines the interface for an outlet switcher.
 type Switcher interface {
@@ -27,12 +30,22 @@ func NewSwitch(transmitter gpio.CodeTransmitter) *Switch {
 // Switch switches an outlet to the provided state
 func (s *Switch) Switch(o *Outlet, state State) error {
 	if o.Protocol < 1 || o.Protocol > len(gpio.DefaultProtocols) {
-		return fmt.Errorf("Protocol %d does not exist", o.Protocol)
+		return fmt.Errorf("protocol %d does not exist", o.Protocol)
 	}
 
 	proto := gpio.DefaultProtocols[o.Protocol-1]
 
-	s.Transmitter.Transmit(o.getCodeForState(state), proto, o.PulseLength)
+	code := o.getCodeForState(state)
+
+	log.WithFields(logrus.Fields{
+		"outletID":     o.ID,
+		"outletState":  o.GetState(),
+		"desiredState": state,
+		"protocol":     o.Protocol,
+		"pulseLength":  o.PulseLength,
+	}).Debugf("transmitting code %d", code)
+
+	s.Transmitter.Transmit(code, proto, o.PulseLength)
 	o.SetState(state)
 
 	return nil

@@ -45,7 +45,7 @@ type Config struct {
 type OutletGroupConfig struct {
 	ID          string         `json:"id"`
 	DisplayName string         `json:"displayName"`
-	Outlets     []OutletConfig `outlets`
+	Outlets     []OutletConfig `json:"outlets"`
 }
 
 type OutletConfig struct {
@@ -87,6 +87,8 @@ func (c Config) BuildOutletGroups() []*outlet.Group {
 	return groups
 }
 
+// LoadWithDefaults loads config from file and merges in the default config for
+// unset fields.
 func LoadWithDefaults(file string) (*Config, error) {
 	config, err := Load(file)
 	if err != nil {

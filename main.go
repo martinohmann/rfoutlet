@@ -11,11 +11,9 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/gin-gonic/gin"
 	"github.com/martinohmann/rfoutlet/cmd"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +29,7 @@ func newRootCommand() *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			gin.SetMode(gin.ReleaseMode)
 			if debug {
+				log.SetLevel(log.DebugLevel)
 				gin.SetMode(gin.DebugMode)
 			}
 		},
@@ -49,7 +48,6 @@ func main() {
 	rootCmd.AddCommand(cmd.NewTransmitCommand())
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }

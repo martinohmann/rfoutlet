@@ -6,6 +6,7 @@ import (
 
 	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/warthog618/gpiod"
 )
@@ -18,10 +19,10 @@ func NewTransmitCommand() *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "transmit <code>",
+		Use:   "transmit [codes...]",
 		Short: "Send out codes to remote controlled outlets",
 		Long:  "The transmit command can be used send out codes to remote controlled outlets.",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return options.Run(args)
 		},
@@ -46,32 +47,52 @@ func (o *TransmitOptions) AddFlags(cmd *cobra.Command) {
 }
 
 func (o *TransmitOptions) Run(args []string) error {
-	code, err := strconv.ParseUint(args[0], 10, 64)
-	if err != nil {
-		return err
-	}
-
-	chip, err := gpiod.NewChip("gpiochip0")
-	if err != nil {
-		return err
-	}
-	defer chip.Close()
-
 	if o.Protocol < 1 || o.Protocol > len(gpio.DefaultProtocols) {
-		return fmt.Errorf("Protocol %d does not exist", o.Protocol)
+		return fmt.Errorf("protocol %d does not exist", o.Protocol)
 	}
 
 	proto := gpio.DefaultProtocols[o.Protocol-1]
 
+	codes := make([]uint64, len(args))
+
+	for i, arg := range args {
+		var err error
+		codes[i], err = strconv.ParseUint(arg, 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse code: %v", err)
+		}
+	}
+
+	chip, err := gpiod.NewChip("gpiochip0")
+	if err != nil {
+		return fmt.Errorf("failed to open gpio device: %v", err)
+	}
+	defer chip.Close()
+
 	transmitter, err := gpio.NewTransmitter(chip, int(o.Pin))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create gpio transmitter: %v", err)
 	}
 	defer transmitter.Close()
 
-	fmt.Printf("transmitting code=%d pulseLength=%d protocol=%d\n", code, o.PulseLength, o.Protocol)
+	stopCh := make(chan struct{})
 
-	<-transmitter.Transmit(code, proto, o.PulseLength)
+	go handleSignals(stopCh)
+
+	log := log.WithFields(log.Fields{
+		"pulseLength": o.PulseLength,
+		"protocol":    o.Protocol,
+	})
+
+	for _, code := range codes {
+		log.Infof("transmitting code %d", code)
+
+		select {
+		case <-transmitter.Transmit(code, proto, o.PulseLength):
+		case <-stopCh:
+			return nil
+		}
+	}
 
 	return nil
 }

@@ -2,11 +2,14 @@ package controller
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 
 	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.WithField("component", "controller")
 
 // Broadcaster can broadcast messages to all connected clients.
 type Broadcaster interface {
@@ -36,9 +39,10 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 		case cmd := <-c.CommandQueue:
 			err := c.handleCommand(cmd)
 			if err != nil {
-				log.Println(err)
+				log.Errorf("error handling command: %v", err)
 			}
 		case <-stopCh:
+			log.Info("shutting down controller")
 			return
 		}
 	}
@@ -55,6 +59,8 @@ func (c *Controller) commandContext() command.Context {
 // handleCommand executes cmd and may trigger broadcasts of state changes back
 // to the connected clients.
 func (c *Controller) handleCommand(cmd command.Command) error {
+	log.WithField("command", fmt.Sprintf("%#v", cmd)).Debug("handling command")
+
 	ctx := c.commandContext()
 
 	broadcast, err := cmd.Execute(ctx)

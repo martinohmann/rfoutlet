@@ -29,12 +29,15 @@ func (h *Hub) Run(stopCh <-chan struct{}) {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
+			log.Infof("registered new client %s", client.uuid)
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				close(client.done)
 				delete(h.clients, client)
+				log.Infof("unregistered client %s", client.uuid)
 			}
 		case msg := <-h.broadcast:
+			log.WithField("length", len(msg)).Debug("broadcasting message")
 			for client := range h.clients {
 				select {
 				case client.send <- msg:
@@ -43,6 +46,7 @@ func (h *Hub) Run(stopCh <-chan struct{}) {
 				}
 			}
 		case <-stopCh:
+			log.Infof("shutting down hub")
 			for client := range h.clients {
 				close(client.done)
 				delete(h.clients, client)
