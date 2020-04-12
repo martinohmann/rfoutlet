@@ -8,17 +8,28 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 )
 
+// Broadcaster can broadcast messages to all connected clients.
 type Broadcaster interface {
+	// Broadcast broadcasts msg to all connected clients.
 	Broadcast(msg []byte)
 }
 
+// Controller controls the outlets registered to the registry.
 type Controller struct {
-	Registry     *outlet.Registry
-	Switcher     outlet.Switcher
-	Broadcaster  Broadcaster
+	// Registry contains all known outlets and outlet groups.
+	Registry *outlet.Registry
+	// Switcher switches outlets on or off based on commands from the
+	// CommandQueue.
+	Switcher outlet.Switcher
+	// Broadcaster broadcasts state updates to all connected clients.
+	Broadcaster Broadcaster
+	// CommandQueue is consumed sequentially by the controller. The commands
+	// may cause outlet and group state changes which are communicated back to
+	// one or more connected clients.
 	CommandQueue <-chan command.Command
 }
 
+// Run runs the main control loop until stopCh is closed.
 func (c *Controller) Run(stopCh <-chan struct{}) {
 	for {
 		select {
@@ -33,6 +44,7 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 	}
 }
 
+// commandContext creates a new command.Context.
 func (c *Controller) commandContext() command.Context {
 	return command.Context{
 		Registry: c.Registry,
@@ -40,6 +52,8 @@ func (c *Controller) commandContext() command.Context {
 	}
 }
 
+// handleCommand executes cmd and may trigger broadcasts of state changes back
+// to the connected clients.
 func (c *Controller) handleCommand(cmd command.Command) error {
 	ctx := c.commandContext()
 
@@ -51,6 +65,8 @@ func (c *Controller) handleCommand(cmd command.Command) error {
 	return c.broadcastState()
 }
 
+// broadcastState broadcasts the current outlet group state back to connected
+// clients.
 func (c *Controller) broadcastState() error {
 	msg, err := json.Marshal(c.Registry.GetGroups())
 	if err != nil {

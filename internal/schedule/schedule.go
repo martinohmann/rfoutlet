@@ -29,6 +29,10 @@ func NewWithIntervals(intervals []Interval) *Schedule {
 
 // Enabled returns true if any of the intervals is enabled
 func (s *Schedule) Enabled() bool {
+	if s == nil {
+		return false
+	}
+
 	s.RLock()
 	intervals := s.intervals
 	s.RUnlock()
@@ -44,6 +48,10 @@ func (s *Schedule) Enabled() bool {
 
 // Contains returns true if any of the intervals contains t
 func (s *Schedule) Contains(t time.Time) bool {
+	if s == nil {
+		return false
+	}
+
 	s.RLock()
 	intervals := s.intervals
 	s.RUnlock()

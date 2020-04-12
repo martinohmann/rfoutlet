@@ -1,9 +1,10 @@
-package command
+package websocket
 
 import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 )
@@ -19,26 +20,36 @@ const (
 	StatusType   Type = "status"
 )
 
-// StatusCommand...
-type StatusCommand struct {
-	sender Sender
+// ClientAwareCommand is aware of the websocket client.
+type ClientAwareCommand interface {
+	command.Command
+
+	// SetClient sets the websocket client on the command. The client can be
+	// used to send messages back to the client that issued the command.
+	SetClient(client *Client)
 }
 
-func (c StatusCommand) Execute(context Context) (bool, error) {
-	groups := context.Registry.GetGroups()
+// StatusCommand is sent by a connected client to retrieve the list of current
+// outlet groups. This usually happens when the client first connects.
+type StatusCommand struct {
+	client *Client
+}
+
+func (c StatusCommand) Execute(context command.Context) (bool, error) {
+	groups := context.GetGroups()
 
 	msg, err := json.Marshal(groups)
 	if err != nil {
 		return false, err
 	}
 
-	c.sender.Send(msg)
+	c.client.Send(msg)
 
 	return false, nil
 }
 
-func (c *StatusCommand) SetSender(sender Sender) {
-	c.sender = sender
+func (c *StatusCommand) SetClient(client *Client) {
+	c.client = client
 }
 
 // OutletCommand...
@@ -47,8 +58,8 @@ type OutletCommand struct {
 	Action   string `json:"action"`
 }
 
-func (c OutletCommand) Execute(context Context) (bool, error) {
-	outlet, ok := context.Registry.GetOutlet(c.OutletID)
+func (c OutletCommand) Execute(context command.Context) (bool, error) {
+	outlet, ok := context.GetOutlet(c.OutletID)
 	if !ok {
 		return false, fmt.Errorf("outlet %q does not exist", c.OutletID)
 	}
@@ -57,7 +68,7 @@ func (c OutletCommand) Execute(context Context) (bool, error) {
 		return false, nil
 	}
 
-	err := context.Switcher.Switch(outlet, getTargetState(outlet, c.Action))
+	err := context.Switch(outlet, getTargetState(outlet, c.Action))
 	if err != nil {
 		return false, err
 	}
@@ -71,8 +82,8 @@ type GroupCommand struct {
 	Action  string `json:"action"`
 }
 
-func (c GroupCommand) Execute(context Context) (bool, error) {
-	group, ok := context.Registry.GetGroup(c.GroupID)
+func (c GroupCommand) Execute(context command.Context) (bool, error) {
+	group, ok := context.GetGroup(c.GroupID)
 	if !ok {
 		return false, fmt.Errorf("outlet group %q does not exist", c.GroupID)
 	}
@@ -84,7 +95,7 @@ func (c GroupCommand) Execute(context Context) (bool, error) {
 			continue
 		}
 
-		err := context.Switcher.Switch(outlet, getTargetState(outlet, c.Action))
+		err := context.Switch(outlet, getTargetState(outlet, c.Action))
 		if err != nil {
 			return modified, err
 		}
@@ -102,8 +113,8 @@ type IntervalCommand struct {
 	Interval schedule.Interval `json:"interval"`
 }
 
-func (c IntervalCommand) Execute(context Context) (bool, error) {
-	outlet, ok := context.Registry.GetOutlet(c.OutletID)
+func (c IntervalCommand) Execute(context command.Context) (bool, error) {
+	outlet, ok := context.GetOutlet(c.OutletID)
 	if !ok {
 		return false, fmt.Errorf("outlet %q does not exist", c.OutletID)
 	}
@@ -129,24 +140,6 @@ func (c IntervalCommand) handle(outlet *outlet.Outlet) error {
 	}
 }
 
-type ScheduleCommand struct {
-	Outlet       *outlet.Outlet
-	DesiredState outlet.State
-}
-
-func (c ScheduleCommand) Execute(context Context) (bool, error) {
-	if c.Outlet.GetState() == c.DesiredState {
-		return false, nil
-	}
-
-	err := context.Switcher.Switch(c.Outlet, c.DesiredState)
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
 func getTargetState(o *outlet.Outlet, action string) outlet.State {
 	switch action {
 	default:
@@ -160,4 +153,33 @@ func getTargetState(o *outlet.Outlet, action string) outlet.State {
 
 		return outlet.StateOn
 	}
+}
+
+// Envelope defines a command envelope which hold the command type and the raw
+// json data of the command that gets unmarshalled into the correct type by
+// decodeCommand.
+type Envelope struct {
+	Type Type
+	Data *json.RawMessage
+}
+
+// decodeCommand decodes the contents of a command envelope into the correct
+// type.
+func decodeCommand(envelope Envelope) (command.Command, error) {
+	switch envelope.Type {
+	case OutletType:
+		return decode(envelope.Data, &OutletCommand{})
+	case GroupType:
+		return decode(envelope.Data, &GroupCommand{})
+	case IntervalType:
+		return decode(envelope.Data, &IntervalCommand{})
+	case StatusType:
+		return &StatusCommand{}, nil
+	default:
+		return nil, fmt.Errorf("unknown message type %q", envelope.Type)
+	}
+}
+
+func decode(data *json.RawMessage, cmd command.Command) (command.Command, error) {
+	return cmd, json.Unmarshal(*data, cmd)
 }

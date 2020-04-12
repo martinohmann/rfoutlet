@@ -1,4 +1,4 @@
-package scheduler
+package timeswitch
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestScheduler(t *testing.T) {
+func TestTimeSwitch(t *testing.T) {
 	now := time.Now()
 	plus1 := now.Add(time.Hour)
 
@@ -60,7 +60,7 @@ func TestScheduler(t *testing.T) {
 				},
 			},
 			expectedCommands: []command.Command{
-				command.ScheduleCommand{
+				TimeSwitchCommand{
 					DesiredState: outlet.StateOn,
 					Outlet: &outlet.Outlet{
 						State: outlet.StateOff,
@@ -108,7 +108,7 @@ func TestScheduler(t *testing.T) {
 				},
 			},
 			expectedCommands: []command.Command{
-				command.ScheduleCommand{
+				TimeSwitchCommand{
 					DesiredState: outlet.StateOff,
 					Outlet: &outlet.Outlet{
 						State: outlet.StateOn,
@@ -150,7 +150,7 @@ func TestScheduler(t *testing.T) {
 			queue := make(chan command.Command)
 			defer close(queue)
 
-			sched := New(reg, queue)
+			timeSwitch := New(reg, queue)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
 			defer cancel()
@@ -173,7 +173,7 @@ func TestScheduler(t *testing.T) {
 				}
 			}()
 
-			sched.schedule()
+			timeSwitch.check()
 
 			<-doneCh
 

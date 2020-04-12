@@ -14,9 +14,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/martinohmann/rfoutlet/cmd"
 	"github.com/spf13/cobra"
 )
+
+var debug bool
 
 func newRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -25,7 +28,15 @@ func newRootCommand() *cobra.Command {
 		Long:          "rfoutlet is a tool for interacting with remote controlled outlets. It provides functionality to sniff and transmit the codes controlling the outlets.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			gin.SetMode(gin.ReleaseMode)
+			if debug {
+				gin.SetMode(gin.DebugMode)
+			}
+		},
 	}
+
+	cmd.PersistentFlags().BoolVar(&debug, "debug", debug, "enable debug mode. this will cause more verbose output")
 
 	return cmd
 }

@@ -1,5 +1,7 @@
 package websocket
 
+// Hub acts as a central registry for connected websocket clients and can be
+// used to broadcast messages to everyone.
 type Hub struct {
 	clients    map[*Client]bool
 	register   chan *Client
@@ -29,7 +31,7 @@ func (h *Hub) Run(stopCh <-chan struct{}) {
 			h.clients[client] = true
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
-				close(client.send)
+				close(client.done)
 				delete(h.clients, client)
 			}
 		case msg := <-h.broadcast:
@@ -42,7 +44,7 @@ func (h *Hub) Run(stopCh <-chan struct{}) {
 			}
 		case <-stopCh:
 			for client := range h.clients {
-				close(client.send)
+				close(client.done)
 				delete(h.clients, client)
 			}
 			return

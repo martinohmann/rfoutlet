@@ -18,8 +18,8 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/controller"
 	"github.com/martinohmann/rfoutlet/internal/handler"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
-	"github.com/martinohmann/rfoutlet/internal/scheduler"
 	"github.com/martinohmann/rfoutlet/internal/state"
+	"github.com/martinohmann/rfoutlet/internal/timeswitch"
 	"github.com/martinohmann/rfoutlet/internal/websocket"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/spf13/cobra"
@@ -37,7 +37,7 @@ func NewServeCommand() *cobra.Command {
 		Use:   "serve",
 		Short: "Serve the frontend for controlling outlets",
 		Long:  "The serve command starts a server which serves the frontend and connects clients through websockets for controlling outlets via web interface.",
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return options.Run()
 		},
 	}
@@ -119,22 +119,21 @@ func (o *ServeOptions) Run() error {
 		CommandQueue: commandQueue,
 	}
 
-	sched := scheduler.New(registry, commandQueue)
+	timeSwitch := timeswitch.New(registry, commandQueue)
 
-	go controller.Run(stopCh)
-	go sched.Run(stopCh)
-	go hub.Run(stopCh)
 	go handleSignals(stopCh)
+	go controller.Run(stopCh)
+	go timeSwitch.Run(stopCh)
+	go hub.Run(stopCh)
 
-	router := gin.Default()
-	router.Use(cors.Default())
+	r := gin.Default()
+	r.Use(cors.Default())
+	r.GET("/", handler.Redirect("/app"))
+	r.GET("/ws", handler.Websocket(hub, commandQueue))
+	r.GET("/healthz", handler.Healthz)
+	r.StaticFS("/app", packr.NewBox(webDir))
 
-	router.GET("/", handler.Redirect("/app"))
-	router.GET("/healthz", handler.Healthz)
-	router.GET("/ws", handler.Websocket(hub, commandQueue))
-	router.StaticFS("/app", packr.NewBox(webDir))
-
-	return listenAndServe(stopCh, router, config.ListenAddress)
+	return listenAndServe(stopCh, r, config.ListenAddress)
 }
 
 func listenAndServe(stopCh <-chan struct{}, handler http.Handler, addr string) error {

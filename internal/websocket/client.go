@@ -24,24 +24,28 @@ const (
 	sendBufSize = 256
 )
 
-// Client type definition
+// Client is a connected websocket client.
 type Client struct {
 	hub          *Hub
 	conn         *websocket.Conn
 	send         chan []byte
+	done         chan struct{}
 	commandQueue chan<- command.Command
 }
 
-// NewClient create a new client to handle a websocket connection
+// NewClient creates a new *Client to handle a websocket connection.
 func NewClient(hub *Hub, conn *websocket.Conn, queue chan<- command.Command) *Client {
 	return &Client{
 		hub:          hub,
 		conn:         conn,
 		send:         make(chan []byte, sendBufSize),
+		done:         make(chan struct{}),
 		commandQueue: queue,
 	}
 }
 
+// Listen registers the client to the websocket hub and starts listening for
+// incoming data from and data that should be written to the websocket.
 func (c *Client) Listen() {
 	c.hub.register <- c
 
@@ -49,7 +53,7 @@ func (c *Client) Listen() {
 	go c.listenRead()
 }
 
-// listenRead reads messages from the websocket and processes them
+// listenRead reads messages from the websocket and processes them.
 func (c *Client) listenRead() {
 	defer func() {
 		c.hub.unregister <- c
@@ -61,30 +65,36 @@ func (c *Client) listenRead() {
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	for {
-		envelope := command.Envelope{}
+		select {
+		case <-c.done:
+			return
+		default:
+			envelope := Envelope{}
 
-		if err := c.conn.ReadJSON(&envelope); err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Println(err)
+			if err := c.conn.ReadJSON(&envelope); err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					log.Println(err)
+				}
+				return
 			}
-			break
-		}
 
-		cmd, err := command.Decode(envelope)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
+			cmd, err := decodeCommand(envelope)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
 
-		if senderAwareCmd, ok := cmd.(command.SenderAwareCommand); ok {
-			senderAwareCmd.SetSender(c)
-		}
+			if clientAwareCmd, ok := cmd.(ClientAwareCommand); ok {
+				clientAwareCmd.SetClient(c)
+			}
 
-		c.commandQueue <- cmd
+			c.commandQueue <- cmd
+		}
 	}
 }
 
-// listenWrite writes messages received from the hub back to the websocket connection
+// listenWrite writes messages received from the hub back to the websocket
+// connection.
 func (c *Client) listenWrite() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
@@ -94,6 +104,10 @@ func (c *Client) listenWrite() {
 
 	for {
 		select {
+		case <-c.done:
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+			return
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
@@ -113,7 +127,7 @@ func (c *Client) listenWrite() {
 	}
 }
 
-// Send sends msg to client.
+// Send sends msg through the websocket to the connected client.
 func (c *Client) Send(msg []byte) {
 	c.send <- msg
 }
