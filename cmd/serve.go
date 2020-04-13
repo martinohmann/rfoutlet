@@ -16,7 +16,6 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/martinohmann/rfoutlet/internal/controller"
-	"github.com/martinohmann/rfoutlet/internal/handler"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/internal/statedrift"
 	"github.com/martinohmann/rfoutlet/internal/timeswitch"
@@ -146,11 +145,11 @@ func (o *ServeOptions) Run() error {
 	go timeSwitch.Run(stopCh)
 	go hub.Run(stopCh)
 
-	r := gin.Default()
-	r.Use(cors.Default())
-	r.GET("/", handler.Redirect("/app"))
-	r.GET("/ws", handler.Websocket(hub, commandQueue))
-	r.GET("/healthz", handler.Healthz)
+	r := gin.New()
+	r.Use(gin.Recovery(), gin.Logger(), cors.Default())
+	r.GET("/", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/app") })
+	r.GET("/ws", websocket.Handler(hub, commandQueue))
+	r.GET("/healthz", func(c *gin.Context) { c.String(http.StatusOK, "ok") })
 	r.StaticFS("/app", packr.NewBox(webDir))
 
 	return listenAndServe(stopCh, r, cfg.ListenAddress)

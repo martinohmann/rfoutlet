@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/martinohmann/rfoutlet/internal/command"
@@ -91,17 +90,4 @@ func TestIntervalCommand(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.True(t, broadcast)
-}
-
-func TestDecodeCommand(t *testing.T) {
-	data := json.RawMessage(`{"action":"on"}`)
-
-	envelope := Envelope{
-		Type: OutletType,
-		Data: &data,
-	}
-
-	cmd, err := decodeCommand(envelope)
-	require.NoError(t, err)
-	assert.IsType(t, cmd, &OutletCommand{})
 }

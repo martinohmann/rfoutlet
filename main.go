@@ -28,9 +28,13 @@ func newRootCommand() *cobra.Command {
 		SilenceErrors: true,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			gin.SetMode(gin.ReleaseMode)
+
 			if debug {
-				log.SetLevel(log.DebugLevel)
 				gin.SetMode(gin.DebugMode)
+				log.SetLevel(log.DebugLevel)
+				log.SetFormatter(&log.TextFormatter{
+					FullTimestamp: true,
+				})
 			}
 		},
 	}
