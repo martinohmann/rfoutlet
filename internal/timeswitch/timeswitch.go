@@ -55,7 +55,7 @@ func (s *TimeSwitch) check() {
 		desiredState := getDesiredState(outlet)
 
 		// We only send out commands if the outlet is not in the desired state
-		// to aware spamming the command queue.
+		// to avoid spamming the command queue.
 		if outlet.GetState() != desiredState {
 			s.CommandQueue <- TimeSwitchCommand{
 				Outlet:       outlet,

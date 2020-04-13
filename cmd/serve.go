@@ -18,7 +18,6 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/controller"
 	"github.com/martinohmann/rfoutlet/internal/handler"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
-	"github.com/martinohmann/rfoutlet/internal/state"
 	"github.com/martinohmann/rfoutlet/internal/timeswitch"
 	"github.com/martinohmann/rfoutlet/internal/websocket"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
@@ -89,27 +88,25 @@ func (o *ServeOptions) Run() error {
 
 	err = registry.RegisterGroups(cfg.BuildOutletGroups()...)
 	if err != nil {
-		return fmt.Errorf("failed to registry outlet groups: %v", err)
+		return fmt.Errorf("failed to register outlet groups: %v", err)
 	}
 
 	if cfg.StateFile != "" {
 		log := log.WithField("stateFile", cfg.StateFile)
 
+		stateFile := outlet.NewStateFile(cfg.StateFile)
+
 		log.Debug("loading outlet states")
 
-		outletState, err := state.Load(cfg.StateFile)
-		if err == nil {
-			outletState.Apply(registry.GetOutlets())
-		} else if !os.IsNotExist(err) {
+		err := stateFile.ReadBack(registry.GetOutlets())
+		if err != nil && !os.IsNotExist(err) {
 			return fmt.Errorf("failed to load outlet states: %v", err)
 		}
 
 		defer func() {
 			log.Info("saving outlet states")
 
-			outletState := state.Collect(registry.GetOutlets())
-
-			err := state.Save(cfg.StateFile, outletState)
+			err := stateFile.WriteOut(registry.GetOutlets())
 			if err != nil {
 				log.Errorf("failed to save state: %v", err)
 			}

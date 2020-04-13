@@ -4,7 +4,7 @@ outletGroups:
   - id: foo
     outlets:
       - id: baz
-        name: Baz
+        displayName: Baz
         codeOn: 789
         codeOff: 012
         protocol: 2
@@ -13,7 +13,7 @@ outletGroups:
     displayName: Bar
     outlets:
       - id: qux
-        name: Qux
+        displayName: Qux
         codeOn: 345
         codeOff: 678
         protocol: 3

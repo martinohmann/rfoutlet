@@ -1,8 +1,6 @@
 package outlet
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // Registry holds references to all outlets and outlet groups.
 type Registry struct {
@@ -12,6 +10,7 @@ type Registry struct {
 	groupMap  map[string]*Group
 }
 
+// NewRegistry creates a new *Registry.
 func NewRegistry() *Registry {
 	return &Registry{
 		outlets:   make([]*Outlet, 0),
@@ -21,6 +20,8 @@ func NewRegistry() *Registry {
 	}
 }
 
+// RegisterGroups registers groups and the outlets contained in those groups.
+// Returns an error if groups or outlets with duplicate IDs are found.
 func (r *Registry) RegisterGroups(groups ...*Group) error {
 	for _, group := range groups {
 		_, ok := r.groupMap[group.ID]
@@ -42,6 +43,8 @@ func (r *Registry) RegisterGroups(groups ...*Group) error {
 	return nil
 }
 
+// RegisterGroups registers outlets. Returns an error if outlets with duplicate
+// IDs are found.
 func (r *Registry) RegisterOutlets(outlets ...*Outlet) error {
 	for _, outlet := range outlets {
 		_, ok := r.outletMap[outlet.ID]
@@ -58,20 +61,26 @@ func (r *Registry) RegisterOutlets(outlets ...*Outlet) error {
 	return nil
 }
 
+// GetOutlet fetches the an outlet from the registry by ID. The second return
+// value is true if the outlet was found, false otherwise.
 func (r *Registry) GetOutlet(id string) (*Outlet, bool) {
 	outlet, ok := r.outletMap[id]
 	return outlet, ok
 }
 
+// GetOutlets returns all registered outlets.
 func (r *Registry) GetOutlets() []*Outlet {
 	return r.outlets
 }
 
+// GetGroup fetches the an group from the registry by ID. The second return
+// value is true if the group was found, false otherwise.
 func (r *Registry) GetGroup(id string) (*Group, bool) {
 	group, ok := r.groupMap[id]
 	return group, ok
 }
 
+// GetGroups returns all registered groups.
 func (r *Registry) GetGroups() []*Group {
 	return r.groups
 }

@@ -6,18 +6,24 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 )
 
-// State defines an outlet switch state
+// State describes the state of an outlet (on or off).
 type State uint
 
 const (
-	// StateOff defines the state for a disabled switch
+	// StateOff describes an outlet that is switched off.
 	StateOff State = iota
-
-	// SwitchStateOn defines the state for an enabled switch
+	// StateOn describes an outlet that is switched on.
 	StateOn
 )
 
-// Outlet type definition
+// Group is a group of outlets that can be switched as one.
+type Group struct {
+	ID          string    `json:"id"`
+	DisplayName string    `json:"displayName"`
+	Outlets     []*Outlet `json:"outlets"`
+}
+
+// Outlet is an rf controlled outlet that can be switched on or off.
 type Outlet struct {
 	sync.Mutex
 	ID          string             `json:"id"`
@@ -52,11 +58,4 @@ func (o *Outlet) getCodeForState(state State) uint64 {
 	default:
 		return o.CodeOff
 	}
-}
-
-// Group type definition
-type Group struct {
-	ID          string    `json:"id"`
-	DisplayName string    `json:"displayName"`
-	Outlets     []*Outlet `json:"outlets"`
 }
