@@ -42,7 +42,8 @@ type Config struct {
 	ReceivePin         uint                `json:"receivePin"`
 	TransmitPin        uint                `json:"transmitPin"`
 	DefaultPulseLength uint                `json:"defaultPulseLength"`
-	DefaultProtocol    int                 `json:"DefaultProtocol"`
+	DefaultProtocol    int                 `json:"defaultProtocol"`
+	DetectStateDrift   bool                `json:"detectStateDrift"`
 	OutletGroups       []OutletGroupConfig `json:"outletGroups"`
 }
 

@@ -36,7 +36,12 @@ type Controller struct {
 func (c *Controller) Run(stopCh <-chan struct{}) {
 	for {
 		select {
-		case cmd := <-c.CommandQueue:
+		case cmd, ok := <-c.CommandQueue:
+			if !ok {
+				log.Error("command queue was closed unexpectedly, shutting down controller")
+				return
+			}
+
 			err := c.handleCommand(cmd)
 			if err != nil {
 				log.Errorf("error handling command: %v", err)

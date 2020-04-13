@@ -18,6 +18,7 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/controller"
 	"github.com/martinohmann/rfoutlet/internal/handler"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
+	"github.com/martinohmann/rfoutlet/internal/statedrift"
 	"github.com/martinohmann/rfoutlet/internal/timeswitch"
 	"github.com/martinohmann/rfoutlet/internal/websocket"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
@@ -56,7 +57,9 @@ func (o *ServeOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.ConfigFilename, "config", o.ConfigFilename, "config filename")
 	cmd.Flags().StringVar(&o.StateFile, "state-file", o.StateFile, "state filename")
 	cmd.Flags().StringVar(&o.ListenAddress, "listen-address", o.ListenAddress, "listen address")
-	cmd.Flags().UintVar(&o.TransmitPin, "transmit-pin", o.TransmitPin, "gpio pin to transmit on")
+	cmd.Flags().UintVar(&o.TransmitPin, "transmit-pin", o.TransmitPin, "gpio pin to transmit rf codes on")
+	cmd.Flags().UintVar(&o.ReceivePin, "receive-pin", o.ReceivePin, "gpio pin to receive rf codes on (this is used by the state drift detector)")
+	cmd.Flags().BoolVar(&o.DetectStateDrift, "detect-state-drift", o.DetectStateDrift, "detect state drift (e.g. if an outlet was switched via the phyical remote instead of rfoutlet)")
 }
 
 func (o *ServeOptions) Run() error {
@@ -115,6 +118,17 @@ func (o *ServeOptions) Run() error {
 
 	stopCh := make(chan struct{})
 	commandQueue := make(chan command.Command)
+
+	if cfg.DetectStateDrift {
+		receiver, err := gpio.NewReceiver(chip, int(cfg.ReceivePin))
+		if err != nil {
+			return fmt.Errorf("failed to create gpio receiver: %v", err)
+		}
+
+		detector := statedrift.NewDetector(registry, receiver, commandQueue)
+
+		go detector.Run(stopCh)
+	}
 
 	hub := websocket.NewHub()
 
