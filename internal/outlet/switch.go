@@ -27,7 +27,7 @@ func NewSwitch(transmitter gpio.CodeTransmitter) *Switch {
 	}
 }
 
-// Switch switches an outlet to the provided state
+// Switch switches an outlet to the provided state.
 func (s *Switch) Switch(o *Outlet, state State) error {
 	if o.Protocol < 1 || o.Protocol > len(gpio.DefaultProtocols) {
 		return fmt.Errorf("protocol %d does not exist", o.Protocol)
