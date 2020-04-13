@@ -9,12 +9,17 @@ import (
 
 var log = logrus.WithField("component", "statedrift")
 
+// Detector sniffs for sent out rf codes using the receiver and pushes state
+// correction commands into the command queue if necessary. This allows for the
+// detection of codes sent out by pressing buttons on a physical outlet remote
+// control.
 type Detector struct {
 	Registry     *outlet.Registry
 	Receiver     gpio.CodeReceiver
 	CommandQueue chan<- command.Command
 }
 
+// NewDetector creates a new *Detector.
 func NewDetector(registry *outlet.Registry, receiver gpio.CodeReceiver, queue chan<- command.Command) *Detector {
 	return &Detector{
 		Registry:     registry,
@@ -23,6 +28,7 @@ func NewDetector(registry *outlet.Registry, receiver gpio.CodeReceiver, queue ch
 	}
 }
 
+// Run runs the state drift detection loop until stopCh is closed.
 func (d *Detector) Run(stopCh <-chan struct{}) {
 	for {
 		select {
@@ -35,17 +41,25 @@ func (d *Detector) Run(stopCh <-chan struct{}) {
 				return
 			}
 
+			var found bool
+
 			for _, o := range d.Registry.GetOutlets() {
 				if result.Code == o.CodeOn && o.GetState() != outlet.StateOn {
+					found = true
 					d.CommandQueue <- StateCorrectionCommand{
 						Outlet:       o,
 						DesiredState: outlet.StateOn,
 					}
 				} else if result.Code == o.CodeOff && o.GetState() != outlet.StateOff {
+					found = true
 					d.CommandQueue <- StateCorrectionCommand{
 						Outlet:       o,
 						DesiredState: outlet.StateOff,
 					}
+				}
+
+				if found {
+					break
 				}
 			}
 		}
