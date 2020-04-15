@@ -1,3 +1,5 @@
+// Package outlet provides types for the outlet and outlet group as well as
+// tools to interact with them and to manage their state.
 package outlet
 
 import (

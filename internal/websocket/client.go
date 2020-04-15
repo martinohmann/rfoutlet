@@ -89,8 +89,8 @@ func (c *Client) listenRead() {
 				continue
 			}
 
-			if clientAwareCmd, ok := cmd.(ClientAwareCommand); ok {
-				clientAwareCmd.SetClient(c)
+			if clientAwareCmd, ok := cmd.(command.SenderAwareCommand); ok {
+				clientAwareCmd.SetSender(c)
 			}
 
 			c.commandQueue <- cmd

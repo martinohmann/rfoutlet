@@ -2,7 +2,8 @@ package schedule
 
 import "time"
 
-// Interval type definition
+// Interval defines a time frame consisting of a start and end time and a list
+// of weekdays for which the interval is valid.
 type Interval struct {
 	ID       string         `json:"id"`
 	Enabled  bool           `json:"enabled"`
@@ -11,7 +12,7 @@ type Interval struct {
 	To       DayTime        `json:"to"`
 }
 
-// Contains returns true if interval is enabled and t lies within
+// Contains returns true if interval is enabled and t lies within.
 func (i Interval) Contains(t time.Time) bool {
 	if !i.Enabled || !i.enabledOn(t.Weekday()) {
 		return false

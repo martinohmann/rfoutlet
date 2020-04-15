@@ -1,7 +1,11 @@
+// Package statedrift provides a detector for listening to rf codes sent out by
+// anything else than rfoutlet (e.g. the physical remote control for the
+// outlet).
 package statedrift
 
 import (
 	"github.com/martinohmann/rfoutlet/internal/command"
+	"github.com/martinohmann/rfoutlet/internal/controller/commands"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/sirupsen/logrus"
@@ -46,13 +50,13 @@ func (d *Detector) Run(stopCh <-chan struct{}) {
 			for _, o := range d.Registry.GetOutlets() {
 				if result.Code == o.CodeOn && o.GetState() != outlet.StateOn {
 					found = true
-					d.CommandQueue <- StateCorrectionCommand{
+					d.CommandQueue <- commands.StateCorrectionCommand{
 						Outlet:       o,
 						DesiredState: outlet.StateOn,
 					}
 				} else if result.Code == o.CodeOff && o.GetState() != outlet.StateOff {
 					found = true
-					d.CommandQueue <- StateCorrectionCommand{
+					d.CommandQueue <- commands.StateCorrectionCommand{
 						Outlet:       o,
 						DesiredState: outlet.StateOff,
 					}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/martinohmann/rfoutlet/internal/command"
+	"github.com/martinohmann/rfoutlet/internal/controller/commands"
 	"github.com/posener/wstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,14 +29,14 @@ func TestClient_listenRead(t *testing.T) {
 					"id":     "foo",
 				},
 			},
-			expectedCmdType: &OutletCommand{},
+			expectedCmdType: &commands.OutletCommand{},
 		},
 		{
 			name: "status action",
 			data: map[string]interface{}{
 				"type": "status",
 			},
-			expectedCmdType: &StatusCommand{},
+			expectedCmdType: &commands.StatusCommand{},
 		},
 		{
 			name: "unknown command",

@@ -1,3 +1,5 @@
+// Package controller provides a controller that handles all outlet commands
+// sequentially.
 package controller
 
 import (

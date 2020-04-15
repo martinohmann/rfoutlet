@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/martinohmann/rfoutlet/internal/command"
+	"github.com/martinohmann/rfoutlet/internal/controller/commands"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
@@ -48,8 +49,8 @@ func TestDetector(t *testing.T) {
 	}()
 
 	expected := []command.Command{
-		StateCorrectionCommand{Outlet: o1, DesiredState: outlet.StateOn},
-		StateCorrectionCommand{Outlet: o2, DesiredState: outlet.StateOff},
+		commands.StateCorrectionCommand{Outlet: o1, DesiredState: outlet.StateOn},
+		commands.StateCorrectionCommand{Outlet: o2, DesiredState: outlet.StateOff},
 	}
 
 	received := make([]command.Command, 0)

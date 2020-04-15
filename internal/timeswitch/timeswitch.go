@@ -1,9 +1,14 @@
+// Package timeswitch implements the time switch logic for outlets. Outlets can
+// be configured to automatically be turned on or off during certain periods of
+// the day or week. The time switch will emit state correction commands based
+// on the schedule that may be defined on an outlet.
 package timeswitch
 
 import (
 	"time"
 
 	"github.com/martinohmann/rfoutlet/internal/command"
+	"github.com/martinohmann/rfoutlet/internal/controller/commands"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/sirupsen/logrus"
 )
@@ -57,7 +62,7 @@ func (s *TimeSwitch) check() {
 		// We only send out commands if the outlet is not in the desired state
 		// to avoid spamming the command queue.
 		if outlet.GetState() != desiredState {
-			s.CommandQueue <- TimeSwitchCommand{
+			s.CommandQueue <- commands.StateCorrectionCommand{
 				Outlet:       outlet,
 				DesiredState: desiredState,
 			}

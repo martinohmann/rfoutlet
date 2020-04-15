@@ -1,3 +1,5 @@
+// Package config provides the config file schema and utilities to load the
+// config into concrete outlet and outlet group types.
 package config
 
 import (
@@ -28,6 +30,8 @@ const (
 	DefaultPulseLength uint = 189
 )
 
+// DefaultConfig contains the default values which are chosen if a file is
+// omitted in the config file.
 var DefaultConfig = Config{
 	ListenAddress:      DefaultListenAddress,
 	ReceivePin:         DefaultReceivePin,
@@ -36,6 +40,7 @@ var DefaultConfig = Config{
 	DefaultProtocol:    DefaultProtocol,
 }
 
+// Config is the structure of the config file.
 type Config struct {
 	ListenAddress      string              `json:"listenAddress"`
 	StateFile          string              `json:"stateFile"`
@@ -47,12 +52,14 @@ type Config struct {
 	OutletGroups       []OutletGroupConfig `json:"outletGroups"`
 }
 
+// OutletGroupConfig is the structure of the config for a single outlet group.
 type OutletGroupConfig struct {
 	ID          string         `json:"id"`
 	DisplayName string         `json:"displayName"`
 	Outlets     []OutletConfig `json:"outlets"`
 }
 
+// OutletConfig is the structure of the config for a single outlet.
 type OutletConfig struct {
 	ID          string `json:"id"`
 	DisplayName string `json:"displayName"`
@@ -128,7 +135,7 @@ func LoadWithDefaults(file string) (*Config, error) {
 	return config, nil
 }
 
-// Load loads the config from a file
+// Load loads the config from a file.
 func Load(file string) (*Config, error) {
 	f, err := os.Open(file)
 	if err != nil {
@@ -138,7 +145,7 @@ func Load(file string) (*Config, error) {
 	return LoadWithReader(f)
 }
 
-// LoadWithReader loads the config using reader
+// LoadWithReader loads the config using reader.
 func LoadWithReader(r io.Reader) (*Config, error) {
 	c, err := ioutil.ReadAll(r)
 	if err != nil {

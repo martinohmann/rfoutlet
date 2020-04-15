@@ -1,3 +1,7 @@
+// Package websocket provides the http handler, client and hub for managing the
+// websocket connections of clients using rfoutlet. This is both used to react
+// on commands of a single client as well as to broadcast updates to all
+// clients so that state changes are immediately visible to everybody.
 package websocket
 
 // Hub acts as a central registry for connected websocket clients and can be
