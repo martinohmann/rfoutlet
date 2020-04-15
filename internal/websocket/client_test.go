@@ -59,8 +59,6 @@ func TestClient_listenRead(t *testing.T) {
 			require.NoError(t, err)
 			defer c.Close()
 
-			require.NoError(t, err)
-
 			go func(data interface{}) {
 				require.NoError(t, c.WriteJSON(data))
 			}(test.data)
@@ -90,7 +88,6 @@ func TestClient_listenWrite(t *testing.T) {
 	hub := NewHub()
 
 	queue := make(chan command.Command)
-	valCh := make(chan interface{})
 
 	r := gin.New()
 	r.GET("/ws", Handler(hub, queue))
@@ -99,33 +96,24 @@ func TestClient_listenWrite(t *testing.T) {
 	require.NoError(t, err)
 	defer c.Close()
 
-	require.NoError(t, err)
 	assert.Equal(t, http.StatusSwitchingProtocols, rr.StatusCode)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
 	defer cancel()
 
 	go hub.Run(ctx.Done())
+	go func() {
+		hub.Broadcast([]byte(`{"name":"bar"}`))
+		<-ctx.Done()
+		c.Close()
+	}()
 
 	type foo struct {
 		Name string
 	}
 
-	go func() {
-		val := foo{}
+	val := foo{}
 
-		err := c.ReadJSON(&val)
-		require.NoError(t, err)
-
-		valCh <- val
-	}()
-
-	hub.Broadcast([]byte(`{"name":"bar"}`))
-
-	select {
-	case <-ctx.Done():
-		t.Fatal(ctx.Err())
-	case val := <-valCh:
-		assert.Equal(t, foo{Name: "bar"}, val)
-	}
+	require.NoError(t, c.ReadJSON(&val))
+	assert.Equal(t, foo{Name: "bar"}, val)
 }
