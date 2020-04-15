@@ -1,0 +1,13 @@
+---
+run:
+  deadline: 10m
+
+linters-settings:
+  errcheck:
+    ignore: github.com/martinohmann/rfoutlet/pkg/gpio:SetValue,github.com/martinohmann/rfoutlet/internal/outlet:Register*,github.com/gorilla/websocket:Set.*Deadline
+
+linters:
+  enable:
+    - whitespace
+    - misspell
+    - goimports

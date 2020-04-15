@@ -56,6 +56,7 @@ func TestClient_listenRead(t *testing.T) {
 			r.GET("/ws", Handler(hub, queue))
 
 			c, _, err := wstest.NewDialer(r).Dial("ws://localhost/ws", nil)
+			require.NoError(t, err)
 			defer c.Close()
 
 			require.NoError(t, err)
@@ -96,6 +97,7 @@ func TestClient_listenWrite(t *testing.T) {
 	r.GET("/ws", Handler(hub, queue))
 
 	c, rr, err := wstest.NewDialer(r).Dial("ws://localhost/ws", nil)
+	require.NoError(t, err)
 	defer c.Close()
 
 	require.NoError(t, err)

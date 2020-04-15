@@ -25,6 +25,6 @@ func Handler(hub *Hub, queue chan<- command.Command) gin.HandlerFunc {
 			return
 		}
 
-		NewClient(hub, conn, queue).Listen()
+		newClient(hub, conn, queue).listen()
 	}
 }

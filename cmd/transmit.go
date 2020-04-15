@@ -43,7 +43,7 @@ type TransmitOptions struct {
 func (o *TransmitOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().UintVar(&o.PulseLength, "pulse-length", o.PulseLength, "pulse length")
 	cmd.Flags().UintVar(&o.Pin, "pin", o.Pin, "gpio pin to transmit on")
-	cmd.Flags().IntVar(&o.Protocol, "protocol", o.Protocol, "transmission protocl")
+	cmd.Flags().IntVar(&o.Protocol, "protocol", o.Protocol, "protocol to use for the transmission")
 }
 
 func (o *TransmitOptions) Run(args []string) error {

@@ -111,15 +111,8 @@ func (t *Transmitter) Close() error {
 
 // watch listens on a channel and processes incoming transmissions.
 func (t *Transmitter) watch() {
-	for {
-		select {
-		case trans, ok := <-t.transmission:
-			if !ok {
-				return
-			}
-
-			t.transmit(trans)
-		}
+	for trans := range t.transmission {
+		t.transmit(trans)
 	}
 }
 

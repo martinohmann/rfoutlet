@@ -21,7 +21,7 @@ func TestHub_Broadcast(t *testing.T) {
 
 	go h.Run(stopCh)
 
-	c := NewClient(h, conn, queue)
+	c := newClient(h, conn, queue)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()

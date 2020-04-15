@@ -27,31 +27,29 @@ const (
 	sendBufSize = 256
 )
 
-// Client is a connected websocket client.
-type Client struct {
+// client is a connected websocket client.
+type client struct {
 	uuid         string
 	hub          *Hub
 	conn         *websocket.Conn
 	send         chan []byte
-	done         chan struct{}
 	commandQueue chan<- command.Command
 }
 
-// NewClient creates a new *Client to handle a websocket connection.
-func NewClient(hub *Hub, conn *websocket.Conn, queue chan<- command.Command) *Client {
-	return &Client{
+// newClient creates a new *client to handle a websocket connection.
+func newClient(hub *Hub, conn *websocket.Conn, queue chan<- command.Command) *client {
+	return &client{
 		uuid:         uuid.NewV4().String(),
 		hub:          hub,
 		conn:         conn,
 		send:         make(chan []byte, sendBufSize),
-		done:         make(chan struct{}),
 		commandQueue: queue,
 	}
 }
 
-// Listen registers the client to the websocket hub and starts listening for
+// listen registers the client to the websocket hub and starts listening for
 // incoming data from and data that should be written to the websocket.
-func (c *Client) Listen() {
+func (c *client) listen() {
 	c.hub.register <- c
 
 	go c.listenWrite()
@@ -59,7 +57,7 @@ func (c *Client) Listen() {
 }
 
 // listenRead reads messages from the websocket and processes them.
-func (c *Client) listenRead() {
+func (c *client) listenRead() {
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
@@ -70,37 +68,32 @@ func (c *Client) listenRead() {
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	for {
-		select {
-		case <-c.done:
+		envelope := Envelope{}
+
+		if err := c.conn.ReadJSON(&envelope); err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure, websocket.CloseNormalClosure) {
+				log.Errorf("websocket read error: %v", err)
+			}
 			return
-		default:
-			envelope := Envelope{}
-
-			if err := c.conn.ReadJSON(&envelope); err != nil {
-				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-					log.Errorf("websocket read error: %v", err)
-				}
-				return
-			}
-
-			cmd, err := decodeCommand(envelope)
-			if err != nil {
-				log.Errorf("failed to decode command: %v", err)
-				continue
-			}
-
-			if clientAwareCmd, ok := cmd.(command.SenderAwareCommand); ok {
-				clientAwareCmd.SetSender(c)
-			}
-
-			c.commandQueue <- cmd
 		}
+
+		cmd, err := decodeCommand(envelope)
+		if err != nil {
+			log.Errorf("failed to decode command: %v", err)
+			continue
+		}
+
+		if clientAwareCmd, ok := cmd.(command.SenderAwareCommand); ok {
+			clientAwareCmd.SetSender(c)
+		}
+
+		c.commandQueue <- cmd
 	}
 }
 
 // listenWrite writes messages received from the hub back to the websocket
 // connection.
-func (c *Client) listenWrite() {
+func (c *client) listenWrite() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -109,14 +102,12 @@ func (c *Client) listenWrite() {
 
 	for {
 		select {
-		case <-c.done:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			c.conn.WriteMessage(websocket.CloseMessage, []byte{})
-			return
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err := c.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+					log.Errorf("failed to send websocket close message: %v", err)
+				}
 				return
 			}
 
@@ -139,7 +130,7 @@ func (c *Client) listenWrite() {
 	}
 }
 
-// Send sends msg through the websocket to the connected client.
-func (c *Client) Send(msg []byte) {
-	c.send <- msg
+// Send implements command.Sender.
+func (c *client) Send(msg []byte) {
+	c.hub.Send(c, msg)
 }
