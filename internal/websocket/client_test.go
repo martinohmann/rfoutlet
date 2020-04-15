@@ -61,10 +61,9 @@ func TestClient_listenRead(t *testing.T) {
 
 			require.NoError(t, err)
 
-			go func() {
-				err := c.WriteJSON(test.data)
-				require.NoError(t, err)
-			}()
+			go func(data interface{}) {
+				require.NoError(t, c.WriteJSON(data))
+			}(test.data)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 			defer cancel()
@@ -91,7 +90,7 @@ func TestClient_listenWrite(t *testing.T) {
 	hub := NewHub()
 
 	queue := make(chan command.Command)
-	done := make(chan struct{})
+	valCh := make(chan interface{})
 
 	r := gin.New()
 	r.GET("/ws", Handler(hub, queue))
@@ -113,13 +112,12 @@ func TestClient_listenWrite(t *testing.T) {
 	}
 
 	go func() {
-		defer close(done)
 		val := foo{}
 
 		err := c.ReadJSON(&val)
 		require.NoError(t, err)
 
-		assert.Equal(t, foo{Name: "bar"}, val)
+		valCh <- val
 	}()
 
 	hub.Broadcast([]byte(`{"name":"bar"}`))
@@ -127,6 +125,7 @@ func TestClient_listenWrite(t *testing.T) {
 	select {
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
-	case <-done:
+	case val := <-valCh:
+		assert.Equal(t, foo{Name: "bar"}, val)
 	}
 }
