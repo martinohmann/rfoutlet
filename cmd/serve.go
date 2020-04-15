@@ -181,8 +181,8 @@ func listenAndServe(stopCh <-chan struct{}, handler http.Handler, addr string) e
 
 func handleSignals(stopCh chan struct{}) {
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	<-quit
-	log.Info("received signal, terminating...")
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+	sig := <-quit
+	log.WithField("signal", sig).Info("received signal, shutting down...")
 	close(stopCh)
 }
