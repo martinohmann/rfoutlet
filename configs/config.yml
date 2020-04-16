@@ -1,18 +1,68 @@
 ---
-listenAddress: 0.0.0.0:3333
+# The address to listen on.
+listenAddress: :3333
+
+# Location where switch states and outlet schedules for time switch should be
+# persisted across restarts of rfoutlet. If omitted, state will be lost. Can be
+# relative or absolute.
 stateFile: state.json
+
+# Pin to detect rf codes on. This is used by the state drift detector which can
+# be enabled with --detect-state-drift.
 receivePin: 27
+
+# Pin to transmit rf codes on.
 transmitPin: 17
+
+# The protocol that is used for outlets that do not explicitly define it using
+# the protocol field.
+defaultProtocol: 1
+
+# The pulse length that is used for outlets that do not explicitly define it
+# using the pulseLength field.
+defaultPulseLength: 189
+
+# Enable state drift detection. This will watch for rf codes sent out by
+# something other than rfoutlet (e.g. the physical remote control for the
+# outlet) and will adjust the outlet states if necessary. The receiver has to
+# be attached to receivePin for this to work.
+detectStateDrift: false
+
+# Groups of outlets. IDs are mandatory and need to unique.
 groups:
   - id: foo
+
+    # The group name that is displayed in the UI. If omitted, the ID will be
+    # used.
     displayName: Foo
+
+    # The outlets that are part of the group. Outlet IDs are mandatory and need
+    # to unique.
     outlets:
       - id: bar
+
+        # The outlet name that is displayed in the UI. If omitted, the ID will
+        # be used.
         displayName: Bar
+
+        # The code that needs to be sent to turn the outlet on. This can be
+        # found out using the `rfoutlet sniff` subcommand.
         codeOn: 123
+
+        # The code that needs to be sent to turn the outlet off. This can be
+        # found out using the `rfoutlet sniff` subcommand.
         codeOff: 456
+
+        # The protocol that the outlet supports. This can be found out using
+        # the `rfoutlet sniff` subcommand. If omitted, defaultProtocol will be
+        # used.
         protocol: 1
+
+        # The pulse length that is used for separating sent out high-low
+        # sequences to the outlet. This can be found out using the `rfoutlet
+        # sniff` subcommand. If omitted, defaultPulseLength will be used.
         pulseLength: 189
+
       - id: baz
         name: Baz
         codeOn: 789

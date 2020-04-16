@@ -18,6 +18,7 @@ Contents
 --------
 
 - [Stability note](#stability-note)
+- [Breaking changes](#breaking-changes)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Commands](#commands)
@@ -34,6 +35,56 @@ Stability note
 
 The *master* branch may be broken at any time. Please check out the latest tag
 or use the latest [release](https://github.com/martinohmann/rfoutlet/releases).
+
+Breaking changes
+----------------
+
+### v0.5.0 to v1.0.0
+
+Due to a complete rewrite of the internal logic, many API inconsistencies have
+been fixed. This introduces non-backwards-compatible changes.
+
+- The config file format changed completely, please have a look at [the
+  example](configs/config.yml) and adjust your config accordingly.
+- The state file format changed, so that old file cannot be loaded with the new
+  version. It is advised to start with a fresh state file. If you have a lot of
+  state, make a backup before upgrading and manually convert the state file
+  json to the new format. In the following example `foo` and `bar` are the IDs
+  of the outlets in the state file.
+
+  Old format:
+  ```json
+  {"switch_states":{"bar":1,"foo":1},"schedules":{"foo":[{"enabled": true,"weekdays":[1],"from":{"hour":0,"minute":59},"to":{"hour":2,"minute":1}}]}}
+  ```
+  New format:
+  ```json
+  {"bar":{"state":1},"foo":{"state":1,"schedule":[{"enabled": true,"weekdays":[1],"from":{"hour":0,"minute":59},"to":{"hour":2,"minute":1}}]}}
+  ```
+- `rfoutlet serve`:
+  - `--gpio-pin` flag was renamed to `--transmit-pin` as it now
+    also supports `--receive-pin` for state drift detection.
+- `rfoutlet sniff`:
+  - `--gpio-pin` flag was renamed to `--pin`.
+- `rfoutlet transmit`:
+  - `--gpio-pin` flag was renamed to `--pin`.
+  - The command now accepts a list of codes that are transmitted sequentially.
+- The websocket message format changed slightly, so the web frontend needs to
+  be rebuilt (see [installation](#installation) section).
+- In the package `pkg/gpio` the usage of
+  [gpio](https://github.com/brian-armstrong/gpio) was replaced with
+  [gpiod](https://github.com/warthog618/gpiod) to get rid of the dependency on
+  the deprecated GPIO interface which may be removed from the linux kernel this
+  year. This was also a good opportunity to improve the public API of
+  `pkg/gpio`.
+- Instead of `/dev/gpiomem`, rfoutlet now depends on `/dev/gpiochip0`.
+- Since v1.0.0 does not depend on the sysfs anymore, the GPIO pins have to be
+  unexported there to avoid `device busy` errors. This can be done like this:
+  ```bash
+  # Replace 17 and 27 with the GPIO pin you are using for transmitting and
+  # receving rf codes if you are not using the defaults.
+  echo "17" > /sys/class/gpio/unexport
+  echo "27" > /sys/class/gpio/unexport
+  ```
 
 Prerequisites
 -------------
