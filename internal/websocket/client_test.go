@@ -85,7 +85,11 @@ func TestClient_listenRead(t *testing.T) {
 }
 
 func TestClient_listenWrite(t *testing.T) {
+	stopCh := make(chan struct{})
+	defer close(stopCh)
+
 	hub := NewHub()
+	go hub.Run(stopCh)
 
 	queue := make(chan command.Command)
 
@@ -98,12 +102,14 @@ func TestClient_listenWrite(t *testing.T) {
 
 	assert.Equal(t, http.StatusSwitchingProtocols, rr.StatusCode)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancel()
 
-	go hub.Run(ctx.Done())
 	go func() {
+		// give the client some time to register to hub before broadcasting
+		<-time.After(20 * time.Millisecond)
 		hub.Broadcast([]byte(`{"name":"bar"}`))
+
 		<-ctx.Done()
 		c.Close()
 	}()
