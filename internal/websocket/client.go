@@ -105,7 +105,8 @@ func (c *client) listenWrite() {
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				if err := c.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+				err := c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err != nil && err != websocket.ErrCloseSent {
 					log.Errorf("failed to send websocket close message: %v", err)
 				}
 				return
