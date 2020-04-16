@@ -46,7 +46,8 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 
 			err := c.handleCommand(cmd)
 			if err != nil {
-				log.Errorf("error handling command: %v", err)
+				log.WithField("command", fmt.Sprintf("%T", cmd)).
+					Errorf("error handling command: %v", err)
 			}
 		case <-stopCh:
 			log.Info("shutting down controller")
@@ -66,7 +67,8 @@ func (c *Controller) commandContext() command.Context {
 // handleCommand executes cmd and may trigger broadcasts of state changes back
 // to the connected clients.
 func (c *Controller) handleCommand(cmd command.Command) error {
-	log.WithField("command", fmt.Sprintf("%T", cmd)).Debug("handling command")
+	log.WithField("command", fmt.Sprintf("%T", cmd)).
+		Debug("handling command")
 
 	ctx := c.commandContext()
 

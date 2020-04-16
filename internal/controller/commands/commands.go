@@ -50,7 +50,7 @@ func (c *StatusCommand) SetSender(sender command.Sender) {
 // OutletCommand switches a specific outlet based on the action.
 type OutletCommand struct {
 	// OutletID is the ID of the outlet that the action should be performed on.
-	OutletID string `json:"id"`
+	OutletID string `json:"outletID"`
 	// Action defines the action type that should be performed on the outlet.
 	Action string `json:"action"`
 }
@@ -85,7 +85,7 @@ func (c OutletCommand) Execute(context command.Context) (bool, error) {
 type GroupCommand struct {
 	// GroupID is the ID of the outlet group that the action should be
 	// performed on.
-	GroupID string `json:"id"`
+	GroupID string `json:"groupID"`
 	// Action defines the action type that should be performed on the outlet
 	// group.
 	Action string `json:"action"`
@@ -127,7 +127,7 @@ func (c GroupCommand) Execute(context command.Context) (bool, error) {
 type IntervalCommand struct {
 	// OutletID is the ID of the outlet where the intervals of the schedule
 	// should be changed.
-	OutletID string `json:"id"`
+	OutletID string `json:"outletID"`
 	// Action defines the action type that should be performed on the interval.
 	Action string `json:"action"`
 	// Interval is the configuration of the interval.
