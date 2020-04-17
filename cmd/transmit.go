@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
@@ -41,6 +42,7 @@ type TransmitOptions struct {
 	Pin         uint
 	Protocol    int
 	Count       int
+	Delay       time.Duration
 }
 
 func (o *TransmitOptions) AddFlags(cmd *cobra.Command) {
@@ -48,6 +50,7 @@ func (o *TransmitOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().UintVar(&o.Pin, "pin", o.Pin, "gpio pin to transmit on")
 	cmd.Flags().IntVar(&o.Protocol, "protocol", o.Protocol, "protocol to use for the transmission")
 	cmd.Flags().IntVar(&o.Count, "count", o.Count, "number of times a code should be transmitted in a row. The higher the value, the more likely it is that an outlet actually received the code")
+	cmd.Flags().DurationVar(&o.Delay, "delay", o.Delay, "delay between code transmissions")
 }
 
 func (o *TransmitOptions) Run(args []string) error {
@@ -94,6 +97,7 @@ func (o *TransmitOptions) Run(args []string) error {
 
 		select {
 		case <-transmitter.Transmit(code, proto, o.PulseLength):
+			<-time.After(o.Delay)
 		case <-ctx.Done():
 			return nil
 		}
