@@ -43,6 +43,7 @@ type TransmitOptions struct {
 	Protocol    int
 	Count       int
 	Delay       time.Duration
+	Infinite    bool
 }
 
 func (o *TransmitOptions) AddFlags(cmd *cobra.Command) {
@@ -51,6 +52,7 @@ func (o *TransmitOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().IntVar(&o.Protocol, "protocol", o.Protocol, "protocol to use for the transmission")
 	cmd.Flags().IntVar(&o.Count, "count", o.Count, "number of times a code should be transmitted in a row. The higher the value, the more likely it is that an outlet actually received the code")
 	cmd.Flags().DurationVar(&o.Delay, "delay", o.Delay, "delay between code transmissions")
+	cmd.Flags().BoolVar(&o.Infinite, "infinite", o.Infinite, "restart the transmission of codes after the last one was sent")
 }
 
 func (o *TransmitOptions) Run(args []string) error {
@@ -87,11 +89,14 @@ func (o *TransmitOptions) Run(args []string) error {
 
 	go handleSignals(cancel)
 
-	log := log.WithFields(log.Fields{
+	log.WithFields(log.Fields{
 		"pulseLength": o.PulseLength,
 		"protocol":    o.Protocol,
-	})
+		"delay":       o.Delay,
+		"count":       o.Count,
+	}).Infof("starting transmission")
 
+Loop:
 	for _, code := range codes {
 		log.Infof("transmitting code %d", code)
 
@@ -101,6 +106,10 @@ func (o *TransmitOptions) Run(args []string) error {
 		case <-ctx.Done():
 			return nil
 		}
+	}
+
+	if o.Infinite {
+		goto Loop
 	}
 
 	return nil
