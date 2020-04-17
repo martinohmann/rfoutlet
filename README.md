@@ -10,13 +10,12 @@ Outlet control via web interface for Raspberry PI 2/3. The transmitter and
 receiver logic has been ported from the great
 [rc-switch](https://github.com/sui77/rc-switch) C++ project to golang.
 
-Screenshot                           | Raspberry PI Setup
-:-----------------------------------:|:--------------------------------------:
-![Screenshot](assets/screenshot.jpg) | ![Raspberry PI Setup](assets/setup.jpg)
+![Raspberry PI Setup](assets/setup.jpg)
 
 Contents
 --------
 
+- [Screenshots](#screenshots)
 - [Stability note](#stability-note)
 - [Breaking changes](#breaking-changes)
 - [Prerequisites](#prerequisites)
@@ -29,6 +28,15 @@ Contents
 - [Todo](#todo)
 - [License](#license)
 - [Resources](#resources)
+
+Screenshots
+-----------
+
+Some screenshots of the web app that controls the outlets.
+
+Main Outlet View                             | Schedule View                                 | Settings View
+:------------------------------------------: | :-------------------------------------------: | :---------------------------------------------------:
+![Screenshot](assets/screenshot_outlets.jpg) | ![Screenshot](assets/screenshot_schedule.jpg) | ![Raspberry PI Setup](assets/screenshot_settings.jpg)
 
 Stability note
 --------------
