@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -63,7 +64,7 @@ func (o *TransmitOptions) Run(args []string) error {
 		}
 	}
 
-	chip, err := gpiod.NewChip("gpiochip0")
+	chip, err := gpiod.NewChip(gpioChipName)
 	if err != nil {
 		return fmt.Errorf("failed to open gpio device: %v", err)
 	}
@@ -75,9 +76,10 @@ func (o *TransmitOptions) Run(args []string) error {
 	}
 	defer transmitter.Close()
 
-	stopCh := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	go handleSignals(stopCh)
+	go handleSignals(cancel)
 
 	log := log.WithFields(log.Fields{
 		"pulseLength": o.PulseLength,
@@ -89,7 +91,7 @@ func (o *TransmitOptions) Run(args []string) error {
 
 		select {
 		case <-transmitter.Transmit(code, proto, o.PulseLength):
-		case <-stopCh:
+		case <-ctx.Done():
 			return nil
 		}
 	}

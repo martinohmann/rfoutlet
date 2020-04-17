@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/martinohmann/rfoutlet/internal/config"
@@ -38,7 +39,7 @@ func (o *SniffOptions) AddFlags(cmd *cobra.Command) {
 }
 
 func (o *SniffOptions) Run() error {
-	chip, err := gpiod.NewChip("gpiochip0")
+	chip, err := gpiod.NewChip(gpioChipName)
 	if err != nil {
 		return fmt.Errorf("failed to open gpio device: %v", err)
 	}
@@ -50,9 +51,10 @@ func (o *SniffOptions) Run() error {
 	}
 	defer receiver.Close()
 
-	stopCh := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	go handleSignals(stopCh)
+	go handleSignals(cancel)
 
 	for {
 		select {
@@ -62,7 +64,7 @@ func (o *SniffOptions) Run() error {
 				"protocol":    res.Protocol,
 				"bitlength":   res.BitLength,
 			}).Infof("received code %d", res.Code)
-		case <-stopCh:
+		case <-ctx.Done():
 			return nil
 		}
 	}

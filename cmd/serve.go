@@ -26,7 +26,10 @@ import (
 	"github.com/warthog618/gpiod"
 )
 
-const webDir = "../web/build"
+const (
+	webDir       = "../web/build"
+	gpioChipName = "gpiochip0"
+)
 
 func NewServeCommand() *cobra.Command {
 	options := &ServeOptions{
@@ -74,7 +77,14 @@ func (o *ServeOptions) Run() error {
 
 	log.WithField("config", fmt.Sprintf("%#v", cfg)).Debug("merged config values")
 
-	chip, err := gpiod.NewChip("gpiochip0")
+	registry := outlet.NewRegistry()
+
+	err = registry.RegisterGroups(cfg.BuildOutletGroups()...)
+	if err != nil {
+		return fmt.Errorf("failed to register outlet groups: %v", err)
+	}
+
+	chip, err := gpiod.NewChip(gpioChipName)
 	if err != nil {
 		return fmt.Errorf("failed to open gpio device: %v", err)
 	}
@@ -85,13 +95,6 @@ func (o *ServeOptions) Run() error {
 		return fmt.Errorf("failed to create gpio transmitter: %v", err)
 	}
 	defer transmitter.Close()
-
-	registry := outlet.NewRegistry()
-
-	err = registry.RegisterGroups(cfg.BuildOutletGroups()...)
-	if err != nil {
-		return fmt.Errorf("failed to register outlet groups: %v", err)
-	}
 
 	if cfg.StateFile != "" {
 		log := log.WithField("stateFile", cfg.StateFile)
@@ -115,7 +118,10 @@ func (o *ServeOptions) Run() error {
 		}()
 	}
 
-	stopCh := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stopCh := ctx.Done()
 	commandQueue := make(chan command.Command)
 
 	if cfg.DetectStateDrift {
@@ -123,6 +129,7 @@ func (o *ServeOptions) Run() error {
 		if err != nil {
 			return fmt.Errorf("failed to create gpio receiver: %v", err)
 		}
+		defer receiver.Close()
 
 		detector := statedrift.NewDetector(registry, receiver, commandQueue)
 
@@ -140,11 +147,17 @@ func (o *ServeOptions) Run() error {
 
 	timeSwitch := timeswitch.New(registry, commandQueue)
 
-	go handleSignals(stopCh)
+	go handleSignals(cancel)
 	go controller.Run(stopCh)
 	go timeSwitch.Run(stopCh)
 	go hub.Run(stopCh)
 
+	router := setupRouter(hub, commandQueue)
+
+	return listenAndServe(stopCh, router, cfg.ListenAddress)
+}
+
+func setupRouter(hub *websocket.Hub, commandQueue chan<- command.Command) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery(), gin.Logger(), cors.Default())
 	r.GET("/", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/app") })
@@ -152,7 +165,7 @@ func (o *ServeOptions) Run() error {
 	r.GET("/healthz", func(c *gin.Context) { c.String(http.StatusOK, "ok") })
 	r.StaticFS("/app", packr.NewBox(webDir))
 
-	return listenAndServe(stopCh, r, cfg.ListenAddress)
+	return r
 }
 
 func listenAndServe(stopCh <-chan struct{}, handler http.Handler, addr string) error {
@@ -179,10 +192,10 @@ func listenAndServe(stopCh <-chan struct{}, handler http.Handler, addr string) e
 	return srv.Shutdown(ctx)
 }
 
-func handleSignals(stopCh chan struct{}) {
+func handleSignals(cancel func()) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	sig := <-quit
 	log.WithField("signal", sig).Info("received signal, shutting down...")
-	close(stopCh)
+	cancel()
 }
