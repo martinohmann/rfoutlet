@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -106,7 +107,7 @@ func (c *client) listenWrite() {
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				err := c.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				if err != nil && err != websocket.ErrCloseSent {
+				if err != nil && !errors.Is(err, websocket.ErrCloseSent) {
 					log.Errorf("failed to send websocket close message: %v", err)
 				}
 				return

@@ -1,6 +1,6 @@
 module github.com/martinohmann/rfoutlet
 
-go 1.12
+go 1.13
 
 require (
 	github.com/ghodss/yaml v1.0.0
@@ -16,5 +16,4 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/ugorji/go v1.1.7 // indirect
 	github.com/warthog618/gpiod v0.4.0
-	gopkg.in/yaml.v2 v2.2.2
 )

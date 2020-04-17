@@ -107,7 +107,7 @@ and required software.
 
 - I use Arch Linux on the Raspberry PI, but Raspbian should also work
 - `node` executable (tested with `node 11.0+`)
-- golang 1.12+
+- golang 1.13+
 - `make`
 
 Older software versions may also work, but I did not test that.
