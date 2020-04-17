@@ -1,8 +1,9 @@
 ---
 listenAddress: 0.0.0.0:1234
 stateFile: state.json
-receivePin: 27
-transmitPin: 17
+gpio:
+  receivePin: 27
+  transmitPin: 17
 outletGroups:
   - id: foo
     displayName: Foo

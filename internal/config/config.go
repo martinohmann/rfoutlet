@@ -34,25 +34,32 @@ const (
 // DefaultConfig contains the default values which are chosen if a file is
 // omitted in the config file.
 var DefaultConfig = Config{
-	ListenAddress:      DefaultListenAddress,
-	ReceivePin:         DefaultReceivePin,
-	TransmitPin:        DefaultTransmitPin,
-	DefaultPulseLength: DefaultPulseLength,
-	DefaultProtocol:    DefaultProtocol,
-	TransmissionCount:  gpio.DefaultTransmissionCount,
+	ListenAddress: DefaultListenAddress,
+	GPIO: GPIOConfig{
+		ReceivePin:         DefaultReceivePin,
+		TransmitPin:        DefaultTransmitPin,
+		DefaultPulseLength: DefaultPulseLength,
+		DefaultProtocol:    DefaultProtocol,
+		TransmissionCount:  gpio.DefaultTransmissionCount,
+	},
 }
 
 // Config is the structure of the config file.
 type Config struct {
-	ListenAddress      string              `json:"listenAddress"`
-	StateFile          string              `json:"stateFile"`
-	ReceivePin         uint                `json:"receivePin"`
-	TransmitPin        uint                `json:"transmitPin"`
-	DefaultPulseLength uint                `json:"defaultPulseLength"`
-	DefaultProtocol    int                 `json:"defaultProtocol"`
-	TransmissionCount  int                 `json:"transmissionCount"`
-	DetectStateDrift   bool                `json:"detectStateDrift"`
-	OutletGroups       []OutletGroupConfig `json:"outletGroups"`
+	ListenAddress    string              `json:"listenAddress"`
+	StateFile        string              `json:"stateFile"`
+	DetectStateDrift bool                `json:"detectStateDrift"`
+	GPIO             GPIOConfig          `json:"gpio"`
+	OutletGroups     []OutletGroupConfig `json:"outletGroups"`
+}
+
+// GPIOConfig is the structure of the gpio config section.
+type GPIOConfig struct {
+	ReceivePin         uint `json:"receivePin"`
+	TransmitPin        uint `json:"transmitPin"`
+	DefaultPulseLength uint `json:"defaultPulseLength"`
+	DefaultProtocol    int  `json:"defaultProtocol"`
+	TransmissionCount  int  `json:"transmissionCount"`
 }
 
 // OutletGroupConfig is the structure of the config for a single outlet group.
@@ -96,11 +103,11 @@ func (c Config) BuildOutletGroups() []*outlet.Group {
 			}
 
 			if o.PulseLength == 0 {
-				o.PulseLength = c.DefaultPulseLength
+				o.PulseLength = c.GPIO.DefaultPulseLength
 			}
 
 			if o.Protocol == 0 {
-				o.Protocol = c.DefaultProtocol
+				o.Protocol = c.GPIO.DefaultProtocol
 			}
 
 			outlets[j] = o

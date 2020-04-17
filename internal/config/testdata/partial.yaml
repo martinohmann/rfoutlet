@@ -1,5 +1,6 @@
 ---
-receivePin: 42
+gpio:
+  receivePin: 42
 outletGroups:
   - id: foo
     outlets:

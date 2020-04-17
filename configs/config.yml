@@ -7,30 +7,32 @@ listenAddress: :3333
 # relative or absolute.
 stateFile: state.json
 
-# Pin to detect rf codes on. This is used by the state drift detector which can
-# be enabled with --detect-state-drift.
-receivePin: 27
-
-# Pin to transmit rf codes on.
-transmitPin: 17
-
-# The protocol that is used for outlets that do not explicitly define it using
-# the protocol field.
-defaultProtocol: 1
-
-# The pulse length that is used for outlets that do not explicitly define it
-# using the pulseLength field.
-defaultPulseLength: 189
-
 # Enable state drift detection. This will watch for rf codes sent out by
 # something other than rfoutlet (e.g. the physical remote control for the
 # outlet) and will adjust the outlet states if necessary. The receiver has to
 # be attached to receivePin for this to work.
 detectStateDrift: false
 
-# Number many times a code should be transmitted in a row. The higher the
-# value, the more likely it is that an outlet actually received the code.
-transmissionCount: 10
+# GPIO configuration.
+gpio:
+  # Pin to detect rf codes on. This is used by the state drift detector which
+  # can be enabled with --detect-state-drift.
+  receivePin: 27
+
+  # Pin to transmit rf codes on.
+  transmitPin: 17
+
+  # The protocol that is used for outlets that do not explicitly define it
+  # using the protocol field.
+  defaultProtocol: 1
+
+  # The pulse length that is used for outlets that do not explicitly define it
+  # using the pulseLength field.
+  defaultPulseLength: 189
+
+  # Number of times a code should be transmitted in a row. The higher the
+  # value, the more likely it is that an outlet actually received the code.
+  transmissionCount: 10
 
 # Groups of outlets. IDs are mandatory and need to unique.
 groups:

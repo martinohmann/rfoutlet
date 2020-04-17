@@ -27,8 +27,8 @@ func TestLoadWithDefaults(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, DefaultConfig.ListenAddress, c.ListenAddress)
 	assert.Empty(t, c.StateFile)
-	assert.Equal(t, uint(42), c.ReceivePin)
-	assert.Equal(t, DefaultConfig.TransmitPin, c.TransmitPin)
+	assert.Equal(t, uint(42), c.GPIO.ReceivePin)
+	assert.Equal(t, DefaultConfig.GPIO.TransmitPin, c.GPIO.TransmitPin)
 	require.Len(t, c.OutletGroups, 2)
 }
 
@@ -69,8 +69,10 @@ func TestLoadWithBadReader(t *testing.T) {
 
 func TestConfig_BuildOutletGroups(t *testing.T) {
 	config := Config{
-		DefaultProtocol:    1,
-		DefaultPulseLength: 123,
+		GPIO: GPIOConfig{
+			DefaultProtocol:    1,
+			DefaultPulseLength: 123,
+		},
 		OutletGroups: []OutletGroupConfig{
 			{
 				ID:          "foo",
