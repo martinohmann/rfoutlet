@@ -56,12 +56,13 @@ type ServeOptions struct {
 }
 
 func (o *ServeOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.ConfigFilename, "config", o.ConfigFilename, "config filename")
-	cmd.Flags().StringVar(&o.StateFile, "state-file", o.StateFile, "state filename")
-	cmd.Flags().StringVar(&o.ListenAddress, "listen-address", o.ListenAddress, "listen address")
+	cmd.Flags().StringVar(&o.ConfigFilename, "config", o.ConfigFilename, "path to the outlet config file")
+	cmd.Flags().StringVar(&o.StateFile, "state-file", o.StateFile, "path to the file where outlet state and schedule should be stored")
+	cmd.Flags().StringVar(&o.ListenAddress, "listen-address", o.ListenAddress, "address to serve the web app on")
 	cmd.Flags().UintVar(&o.TransmitPin, "transmit-pin", o.TransmitPin, "gpio pin to transmit rf codes on")
 	cmd.Flags().UintVar(&o.ReceivePin, "receive-pin", o.ReceivePin, "gpio pin to receive rf codes on (this is used by the state drift detector)")
 	cmd.Flags().BoolVar(&o.DetectStateDrift, "detect-state-drift", o.DetectStateDrift, "detect state drift (e.g. if an outlet was switched via the phyical remote instead of rfoutlet)")
+	cmd.Flags().IntVar(&o.TransmissionCount, "transmission-count", o.TransmissionCount, "number of times a code should be transmitted in a row. The higher the value, the more likely it is that an outlet actually received the code")
 }
 
 func (o *ServeOptions) Run() error {
@@ -75,7 +76,7 @@ func (o *ServeOptions) Run() error {
 		return fmt.Errorf("failed to merge config values: %v", err)
 	}
 
-	log.WithField("config", fmt.Sprintf("%#v", cfg)).Debug("merged config values")
+	log.Debugf("merged config values: %#v", cfg)
 
 	registry := outlet.NewRegistry()
 
@@ -90,7 +91,7 @@ func (o *ServeOptions) Run() error {
 	}
 	defer chip.Close()
 
-	transmitter, err := gpio.NewTransmitter(chip, int(cfg.TransmitPin))
+	transmitter, err := gpio.NewTransmitter(chip, int(cfg.TransmitPin), gpio.TransmissionCount(o.TransmissionCount))
 	if err != nil {
 		return fmt.Errorf("failed to create gpio transmitter: %v", err)
 	}

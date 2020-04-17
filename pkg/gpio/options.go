@@ -16,11 +16,11 @@ func ReceiverProtocols(protocols []Protocol) ReceiverOption {
 // *Transmitter.
 type TransmitterOption func(*Transmitter)
 
-// TransmissionRetries configures how many times a code should be transmitted
-// in a row. The higher the value, the more likely it is that an outlet
-// actually received the code.
-func TransmissionRetries(retries int) TransmitterOption {
+// TransmissionCount configures how many times a code should be transmitted in
+// a row. The higher the value, the more likely it is that an outlet actually
+// received the code.
+func TransmissionCount(count int) TransmitterOption {
 	return func(t *Transmitter) {
-		t.retries = retries
+		t.transmissionCount = count
 	}
 }

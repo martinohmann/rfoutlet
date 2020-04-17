@@ -10,7 +10,7 @@ import (
 func TestTransmitterTransmit(t *testing.T) {
 	pin := gpio.NewFakeOutputPin()
 
-	transmitter := gpio.NewPinTransmitter(pin, gpio.TransmissionRetries(1))
+	transmitter := gpio.NewPinTransmitter(pin, gpio.TransmissionCount(1))
 	defer transmitter.Close()
 
 	<-transmitter.Transmit(0x1, gpio.DefaultProtocols[0], 190)

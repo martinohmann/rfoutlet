@@ -17,6 +17,7 @@ func NewTransmitCommand() *cobra.Command {
 		PulseLength: config.DefaultPulseLength,
 		Pin:         config.DefaultTransmitPin,
 		Protocol:    config.DefaultProtocol,
+		Count:       gpio.DefaultTransmissionCount,
 	}
 
 	cmd := &cobra.Command{
@@ -39,12 +40,14 @@ type TransmitOptions struct {
 	PulseLength uint
 	Pin         uint
 	Protocol    int
+	Count       int
 }
 
 func (o *TransmitOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().UintVar(&o.PulseLength, "pulse-length", o.PulseLength, "pulse length")
 	cmd.Flags().UintVar(&o.Pin, "pin", o.Pin, "gpio pin to transmit on")
 	cmd.Flags().IntVar(&o.Protocol, "protocol", o.Protocol, "protocol to use for the transmission")
+	cmd.Flags().IntVar(&o.Count, "count", o.Count, "number of times a code should be transmitted in a row. The higher the value, the more likely it is that an outlet actually received the code")
 }
 
 func (o *TransmitOptions) Run(args []string) error {
@@ -70,7 +73,7 @@ func (o *TransmitOptions) Run(args []string) error {
 	}
 	defer chip.Close()
 
-	transmitter, err := gpio.NewTransmitter(chip, int(o.Pin))
+	transmitter, err := gpio.NewTransmitter(chip, int(o.Pin), gpio.TransmissionCount(o.Count))
 	if err != nil {
 		return fmt.Errorf("failed to create gpio transmitter: %v", err)
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/internal/schedule"
+	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
 
 const (
@@ -38,6 +39,7 @@ var DefaultConfig = Config{
 	TransmitPin:        DefaultTransmitPin,
 	DefaultPulseLength: DefaultPulseLength,
 	DefaultProtocol:    DefaultProtocol,
+	TransmissionCount:  gpio.DefaultTransmissionCount,
 }
 
 // Config is the structure of the config file.
@@ -48,6 +50,7 @@ type Config struct {
 	TransmitPin        uint                `json:"transmitPin"`
 	DefaultPulseLength uint                `json:"defaultPulseLength"`
 	DefaultProtocol    int                 `json:"defaultProtocol"`
+	TransmissionCount  int                 `json:"transmissionCount"`
 	DetectStateDrift   bool                `json:"detectStateDrift"`
 	OutletGroups       []OutletGroupConfig `json:"outletGroups"`
 }

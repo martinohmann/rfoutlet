@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	// DefaultTransmissionRetries defines how many times a code should be
+	// DefaultTransmissionCount defines how many times a code should be
 	// transmitted in a row by default.
-	DefaultTransmissionRetries = 10
+	DefaultTransmissionCount = 10
 
 	transmissionChanLen = 32
 	bitLength           = 24
@@ -25,10 +25,10 @@ type transmission struct {
 
 // Transmitter can serialize and transmit rf codes.
 type Transmitter struct {
-	pin          OutputPin
-	transmission chan transmission
-	closed       int32
-	retries      int
+	pin               OutputPin
+	transmission      chan transmission
+	closed            int32
+	transmissionCount int
 }
 
 // NewTransmitter creates a Transmitter which attaches to the chip's pin at
@@ -45,17 +45,17 @@ func NewTransmitter(chip *gpiod.Chip, offset int, options ...TransmitterOption) 
 // NewTransmitter creates a *Transmitter that sends on pin.
 func NewPinTransmitter(pin OutputPin, options ...TransmitterOption) *Transmitter {
 	t := &Transmitter{
-		pin:          pin,
-		transmission: make(chan transmission, transmissionChanLen),
-		retries:      DefaultTransmissionRetries,
+		pin:               pin,
+		transmission:      make(chan transmission, transmissionChanLen),
+		transmissionCount: DefaultTransmissionCount,
 	}
 
 	for _, option := range options {
 		option(t)
 	}
 
-	if t.retries <= 0 {
-		t.retries = 1
+	if t.transmissionCount <= 0 {
+		t.transmissionCount = 1
 	}
 
 	go t.watch()
@@ -90,7 +90,7 @@ func (t *Transmitter) Transmit(code uint64, protocol Protocol, pulseLength uint)
 func (t *Transmitter) transmit(trans transmission) {
 	defer close(trans.done)
 
-	for retry := 0; retry < t.retries; retry++ {
+	for i := 0; i < t.transmissionCount; i++ {
 		for j := bitLength - 1; j >= 0; j-- {
 			if trans.code&(1<<uint64(j)) > 0 {
 				t.send(trans.protocol.One, trans.pulseLength)

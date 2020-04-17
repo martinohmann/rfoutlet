@@ -28,6 +28,10 @@ defaultPulseLength: 189
 # be attached to receivePin for this to work.
 detectStateDrift: false
 
+# Number many times a code should be transmitted in a row. The higher the
+# value, the more likely it is that an outlet actually received the code.
+transmissionCount: 10
+
 # Groups of outlets. IDs are mandatory and need to unique.
 groups:
   - id: foo
