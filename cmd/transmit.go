@@ -102,7 +102,12 @@ Loop:
 
 		select {
 		case <-transmitter.Transmit(code, proto, o.PulseLength):
-			<-time.After(o.Delay)
+			select {
+			case <-time.After(o.Delay):
+			case <-ctx.Done():
+				return nil
+			}
+
 		case <-ctx.Done():
 			return nil
 		}
