@@ -1,6 +1,7 @@
 package outlet
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
@@ -16,4 +17,17 @@ func TestSwitch(t *testing.T) {
 
 	assert.NoError(t, s.Switch(o, StateOn))
 	assert.Equal(t, StateOn, o.GetState())
+}
+
+func TestFakeSwitch(t *testing.T) {
+	s := &FakeSwitch{}
+	o := &Outlet{State: StateOn}
+
+	assert.NoError(t, s.Switch(o, StateOff))
+	assert.Equal(t, StateOff, o.GetState())
+
+	s = &FakeSwitch{Err: errors.New("whoops")}
+
+	assert.Error(t, s.Switch(o, StateOn))
+	assert.Equal(t, StateOff, o.GetState())
 }

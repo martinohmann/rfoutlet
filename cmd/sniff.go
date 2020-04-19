@@ -1,19 +1,19 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"os/signal"
 
 	"github.com/martinohmann/rfoutlet/internal/config"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/warthog618/gpiod"
 )
 
 func NewSniffCommand() *cobra.Command {
 	options := &SniffOptions{
-		GpioPin: config.DefaultReceivePin,
+		Pin: config.DefaultReceivePin,
 	}
 
 	cmd := &cobra.Command{
@@ -31,36 +31,40 @@ func NewSniffCommand() *cobra.Command {
 }
 
 type SniffOptions struct {
-	GpioPin uint
+	Pin uint
 }
 
 func (o *SniffOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().UintVar(&o.GpioPin, "gpio-pin", o.GpioPin, "gpio pin to sniff on")
+	cmd.Flags().UintVar(&o.Pin, "pin", o.Pin, "gpio pin to sniff on")
 }
 
 func (o *SniffOptions) Run() error {
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-
-	chip, err := gpiod.NewChip("gpiochip0")
+	chip, err := gpiod.NewChip(gpioChipName)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open gpio device: %v", err)
 	}
 	defer chip.Close()
 
-	receiver, err := gpio.NewReceiver(chip, int(o.GpioPin))
+	receiver, err := gpio.NewReceiver(chip, int(o.Pin))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create gpio receiver: %v", err)
 	}
 	defer receiver.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go handleSignals(cancel)
 
 	for {
 		select {
 		case res := <-receiver.Receive():
-			fmt.Printf("received code=%d pulseLength=%d bitLength=%d protocol=%d\n",
-				res.Code, res.PulseLength, res.BitLength, res.Protocol)
-		case <-interrupt:
-			fmt.Println("received interrupt")
+			log.WithFields(log.Fields{
+				"pulseLength": res.PulseLength,
+				"protocol":    res.Protocol,
+				"bitlength":   res.BitLength,
+			}).Infof("received code %d", res.Code)
+		case <-ctx.Done():
 			return nil
 		}
 	}

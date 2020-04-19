@@ -28,7 +28,7 @@ GroupList.propTypes = {
   groups: PropTypes.array.isRequired,
 };
 
-const GroupListItem = ({ id, name, outlets }) => {
+const GroupListItem = ({ id, displayName, outlets }) => {
   const handleAction = (action) => () => {
     dispatcher.dispatchGroupMessage(id, action);
   };
@@ -36,7 +36,7 @@ const GroupListItem = ({ id, name, outlets }) => {
   return (
     <>
       <GroupHeader
-        name={name}
+        displayName={displayName}
         onActionOn={handleAction('on')}
         onActionOff={handleAction('off')}
         onActionToggle={handleAction('toggle')}
@@ -48,6 +48,6 @@ const GroupListItem = ({ id, name, outlets }) => {
 
 GroupListItem.propTypes = {
   id: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
+  displayName: PropTypes.string.isRequired,
   outlets: PropTypes.array.isRequired,
 };

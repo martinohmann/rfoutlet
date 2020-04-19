@@ -1,1 +1,0 @@
-{"switch_states":{"foo":1},"schedules":{"foo":[{"enabled": true,"weekdays":[1],"from":{"hour":0,"minute":59},"to":{"hour":2,"minute":1}}]}}

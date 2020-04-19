@@ -2,16 +2,17 @@
 language: go
 sudo: false
 go:
-  - "1.12"
   - "1.13"
+  - "tip"
 env:
   global:
     - GO111MODULE=on
 install:
   - make deps
 script:
-  - make vet
   - make coverage
+  - make vet
+  - make lint
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 deploy:
@@ -20,4 +21,4 @@ deploy:
     script: curl -sL https://git.io/goreleaser | bash
     on:
       tags: true
-      condition: $TRAVIS_OS_NAME = linux && $TRAVIS_GO_VERSION =~ ^1\.12
+      condition: $TRAVIS_OS_NAME = linux && $TRAVIS_GO_VERSION =~ ^1\.13

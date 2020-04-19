@@ -1,0 +1,21 @@
+---
+gpio:
+  receivePin: 42
+outletGroups:
+  - id: foo
+    outlets:
+      - id: baz
+        displayName: Baz
+        codeOn: 789
+        codeOff: 012
+        protocol: 2
+        pulseLength: 189
+  - id: bar
+    displayName: Bar
+    outlets:
+      - id: qux
+        displayName: Qux
+        codeOn: 345
+        codeOff: 678
+        protocol: 3
+        pulseLength: 305

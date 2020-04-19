@@ -35,12 +35,12 @@ const useStyles = makeStyles(theme => ({
 export default function GroupHeader(props) {
   const classes = useStyles();
 
-  const { name, onActionOn, onActionOff, onActionToggle } = props;
+  const { displayName, onActionOn, onActionOff, onActionToggle } = props;
 
   return (
     <List className={classes.container}>
       <ListItem className={classes.header}>
-        <ListItemText className={classes.groupName} primary={name} disableTypography={true} />
+        <ListItemText className={classes.groupName} primary={displayName} disableTypography={true} />
         <IconButton className={classes.buttonOff} onClick={onActionOff}>
           <PowerOffIcon />
         </IconButton>
@@ -56,7 +56,7 @@ export default function GroupHeader(props) {
 }
 
 GroupHeader.propTypes = {
-  name: PropTypes.string.isRequired,
+  displayName: PropTypes.string.isRequired,
   onActionOn: PropTypes.func.isRequired,
   onActionOff: PropTypes.func.isRequired,
   onActionToggle: PropTypes.func.isRequired,

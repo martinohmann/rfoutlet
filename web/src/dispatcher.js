@@ -14,16 +14,16 @@ class Dispatcher {
     this.dispatchMessage('status');
   }
 
-  dispatchGroupMessage(id, action) {
-    this.dispatchMessage('group', { id, action });
+  dispatchGroupMessage(groupID, action) {
+    this.dispatchMessage('group', { groupID, action });
   }
 
-  dispatchOutletMessage(id, action) {
-    this.dispatchMessage('outlet', { id, action });
+  dispatchOutletMessage(outletID, action) {
+    this.dispatchMessage('outlet', { outletID, action });
   }
 
-  dispatchIntervalMessage(id, action, interval) {
-    const data = { id, action, interval: intervalToApi(interval) };
+  dispatchIntervalMessage(outletID, action, interval) {
+    const data = { outletID, action, interval: intervalToApi(interval) };
 
     this.dispatchMessage('interval', data);
   }

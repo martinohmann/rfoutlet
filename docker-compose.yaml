@@ -7,7 +7,7 @@ services:
     ports:
       - '3333:3333'
     volumes:
-      - /etc/localtime
+      - /etc/localtime:/etc/localtime:ro
       - ${CONFIG_PATH:-./configs/config.yml}:/etc/rfoutlet/config.yml:ro
       # set "state_file: state.json" in config.yml to store
       # the outlet state in the state-storage volume to

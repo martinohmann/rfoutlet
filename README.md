@@ -6,18 +6,18 @@ rfoutlet
 [![Go Report Card](https://goreportcard.com/badge/github.com/martinohmann/rfoutlet)](https://goreportcard.com/report/github.com/martinohmann/rfoutlet)
 [![GoDoc](https://godoc.org/github.com/martinohmann/rfoutlet?status.svg)](https://godoc.org/github.com/martinohmann/rfoutlet)
 
-Outlet control via web interface for Raspberry PI 2/3. The transmitter and
+Outlet control via web interface for Raspberry PI 2/3/4. The transmitter and
 receiver logic has been ported from the great
 [rc-switch](https://github.com/sui77/rc-switch) C++ project to golang.
 
-Screenshot                           | Raspberry PI Setup
-:-----------------------------------:|:--------------------------------------:
-![Screenshot](assets/screenshot.jpg) | ![Raspberry PI Setup](assets/setup.jpg)
+![Raspberry PI Setup](assets/setup.jpg)
 
 Contents
 --------
 
+- [Screenshots](#screenshots)
 - [Stability note](#stability-note)
+- [Breaking changes](#breaking-changes)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Commands](#commands)
@@ -29,11 +29,70 @@ Contents
 - [License](#license)
 - [Resources](#resources)
 
+Screenshots
+-----------
+
+Some screenshots of the web app that controls the outlets.
+
+Main Outlet View                             | Schedule View                                 | Settings View
+:------------------------------------------: | :-------------------------------------------: | :---------------------------------------------------:
+![Screenshot](assets/screenshot_outlets.jpg) | ![Screenshot](assets/screenshot_schedule.jpg) | ![Raspberry PI Setup](assets/screenshot_settings.jpg)
+
 Stability note
 --------------
 
 The *master* branch may be broken at any time. Please check out the latest tag
 or use the latest [release](https://github.com/martinohmann/rfoutlet/releases).
+
+Breaking changes
+----------------
+
+### v0.5.0 to v1.0.0
+
+Due to a complete rewrite of the internal logic, many API inconsistencies have
+been fixed. This introduces non-backwards-compatible changes.
+
+- The config file format changed completely, please have a look at [the
+  example](configs/config.yml) and adjust your config accordingly.
+- The state file format changed, so that old file cannot be loaded with the new
+  version. It is advised to start with a fresh state file. If you have a lot of
+  state, make a backup before upgrading and manually convert the state file
+  json to the new format. In the following example `foo` and `bar` are the IDs
+  of the outlets in the state file.
+
+  Old format:
+  ```json
+  {"switch_states":{"bar":1,"foo":1},"schedules":{"foo":[{"enabled": true,"weekdays":[1],"from":{"hour":0,"minute":59},"to":{"hour":2,"minute":1}}]}}
+  ```
+  New format:
+  ```json
+  {"bar":{"state":1},"foo":{"state":1,"schedule":[{"enabled": true,"weekdays":[1],"from":{"hour":0,"minute":59},"to":{"hour":2,"minute":1}}]}}
+  ```
+- `rfoutlet serve`:
+  - `--gpio-pin` flag was renamed to `--transmit-pin` as it now
+    also supports `--receive-pin` for state drift detection.
+- `rfoutlet sniff`:
+  - `--gpio-pin` flag was renamed to `--pin`.
+- `rfoutlet transmit`:
+  - `--gpio-pin` flag was renamed to `--pin`.
+  - The command now accepts a list of codes that are transmitted sequentially.
+- The websocket message format changed slightly, so the web frontend needs to
+  be rebuilt (see [installation](#installation) section).
+- In the package `pkg/gpio` the usage of
+  [gpio](https://github.com/brian-armstrong/gpio) was replaced with
+  [gpiod](https://github.com/warthog618/gpiod) to get rid of the dependency on
+  the deprecated GPIO interface which may be removed from the linux kernel this
+  year. This was also a good opportunity to improve the public API of
+  `pkg/gpio`.
+- Instead of `/dev/gpiomem`, rfoutlet now depends on `/dev/gpiochip0`.
+- Since v1.0.0 does not depend on the sysfs anymore, the GPIO pins have to be
+  unexported there to avoid `device busy` errors. This can be done like this:
+  ```bash
+  # Replace 17 and 27 with the GPIO pin you are using for transmitting and
+  # receving rf codes if you are not using the defaults.
+  echo "17" > /sys/class/gpio/unexport
+  echo "27" > /sys/class/gpio/unexport
+  ```
 
 Prerequisites
 -------------
@@ -43,7 +102,7 @@ and required software.
 
 ### Hardware
 
-- Raspberry PI 2 or 3
+- Raspberry PI 2, 3 or 4
 - Remote controlled outlets (see [Outlets](#outlets) section for suggestions)
 - Receiver/Transmitter (e.g.
   [this](https://www.amazon.com/SMAKN%C2%AE-433Mhz-Transmitter-Receiver-Arduino/dp/B00M2CUALS/ref=sr_1_3?s=electronics&ie=UTF8&qid=1541529103&sr=1-3&keywords=433mhz+receiver+transmitter))
@@ -56,7 +115,7 @@ and required software.
 
 - I use Arch Linux on the Raspberry PI, but Raspbian should also work
 - `node` executable (tested with `node 11.0+`)
-- golang 1.12+
+- golang 1.13+
 - `make`
 
 Older software versions may also work, but I did not test that.
@@ -141,12 +200,12 @@ Start the server:
 
 ```sh
 sudo rfoutlet serve --listen-address 0.0.0.0:3333 \
-  --config /etc/rfoutlet/config.yml --gpio-pin 17
+  --config /etc/rfoutlet/config.yml --transmit-pin 17
 ```
 
 By default rfoutlet uses gpio pin 17 (physical 11 / wiringPi 0) for
 transmission of the rf codes. A different pin can be use by providing the
-`-gpio-pin` flag. Check out the [Raspberry Pi pinouts](https://pinout.xyz/) for
+`--transmit-pin` flag. Check out the [Raspberry Pi pinouts](https://pinout.xyz/) for
 reference.
 
 If you want the outlet switch states to be persisted, pass the `--state-file` flag, e.g:
@@ -162,7 +221,7 @@ remote controls. It will print the received code, protocol, pulse length and
 bit length to stdout when you press the on/off buttons on your remote.
 
 ```sh
-sudo rfoutlet sniff --gpio-pin 27
+sudo rfoutlet sniff --pin 27
 ```
 
 ### `transmit` command
@@ -173,7 +232,7 @@ for testing or you can wrap it for use in another application.
 Example for sending out the code `123456`:
 
 ```sh
-sudo rfoutlet transmit --gpio-pin 17 --protocol 1 --pulse-length 189 123456
+sudo rfoutlet transmit --pin 17 --protocol 1 --pulse-length 189 123456
 ```
 
 Raspberry PI Setup
@@ -217,9 +276,12 @@ Transmitter                            | Receiver
 :-------------------------------------:|:-------------------------------:
 ![Transmitter](assets/transmitter.jpg) | ![Receiver](assets/receiver.jpg)
 
-To increase the range of the transmitter I use a 25cm wire as antenna. I just
+To increase the range of the transmitter I initially used a 25cm wire as antenna. I just
 twisted it with a pair of pliers to hold it in place, soldering is optional.
-This covers my whole appartment (105sqm). YMMV.
+This covers my whole appartment (105sqm). YMMV. Switched to [transmitters and
+receivers with antennas already soldered
+on](https://www.amazon.de/gp/product/B071J2Z3YK/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&language=en_GB&psc=1)
+later.
 
 Outlets
 -------
@@ -240,7 +302,7 @@ example systemd service file.
 Development / Testing
 ---------------------
 
-rfoutlet is meant to run on a Raspberry PI 2/3 to work properly. However, for
+rfoutlet is meant to run on a Raspberry PI 2/3/4 to work properly. However, for
 development purposes you can also run it on your local machine. If your
 development box does not have `/dev/gpiochip0`, you can load the `gpio-mockup`
 kernel module to create a mockup:
@@ -258,7 +320,8 @@ Todo
 - [x] implement code receiver (see [cmd/sniff.go](cmd/sniff.go))
 - [x] make transmitter/receiver code available as library below [pkg/gpio/](pkg/gpio/)
 - [x] persist outlet state across server restarts
-- [ ] use receiver to detect outlet state changes (e.g. via remote control)?
+- [x] use receiver to detect outlet state changes (see `--detect-state-drift`
+  flag of the `serve` command)
 - [x] time switch: switch outlets on/off using user defined rules (e.g. fixed
   time or relative)
 - [x] use web sockets for communication to be able to push outlet state changes

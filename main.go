@@ -11,12 +11,13 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
+	"github.com/gin-gonic/gin"
 	"github.com/martinohmann/rfoutlet/cmd"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+var debug bool
 
 func newRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -25,7 +26,20 @@ func newRootCommand() *cobra.Command {
 		Long:          "rfoutlet is a tool for interacting with remote controlled outlets. It provides functionality to sniff and transmit the codes controlling the outlets.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			gin.SetMode(gin.ReleaseMode)
+
+			if debug {
+				gin.SetMode(gin.DebugMode)
+				log.SetLevel(log.DebugLevel)
+				log.SetFormatter(&log.TextFormatter{
+					FullTimestamp: true,
+				})
+			}
+		},
 	}
+
+	cmd.PersistentFlags().BoolVar(&debug, "debug", debug, "enable debug mode. this will cause more verbose output")
 
 	return cmd
 }
@@ -38,7 +52,6 @@ func main() {
 	rootCmd.AddCommand(cmd.NewTransmitCommand())
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }

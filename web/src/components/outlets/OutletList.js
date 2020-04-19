@@ -48,7 +48,7 @@ OutletList.propTypes = {
 };
 
 
-const OutletListItem = ({ id, name, state, schedule }) => {
+const OutletListItem = ({ id, displayName, state, schedule }) => {
   const history = useHistory();
   const { t } = useTranslation();
 
@@ -59,7 +59,7 @@ const OutletListItem = ({ id, name, state, schedule }) => {
   return (
     <ListItem>
       <ListItemText
-        primary={name}
+        primary={displayName}
         secondary={formatSchedule(schedule, t)}
         onClick={() => history.push(`/schedule/${id}`)}
       />
@@ -80,7 +80,7 @@ const OutletListItem = ({ id, name, state, schedule }) => {
 
 OutletListItem.propTypes = {
   id: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
+  displayName: PropTypes.string.isRequired,
   state: PropTypes.number.isRequired,
   schedule: PropTypes.array.isRequired,
 };

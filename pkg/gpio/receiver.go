@@ -58,14 +58,19 @@ func NewWatcherReceiver(watcher Watcher, options ...ReceiverOption) *Receiver {
 }
 
 func (r *Receiver) watch() {
+	defer close(r.result)
+
 	var lastEventType gpiod.LineEventType
 
 	for {
 		select {
 		case <-r.done:
-			close(r.result)
 			return
-		case event := <-r.watcher.Watch():
+		case event, ok := <-r.watcher.Watch():
+			if !ok {
+				return
+			}
+
 			if lastEventType != event.Type {
 				r.handleEvent()
 			}

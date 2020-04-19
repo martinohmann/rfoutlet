@@ -1,0 +1,31 @@
+---
+listenAddress: 0.0.0.0:1234
+stateFile: state.json
+gpio:
+  receivePin: 27
+  transmitPin: 17
+outletGroups:
+  - id: foo
+    displayName: Foo
+    outlets:
+      - id: bar
+        displayName: Bar
+        codeOn: 123
+        codeOff: 456
+        protocol: 1
+        pulseLength: 189
+      - id: baz
+        displayName: Baz
+        codeOn: 789
+        codeOff: 012
+        protocol: 2
+        pulseLength: 189
+  - id: bar
+    displayName: Bar
+    outlets:
+      - id: qux
+        displayName: Qux
+        codeOn: 345
+        codeOff: 678
+        protocol: 3
+        pulseLength: 305
