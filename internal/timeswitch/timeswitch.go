@@ -7,6 +7,7 @@ package timeswitch
 import (
 	"time"
 
+	"github.com/jonboulle/clockwork"
 	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/controller/commands"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
@@ -18,18 +19,18 @@ var log = logrus.WithField("component", "timeswitch")
 // TimeSwitch checks if outlets should be enabled or disabled based on their
 // schedule and send out commands to bring them to the desired state.
 type TimeSwitch struct {
-	Interval     time.Duration
 	Registry     *outlet.Registry
 	CommandQueue chan<- command.Command
+	Clock        clockwork.Clock
 }
 
 // New creates a new *TimeSwitch which will observe the outlets in the registry
 // and eventually push commands to the queue if a state change is required.
 func New(registry *outlet.Registry, queue chan<- command.Command) *TimeSwitch {
 	return &TimeSwitch{
-		Interval:     10 * time.Second,
 		Registry:     registry,
 		CommandQueue: queue,
+		Clock:        clockwork.NewRealClock(),
 	}
 }
 
@@ -37,18 +38,20 @@ func New(registry *outlet.Registry, queue chan<- command.Command) *TimeSwitch {
 // should be enabled or disabled. Whenever an outlet should change its state,
 // it will push a TimeSwitchCommand into the CommandQueue.
 func (s *TimeSwitch) Run(stopCh <-chan struct{}) {
-	ticker := time.NewTicker(s.Interval)
-
 	for {
 		select {
-		case <-ticker.C:
+		case <-s.Clock.After(s.secondsUntilNextMinute()):
 			s.check()
 		case <-stopCh:
-			ticker.Stop()
 			log.Info("shutting down time switch")
 			return
 		}
 	}
+}
+
+// secondsUntilNextMinute returns the seconds until the next minute starts.
+func (s *TimeSwitch) secondsUntilNextMinute() time.Duration {
+	return time.Second * time.Duration(60-s.Clock.Now().Second())
 }
 
 func (s *TimeSwitch) check() {

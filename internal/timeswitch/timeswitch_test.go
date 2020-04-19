@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jonboulle/clockwork"
 	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/controller/commands"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
@@ -151,13 +152,24 @@ func TestTimeSwitch(t *testing.T) {
 			queue := make(chan command.Command)
 			defer close(queue)
 
-			timeSwitch := New(reg, queue)
+			fakeClock := clockwork.NewFakeClockAt(now)
 
-			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+			timeSwitch := &TimeSwitch{
+				Registry:     reg,
+				CommandQueue: queue,
+				Clock:        fakeClock,
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 			defer cancel()
 
 			var commands []command.Command
 			doneCh := make(chan struct{})
+
+			go timeSwitch.Run(doneCh)
+
+			fakeClock.BlockUntil(1)
+			fakeClock.Advance(1 * time.Minute)
 
 			go func() {
 				defer close(doneCh)
@@ -173,8 +185,6 @@ func TestTimeSwitch(t *testing.T) {
 					}
 				}
 			}()
-
-			timeSwitch.check()
 
 			<-doneCh
 

@@ -9,6 +9,7 @@ require (
 	github.com/gobuffalo/packr v1.30.1
 	github.com/gorilla/websocket v1.4.1
 	github.com/imdario/mergo v0.3.9
+	github.com/jonboulle/clockwork v0.1.1-0.20190114141812-62fb9bc030d1
 	github.com/posener/wstest v1.2.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.2
