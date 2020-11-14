@@ -1,0 +1,35 @@
+---
+name: build-web
+on:
+  push:
+    branches:
+      - 'master'
+    tags:
+      - 'v*'
+  pull_request:
+defaults:
+  run:
+    working-directory: web
+jobs:
+  build-web:
+    strategy:
+      matrix:
+        node-version: ['15']
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+      - name: Setup
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: ${{ matrix.go-version }}
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-npm-${{ matrix.go-version }}-
+      - name: Install node modules
+        run: npm install
+      - name: Build app
+        run: npm run build
