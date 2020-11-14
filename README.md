@@ -1,7 +1,7 @@
 rfoutlet
 ========
 
-[![Build Status](https://travis-ci.org/martinohmann/rfoutlet.svg)](https://travis-ci.org/martinohmann/rfoutlet)
+[![Build Status](https://github.com/martinohmann/rfoutlet/workflows/build/badge.svg)](https://github.com/martinohmann/rfoutlet/actions?query=workflow%3Abuild)
 [![codecov](https://codecov.io/gh/martinohmann/rfoutlet/branch/master/graph/badge.svg)](https://codecov.io/gh/martinohmann/rfoutlet)
 [![Go Report Card](https://goreportcard.com/badge/github.com/martinohmann/rfoutlet)](https://goreportcard.com/report/github.com/martinohmann/rfoutlet)
 [![GoDoc](https://godoc.org/github.com/martinohmann/rfoutlet?status.svg)](https://godoc.org/github.com/martinohmann/rfoutlet)
