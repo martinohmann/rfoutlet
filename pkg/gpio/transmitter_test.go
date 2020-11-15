@@ -1,19 +1,18 @@
-package gpio_test
+package gpio
 
 import (
 	"testing"
 
-	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTransmitterTransmit(t *testing.T) {
-	pin := gpio.NewFakeOutputPin()
+	pin := NewFakeOutputPin()
 
-	transmitter := gpio.NewPinTransmitter(pin, gpio.TransmissionCount(1))
-	defer transmitter.Close()
+	tx := NewPinTransmitter(pin, TransmissionCount(1))
+	defer tx.Close()
 
-	<-transmitter.Transmit(0x1, gpio.DefaultProtocols[0], 190)
+	<-tx.Transmit(0x1, DefaultProtocols[0], 190)
 
 	assert.Equal(
 		t,
@@ -23,10 +22,10 @@ func TestTransmitterTransmit(t *testing.T) {
 }
 
 func TestTransmitterClose(t *testing.T) {
-	pin := gpio.NewFakeOutputPin()
+	pin := NewFakeOutputPin()
 
-	transmitter := gpio.NewPinTransmitter(pin)
-	assert.Nil(t, transmitter.Close())
+	tx := NewPinTransmitter(pin)
+	assert.Nil(t, tx.Close())
 
 	assert.True(t, pin.Closed)
 }

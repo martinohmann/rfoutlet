@@ -43,7 +43,7 @@ func (r *Registry) RegisterGroups(groups ...*Group) error {
 	return nil
 }
 
-// RegisterGroups registers outlets. Returns an error if outlets with duplicate
+// RegisterOutlets registers outlets. Returns an error if outlets with duplicate
 // IDs are found.
 func (r *Registry) RegisterOutlets(outlets ...*Outlet) error {
 	for _, outlet := range outlets {

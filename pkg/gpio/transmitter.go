@@ -29,6 +29,8 @@ type Transmitter struct {
 	transmission      chan transmission
 	closed            int32
 	transmissionCount int
+	// sleepFn can be replaced in tests to make timing predictable.
+	sleepFn func(time.Duration)
 }
 
 // NewTransmitter creates a Transmitter which attaches to the chip's pin at
@@ -42,12 +44,13 @@ func NewTransmitter(chip *gpiod.Chip, offset int, options ...TransmitterOption) 
 	return NewPinTransmitter(pin, options...), nil
 }
 
-// NewTransmitter creates a *Transmitter that sends on pin.
+// NewPinTransmitter creates a *Transmitter that sends on pin.
 func NewPinTransmitter(pin OutputPin, options ...TransmitterOption) *Transmitter {
 	t := &Transmitter{
 		pin:               pin,
 		transmission:      make(chan transmission, transmissionChanLen),
 		transmissionCount: DefaultTransmissionCount,
+		sleepFn:           sleepFor,
 	}
 
 	for _, option := range options {
@@ -119,9 +122,9 @@ func (t *Transmitter) watch() {
 // send sends a sequence of high and low pulses on the gpio pin.
 func (t *Transmitter) send(pulses HighLow, pulseLength uint) {
 	t.pin.SetValue(1)
-	sleepFor(time.Microsecond * time.Duration(pulseLength*pulses.High))
+	t.sleepFn(time.Microsecond * time.Duration(pulseLength*pulses.High))
 	t.pin.SetValue(0)
-	sleepFor(time.Microsecond * time.Duration(pulseLength*pulses.Low))
+	t.sleepFn(time.Microsecond * time.Duration(pulseLength*pulses.Low))
 }
 
 // NewDiscardingTransmitter creates a *Transmitter that does not send anything.

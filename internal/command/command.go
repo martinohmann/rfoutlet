@@ -1,4 +1,4 @@
-// Package commands provides the interfaces for commands that can be pushed
+// Package command provides the interfaces for commands that can be pushed
 // into a command queue for the controller to consume.
 package command
 

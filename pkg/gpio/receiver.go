@@ -60,12 +60,11 @@ func (r *Receiver) watch() {
 
 	var lastEventType gpiod.LineEventType
 
-	for event := range r.watcher.Watch() {
-		if lastEventType != event.Type {
-			r.handleEvent()
+	for evt := range r.watcher.Watch() {
+		if lastEventType != evt.Type {
+			r.handleEvent(evt)
+			lastEventType = evt.Type
 		}
-
-		lastEventType = event.Type
 	}
 }
 
@@ -79,8 +78,8 @@ func (r *Receiver) Close() error {
 	return r.watcher.Close()
 }
 
-func (r *Receiver) handleEvent() {
-	event := time.Now().UnixNano() / int64(time.Microsecond)
+func (r *Receiver) handleEvent(evt gpiod.LineEvent) {
+	event := int64(evt.Timestamp) / int64(time.Microsecond)
 	duration := event - r.lastEvent
 
 	if duration > separationLimit {
@@ -115,9 +114,10 @@ func (r *Receiver) handleEvent() {
 func (r *Receiver) receiveProtocol(protocol int) bool {
 	p := r.protocols[protocol]
 
+	delay := r.timings[0] / int64(p.Sync.Low)
+	delayTolerance := delay * receiveTolerance / 100
+
 	var code uint64
-	var delay int64 = r.timings[0] / int64(p.Sync.Low)
-	var delayTolerance int64 = delay * receiveTolerance / 100
 	var i uint = 1
 
 	for ; i < r.changeCount-1; i += 2 {
