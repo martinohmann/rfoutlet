@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/martinohmann/rfoutlet/internal/testutil"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	"github.com/stretchr/testify/assert"
 	"github.com/warthog618/gpiod"
@@ -43,55 +44,65 @@ func (p *fakeWatcherOutputPin) SetValue(value int) error {
 }
 
 func TestTransmitReceive(t *testing.T) {
-	watcher := gpio.NewFakeWatcher()
+	testutil.Retry(t, 5, 100*time.Millisecond, func(r *testutil.R) {
+		watcher := gpio.NewFakeWatcher()
 
-	pin := &fakeWatcherOutputPin{
-		FakeOutputPin: gpio.NewFakeOutputPin(),
-		w:             watcher,
-		offset:        10,
-	}
-
-	receiver := gpio.NewWatcherReceiver(watcher)
-	defer receiver.Close()
-
-	transmitter := gpio.NewPinTransmitter(pin, gpio.TransmissionRetries(15))
-	defer transmitter.Close()
-
-	tests := []struct {
-		code        uint64
-		protocol    int
-		pulseLength uint
-	}{
-		{5510451, 1, 184},
-		{83281, 1, 305},
-		{86356, 1, 305},
-		{5510604, 1, 184},
-		{5591317, 1, 330},
-	}
-
-	for _, tc := range tests {
-		<-transmitter.Transmit(tc.code, gpio.DefaultProtocols[tc.protocol-1], tc.pulseLength)
-	}
-
-	var i int
-	var lastCode uint64
-
-	for i < len(tests) {
-		select {
-		case result := <-receiver.Receive():
-			if result.Code == lastCode {
-				continue
-			}
-
-			tc := tests[i]
-
-			assert.Equalf(t, tc.code, result.Code, "received code %d != expected %d", result.Code, tc.code)
-
-			lastCode = result.Code
-			i++
-		case <-time.After(time.Second):
-			assert.FailNow(t, "receive timed out")
-			break
+		pin := &fakeWatcherOutputPin{
+			FakeOutputPin: gpio.NewFakeOutputPin(),
+			w:             watcher,
+			offset:        10,
 		}
-	}
+
+		transmitter := gpio.NewPinTransmitter(pin, gpio.TransmissionCount(15))
+		defer transmitter.Close()
+
+		receiver := gpio.NewWatcherReceiver(watcher, gpio.ReceiverProtocols(gpio.DefaultProtocols))
+		defer receiver.Close()
+
+		sequence := []struct {
+			code        uint64
+			protocol    int
+			pulseLength uint
+		}{
+			{5510451, 1, 184},
+			{83281, 1, 305},
+			{86356, 1, 305},
+			{5510604, 1, 184},
+			{5591317, 1, 330},
+		}
+
+		doneCh := make(chan struct{})
+
+		go func() {
+			defer close(doneCh)
+
+			var i int
+			var lastCode uint64
+
+			for i < len(sequence) {
+				select {
+				case result := <-receiver.Receive():
+					if result.Code == lastCode {
+						continue
+					}
+
+					tc := sequence[i]
+
+					assert.Equalf(r, tc.code, result.Code, "received code %d != expected %d", result.Code, tc.code)
+
+					lastCode = result.Code
+					i++
+				case <-time.After(1 * time.Second):
+					r.Errorf("receive timed out")
+					return
+				}
+			}
+		}()
+
+		for _, tc := range sequence {
+			<-transmitter.Transmit(tc.code, gpio.DefaultProtocols[tc.protocol-1], tc.pulseLength)
+		}
+
+		<-doneCh
+	})
 }

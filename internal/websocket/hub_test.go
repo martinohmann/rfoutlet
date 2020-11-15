@@ -5,36 +5,45 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gorilla/websocket"
-	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHub_Broadcast(t *testing.T) {
-	conn := &websocket.Conn{}
-
-	queue := make(chan command.Command)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
+func TestHub(t *testing.T) {
 	h := NewHub()
 
-	go h.Run(stopCh)
-
-	c := newClient(h, conn, queue)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
+	go h.Run(ctx.Done())
+
+	c1 := newClient(h, nil, nil)
+	c2 := newClient(h, nil, nil)
+
 	go func() {
-		h.register <- c
-		h.Broadcast([]byte("foo"))
+		defer cancel()
+
+		h.register <- c1
+		h.register <- c2
+
+		h.Send(c1, []byte{0x1})
+		assert.Equal(t, []byte{0x1}, <-c1.send)
+
+		h.Send(c2, []byte{0x2})
+		assert.Equal(t, []byte{0x2}, <-c2.send)
+
+		h.Broadcast([]byte{0x3})
+		assert.Equal(t, []byte{0x3}, <-c1.send)
+		assert.Equal(t, []byte{0x3}, <-c2.send)
+
+		h.unregister <- c1
+
+		h.Broadcast([]byte{0x4})
+		assert.Equal(t, []byte{0x4}, <-c2.send)
 	}()
 
-	select {
-	case <-ctx.Done():
-		t.Fatal("timeout exceeded")
-	case received := <-c.send:
-		assert.Equal(t, []byte("foo"), received)
+	<-ctx.Done()
+
+	if err := ctx.Err(); err == context.DeadlineExceeded {
+		t.Fatal(err)
 	}
 }

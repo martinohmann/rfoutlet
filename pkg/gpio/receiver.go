@@ -23,7 +23,6 @@ type Receiver struct {
 
 	watcher   Watcher
 	protocols []Protocol
-	done      chan struct{}
 	result    chan ReceiveResult
 }
 
@@ -43,7 +42,6 @@ func NewReceiver(chip *gpiod.Chip, offset int, options ...ReceiverOption) (*Rece
 func NewWatcherReceiver(watcher Watcher, options ...ReceiverOption) *Receiver {
 	r := &Receiver{
 		watcher:   watcher,
-		done:      make(chan struct{}),
 		result:    make(chan ReceiveResult, receiveResultChanLen),
 		protocols: DefaultProtocols,
 	}
@@ -62,21 +60,12 @@ func (r *Receiver) watch() {
 
 	var lastEventType gpiod.LineEventType
 
-	for {
-		select {
-		case <-r.done:
-			return
-		case event, ok := <-r.watcher.Watch():
-			if !ok {
-				return
-			}
-
-			if lastEventType != event.Type {
-				r.handleEvent()
-			}
-
-			lastEventType = event.Type
+	for event := range r.watcher.Watch() {
+		if lastEventType != event.Type {
+			r.handleEvent()
 		}
+
+		lastEventType = event.Type
 	}
 }
 
@@ -87,7 +76,6 @@ func (r *Receiver) Receive() <-chan ReceiveResult {
 
 // Close stops the watcher and receiver goroutines and perform cleanup.
 func (r *Receiver) Close() error {
-	defer close(r.done)
 	return r.watcher.Close()
 }
 
