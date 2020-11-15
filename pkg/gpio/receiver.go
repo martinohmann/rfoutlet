@@ -23,7 +23,6 @@ type Receiver struct {
 
 	watcher   Watcher
 	protocols []Protocol
-	done      chan struct{}
 	result    chan ReceiveResult
 }
 
@@ -43,7 +42,6 @@ func NewReceiver(chip *gpiod.Chip, offset int, options ...ReceiverOption) (*Rece
 func NewWatcherReceiver(watcher Watcher, options ...ReceiverOption) *Receiver {
 	r := &Receiver{
 		watcher:   watcher,
-		done:      make(chan struct{}),
 		result:    make(chan ReceiveResult, receiveResultChanLen),
 		protocols: DefaultProtocols,
 	}
@@ -62,20 +60,10 @@ func (r *Receiver) watch() {
 
 	var lastEventType gpiod.LineEventType
 
-	for {
-		select {
-		case <-r.done:
-			return
-		case event, ok := <-r.watcher.Watch():
-			if !ok {
-				return
-			}
-
-			if lastEventType != event.Type {
-				r.handleEvent()
-			}
-
-			lastEventType = event.Type
+	for evt := range r.watcher.Watch() {
+		if lastEventType != evt.Type {
+			r.handleEvent(evt)
+			lastEventType = evt.Type
 		}
 	}
 }
@@ -87,12 +75,11 @@ func (r *Receiver) Receive() <-chan ReceiveResult {
 
 // Close stops the watcher and receiver goroutines and perform cleanup.
 func (r *Receiver) Close() error {
-	defer close(r.done)
 	return r.watcher.Close()
 }
 
-func (r *Receiver) handleEvent() {
-	event := time.Now().UnixNano() / int64(time.Microsecond)
+func (r *Receiver) handleEvent(evt gpiod.LineEvent) {
+	event := int64(evt.Timestamp) / int64(time.Microsecond)
 	duration := event - r.lastEvent
 
 	if duration > separationLimit {
@@ -127,9 +114,10 @@ func (r *Receiver) handleEvent() {
 func (r *Receiver) receiveProtocol(protocol int) bool {
 	p := r.protocols[protocol]
 
+	delay := r.timings[0] / int64(p.Sync.Low)
+	delayTolerance := delay * receiveTolerance / 100
+
 	var code uint64
-	var delay int64 = r.timings[0] / int64(p.Sync.Low)
-	var delayTolerance int64 = delay * receiveTolerance / 100
 	var i uint = 1
 
 	for ; i < r.changeCount-1; i += 2 {
