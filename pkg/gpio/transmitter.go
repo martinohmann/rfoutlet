@@ -29,8 +29,8 @@ type Transmitter struct {
 	transmission      chan transmission
 	closed            int32
 	transmissionCount int
-	// sleepFn can be replaced in tests to make timing predictable.
-	sleepFn func(time.Duration)
+	// delay can be replaced in tests to make timing predictable.
+	delay func(time.Duration)
 }
 
 // NewTransmitter creates a Transmitter which attaches to the chip's pin at
@@ -50,7 +50,7 @@ func NewPinTransmitter(pin OutputPin, options ...TransmitterOption) *Transmitter
 		pin:               pin,
 		transmission:      make(chan transmission, transmissionChanLen),
 		transmissionCount: DefaultTransmissionCount,
-		sleepFn:           sleepFor,
+		delay:             delay,
 	}
 
 	for _, option := range options {
@@ -122,33 +122,12 @@ func (t *Transmitter) watch() {
 // send sends a sequence of high and low pulses on the gpio pin.
 func (t *Transmitter) send(pulses HighLow, pulseLength uint) {
 	t.pin.SetValue(1)
-	t.sleepFn(time.Microsecond * time.Duration(pulseLength*pulses.High))
+	t.delay(time.Microsecond * time.Duration(pulseLength*pulses.High))
 	t.pin.SetValue(0)
-	t.sleepFn(time.Microsecond * time.Duration(pulseLength*pulses.Low))
+	t.delay(time.Microsecond * time.Duration(pulseLength*pulses.Low))
 }
 
 // NewDiscardingTransmitter creates a *Transmitter that does not send anything.
 func NewDiscardingTransmitter() *Transmitter {
 	return NewPinTransmitter(&FakeOutputPin{})
-}
-
-// sleepFor sleeps for given duration using busy waiting. The godoc for
-// time.Sleep states:
-//
-//   Sleep pauses the current goroutine for *at least* the duration d
-//
-// This means that for sub-millisecond sleep durations it will pause the
-// current goroutine for longer than we can afford as for us the sleep duration
-// needs to be as precise as possible to send out the correct codes to the
-// outlets. time.Sleep causes sleep pauses to be off by 100+ microseconds on
-// average whereas we can bring this down to < 5 microseconds using busy
-// waiting.
-func sleepFor(duration time.Duration) {
-	now := time.Now()
-
-	for {
-		if time.Since(now) >= duration {
-			break
-		}
-	}
 }
