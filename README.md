@@ -166,7 +166,7 @@ Simply run:
 docker-compose up -d
 ```
 
-This pull `mohmann/rfoutlet:latest` and start the `rfoutlet` container listening on port
+This pulls `mohmann/rfoutlet:latest` and starts the `rfoutlet` container listening on port
 `3333`.
 
 ### Running via docker
