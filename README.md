@@ -145,7 +145,20 @@ check out the code in [cmd/sniff.go](cmd/sniff.go) and
 go get -u github.com/martinohmann/rfoutlet/pkg/gpio
 ```
 
-### Using docker-compose
+## Using docker
+
+Pre-built images of tagged releases and `master` are available on [Docker
+Hub](https://hub.docker.com/r/mohmann/rfoutlet). `mohmann/rfoutlet:latest` will
+always point to the latest tagged release.
+
+If you prefer building locally, run:
+
+```sh
+docker build -t mohmann/rfoutlet .
+```
+
+
+### Running via docker-compose
 
 Simply run:
 
@@ -153,18 +166,10 @@ Simply run:
 docker-compose up -d
 ```
 
-This will build the image and start the `rfoutlet` container listening on port
+This pull `mohmann/rfoutlet:latest` and start the `rfoutlet` container listening on port
 `3333`.
 
-### Using docker
-
-Build the image for armv7:
-
-```sh
-make image-armv7
-```
-
-This will create an image called `mohmann/rfoutlet:armv7`.
+### Running via docker
 
 Start the container and browse to `<raspberry-ip-address>:3333`:
 
@@ -175,7 +180,7 @@ docker run \
     -p 3333:3333 \
     -v /etc/localtime:/etc/localtime:ro \
     -v $(pwd)/configs/config.yml:/etc/rfoutlet/config.yml:ro \
-    mohmann/rfoutlet:armv7
+    mohmann/rfoutlet:latest
 ```
 
 The container has to run in privileged mode in order to be able to access

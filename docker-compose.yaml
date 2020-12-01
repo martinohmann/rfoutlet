@@ -3,7 +3,10 @@ version: '3'
 services:
   rfoutlet:
     container_name: rfoutlet
-    build: .
+    image: mohmann/rfoutlet:latest
+    # Uncomment if you want to build the image yourself:
+    #
+    # build: .
     ports:
       - '3333:3333'
     volumes:
