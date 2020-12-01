@@ -12,7 +12,7 @@ builds:
     goarm:
       - 7
     hooks:
-      pre: make app pack-app
+      pre: make deps app pack-app
       post: packr clean
 release:
   github:
