@@ -57,7 +57,7 @@ func TestReceiverReceive(t *testing.T) {
 	pipe := newPinWatcherPipe(fakeClock)
 
 	tx := NewPinTransmitter(pipe, TransmissionCount(10))
-	tx.sleepFn = fakeClock.Advance
+	tx.delay = fakeClock.Advance
 	defer tx.Close()
 
 	rx := NewWatcherReceiver(pipe, ReceiverProtocols(DefaultProtocols))
