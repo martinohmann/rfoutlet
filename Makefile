@@ -1,12 +1,14 @@
 .DEFAULT_GOAL := help
 
-GOLANGCI_LINT_VERSION ?= v1.19.1
+GOLANGCI_LINT_VERSION ?= v1.31.0
 TEST_FLAGS ?= -race
+IMAGE ?= mohmann/rfoutlet
+IMAGE_TAG ?= latest
 PKGS ?= $(shell go list ./... | grep -v /vendor/)
 
 .PHONY: help
 help:
-	@grep -E '^[a-zA-Z0-9-]+:.*?## .*$$' Makefile | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "[32m%-23s[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9-]+:.*?## .*$$' Makefile | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "[32m%-19s[0m %s\n", $$1, $$2}'
 
 .PHONY: all
 all: app binary ## install dependencies and build everything
@@ -67,16 +69,9 @@ clean: ## clean dependencies and artifacts
 install: build ## install rfoutlet into $GOPATH/bin
 	mv rfoutlet $(GOPATH)/bin/rfoutlet
 
-.PHONY: images
-images: image-amd64 image-armv7 ## build docker images
-
-.PHONY: image-amd64
-image-amd64: ## build amd64 image
-	docker build --build-arg GOARCH=amd64 -t mohmann/rfoutlet:amd64 .
-
-.PHONY: image-armv7
-image-armv7: ## build armv7 image
-	docker build --build-arg GOARCH=arm --build-arg GOARM=7 -t mohmann/rfoutlet:armv7 .
+.PHONY: image
+image: ## build docker image
+	docker build -t $(IMAGE):$(IMAGE_TAG) .
 
 .PHONY: load-gpio-mockup
 load-gpio-mockup: ## create a mock /dev/gpiochip0 using the gpio-mockup kernel module
