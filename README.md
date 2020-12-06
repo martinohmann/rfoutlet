@@ -313,7 +313,20 @@ development box does not have `/dev/gpiochip0`, you can load the `gpio-mockup`
 kernel module to create a mockup:
 
 ```bash
-make load-gpio-mockup
+sudo make load-gpio-mockup
+```
+
+To unload the gpio-mockup kernel module again, run:
+
+```bash
+sudo make unload-gpio-mockup
+```
+
+A more convenient way to automatically load the `gpio-mockup` kernel module and
+unload it again is to simply pass the `--gpio-mockup` flag to rfoutlet:
+
+```bash
+sudo rfoutlet --gpio-mockup [...]
 ```
 
 Run `make` without arguments to see available commands for building and testing.

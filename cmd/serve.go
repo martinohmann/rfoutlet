@@ -23,13 +23,9 @@ import (
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/warthog618/gpiod"
 )
 
-const (
-	webDir       = "../web/build"
-	gpioChipName = "gpiochip0"
-)
+const webDir = "../web/build"
 
 func NewServeCommand() *cobra.Command {
 	options := &ServeOptions{
@@ -40,8 +36,8 @@ func NewServeCommand() *cobra.Command {
 		Use:   "serve",
 		Short: "Serve the frontend for controlling outlets",
 		Long:  "The serve command starts a server which serves the frontend and connects clients through websockets for controlling outlets via web interface.",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return options.Run()
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return options.Run(cmd)
 		},
 	}
 
@@ -65,7 +61,7 @@ func (o *ServeOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().IntVar(&o.GPIO.TransmissionCount, "transmission-count", o.GPIO.TransmissionCount, "number of times a code should be transmitted in a row. The higher the value, the more likely it is that an outlet actually received the code")
 }
 
-func (o *ServeOptions) Run() error {
+func (o *ServeOptions) Run(cmd *cobra.Command) error {
 	cfg, err := config.LoadWithDefaults(o.ConfigFilename)
 	if err != nil {
 		return fmt.Errorf("failed to load config: %v", err)
@@ -85,13 +81,13 @@ func (o *ServeOptions) Run() error {
 		return fmt.Errorf("failed to register outlet groups: %v", err)
 	}
 
-	chip, err := gpiod.NewChip(gpioChipName)
+	device, err := openGPIODevice(cmd)
 	if err != nil {
-		return fmt.Errorf("failed to open gpio device: %v", err)
+		return err
 	}
-	defer chip.Close()
+	defer device.Close()
 
-	transmitter, err := gpio.NewTransmitter(chip, int(cfg.GPIO.TransmitPin), gpio.TransmissionCount(cfg.GPIO.TransmissionCount))
+	transmitter, err := gpio.NewTransmitter(device.Chip, int(cfg.GPIO.TransmitPin), gpio.TransmissionCount(cfg.GPIO.TransmissionCount))
 	if err != nil {
 		return fmt.Errorf("failed to create gpio transmitter: %v", err)
 	}
@@ -126,7 +122,7 @@ func (o *ServeOptions) Run() error {
 	commandQueue := make(chan command.Command)
 
 	if cfg.DetectStateDrift {
-		receiver, err := gpio.NewReceiver(chip, int(cfg.GPIO.ReceivePin))
+		receiver, err := gpio.NewReceiver(device.Chip, int(cfg.GPIO.ReceivePin))
 		if err != nil {
 			return fmt.Errorf("failed to create gpio receiver: %v", err)
 		}

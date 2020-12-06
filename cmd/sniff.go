@@ -8,7 +8,6 @@ import (
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/warthog618/gpiod"
 )
 
 func NewSniffCommand() *cobra.Command {
@@ -21,7 +20,7 @@ func NewSniffCommand() *cobra.Command {
 		Short: "Sniff codes sent out to remote controlled outlets",
 		Long:  "The sniff command can be used to sniff codes sent out to remote controlled outlets.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return options.Run()
+			return options.Run(cmd)
 		},
 	}
 
@@ -38,14 +37,14 @@ func (o *SniffOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().UintVar(&o.Pin, "pin", o.Pin, "gpio pin to sniff on")
 }
 
-func (o *SniffOptions) Run() error {
-	chip, err := gpiod.NewChip(gpioChipName)
+func (o *SniffOptions) Run(cmd *cobra.Command) error {
+	device, err := openGPIODevice(cmd)
 	if err != nil {
-		return fmt.Errorf("failed to open gpio device: %v", err)
+		return err
 	}
-	defer chip.Close()
+	defer device.Close()
 
-	receiver, err := gpio.NewReceiver(chip, int(o.Pin))
+	receiver, err := gpio.NewReceiver(device.Chip, int(o.Pin))
 	if err != nil {
 		return fmt.Errorf("failed to create gpio receiver: %v", err)
 	}
