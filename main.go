@@ -11,6 +11,10 @@
 package main
 
 import (
+	"fmt"
+	"path"
+	"runtime"
+
 	"github.com/gin-gonic/gin"
 	"github.com/martinohmann/rfoutlet/cmd"
 	log "github.com/sirupsen/logrus"
@@ -34,7 +38,11 @@ func newRootCommand() *cobra.Command {
 				log.SetLevel(log.DebugLevel)
 				log.SetFormatter(&log.TextFormatter{
 					FullTimestamp: true,
+					CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+						return f.Function, fmt.Sprintf("%s:%d", path.Base(f.File), f.Line)
+					},
 				})
+				log.SetReportCaller(true)
 			}
 		},
 	}
