@@ -10,7 +10,6 @@ import (
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/warthog618/gpiod"
 )
 
 func NewTransmitCommand() *cobra.Command {
@@ -27,7 +26,7 @@ func NewTransmitCommand() *cobra.Command {
 		Long:  "The transmit command can be used send out codes to remote controlled outlets.",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return options.Run(args)
+			return options.Run(cmd, args)
 		},
 	}
 
@@ -55,7 +54,7 @@ func (o *TransmitOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&o.Infinite, "infinite", o.Infinite, "restart the transmission of codes after the last one was sent")
 }
 
-func (o *TransmitOptions) Run(args []string) error {
+func (o *TransmitOptions) Run(cmd *cobra.Command, args []string) error {
 	if o.Protocol < 1 || o.Protocol > len(gpio.DefaultProtocols) {
 		return fmt.Errorf("protocol %d does not exist", o.Protocol)
 	}
@@ -72,13 +71,13 @@ func (o *TransmitOptions) Run(args []string) error {
 		}
 	}
 
-	chip, err := gpiod.NewChip(gpioChipName)
+	device, err := openGPIODevice(cmd)
 	if err != nil {
-		return fmt.Errorf("failed to open gpio device: %v", err)
+		return err
 	}
-	defer chip.Close()
+	defer device.Close()
 
-	transmitter, err := gpio.NewTransmitter(chip, int(o.Pin), gpio.TransmissionCount(o.Count))
+	transmitter, err := gpio.NewTransmitter(device.Chip, int(o.Pin), gpio.TransmissionCount(o.Count))
 	if err != nil {
 		return fmt.Errorf("failed to create gpio transmitter: %v", err)
 	}

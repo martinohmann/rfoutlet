@@ -48,6 +48,8 @@ func newRootCommand() *cobra.Command {
 	}
 
 	cmd.PersistentFlags().BoolVar(&debug, "debug", debug, "enable debug mode. this will cause more verbose output")
+	cmd.PersistentFlags().String("gpio-chip", "gpiochip0", "name of the GPIO chip to interact with")
+	cmd.PersistentFlags().Bool("gpio-mockup", false, "automatically load and unload the gpio-mockup kernel module, useful for testing")
 
 	return cmd
 }
