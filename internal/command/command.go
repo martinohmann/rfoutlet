@@ -1,5 +1,5 @@
-// Package command provides the interfaces for commands that can be pushed
-// into a command queue for the controller to consume.
+// Package command provides commands that can be pushed into a command queue
+// for the controller to consume.
 package command
 
 import "github.com/martinohmann/rfoutlet/internal/outlet"
