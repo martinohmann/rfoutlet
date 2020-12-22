@@ -56,3 +56,25 @@ const (
 	OutletType   Type = "outlet"
 	StatusType   Type = "status"
 )
+
+// OutletAction is the type of an action that can be performed on an outlet or
+// outlet group.
+type OutletAction string
+
+// Supported outlet command actions.
+const (
+	OnOutletAction     OutletAction = "on"
+	OffOutletAction    OutletAction = "off"
+	ToggleOutletAction OutletAction = "toggle"
+)
+
+// IntervalAction is the type of an action that can be performed on intervals
+// of an outlet's schedule.
+type IntervalAction string
+
+// Supported interval command actions.
+const (
+	CreateIntervalAction IntervalAction = "create"
+	UpdateIntervalAction IntervalAction = "update"
+	DeleteIntervalAction IntervalAction = "delete"
+)
