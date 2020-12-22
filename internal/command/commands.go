@@ -8,16 +8,6 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 )
 
-const (
-	outletOnAction     = "on"
-	outletOffAction    = "off"
-	outletToggleAction = "toggle"
-
-	intervalCreateAction = "create"
-	intervalUpdateAction = "update"
-	intervalDeleteAction = "delete"
-)
-
 // StatusCommand is sent by a connected client to retrieve the list of current
 // outlet groups. This usually happens when the client first connects.
 type StatusCommand struct {
@@ -50,7 +40,7 @@ type OutletCommand struct {
 	// OutletID is the ID of the outlet that the action should be performed on.
 	OutletID string `json:"outletID"`
 	// Action defines the action type that should be performed on the outlet.
-	Action string `json:"action"`
+	Action OutletAction `json:"action"`
 }
 
 // Execute implements Command.
@@ -86,7 +76,7 @@ type GroupCommand struct {
 	GroupID string `json:"groupID"`
 	// Action defines the action type that should be performed on the outlet
 	// group.
-	Action string `json:"action"`
+	Action OutletAction `json:"action"`
 }
 
 // Execute implements Command.
@@ -127,7 +117,7 @@ type IntervalCommand struct {
 	// should be changed.
 	OutletID string `json:"outletID"`
 	// Action defines the action type that should be performed on the interval.
-	Action string `json:"action"`
+	Action IntervalAction `json:"action"`
 	// Interval is the configuration of the interval.
 	Interval schedule.Interval `json:"interval"`
 }
@@ -152,24 +142,24 @@ func (c IntervalCommand) Execute(context Context) (bool, error) {
 
 func (c IntervalCommand) handle(outlet *outlet.Outlet) error {
 	switch c.Action {
-	case intervalCreateAction:
+	case CreateIntervalAction:
 		return outlet.Schedule.AddInterval(c.Interval)
-	case intervalUpdateAction:
+	case UpdateIntervalAction:
 		return outlet.Schedule.UpdateInterval(c.Interval)
-	case intervalDeleteAction:
+	case DeleteIntervalAction:
 		return outlet.Schedule.DeleteInterval(c.Interval)
 	default:
 		return fmt.Errorf("invalid interval action %q", c.Action)
 	}
 }
 
-func getTargetState(o *outlet.Outlet, action string) (outlet.State, error) {
+func getTargetState(o *outlet.Outlet, action OutletAction) (outlet.State, error) {
 	switch action {
-	case outletOnAction:
+	case OnOutletAction:
 		return outlet.StateOn, nil
-	case outletOffAction:
+	case OffOutletAction:
 		return outlet.StateOff, nil
-	case outletToggleAction:
+	case ToggleOutletAction:
 		if o.GetState() == outlet.StateOn {
 			return outlet.StateOff, nil
 		}
