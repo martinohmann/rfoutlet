@@ -45,3 +45,14 @@ func NewTestContext() (Context, *outlet.Registry, *outlet.FakeSwitch) {
 
 	return Context{Registry: r, Switcher: s}, r, s
 }
+
+// Type is the type of a Command.
+type Type string
+
+// Supported command types.
+const (
+	GroupType    Type = "group"
+	IntervalType Type = "interval"
+	OutletType   Type = "outlet"
+	StatusType   Type = "status"
+)
