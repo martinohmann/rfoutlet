@@ -9,7 +9,6 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/martinohmann/rfoutlet/internal/command"
-	"github.com/martinohmann/rfoutlet/internal/controller/commands"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/sirupsen/logrus"
 )
@@ -65,7 +64,7 @@ func (s *TimeSwitch) check() {
 		// We only send out commands if the outlet is not in the desired state
 		// to avoid spamming the command queue.
 		if outlet.GetState() != desiredState {
-			s.CommandQueue <- commands.StateCorrectionCommand{
+			s.CommandQueue <- command.StateCorrectionCommand{
 				Outlet:       outlet,
 				DesiredState: desiredState,
 			}

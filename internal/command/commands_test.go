@@ -1,11 +1,10 @@
-package commands
+package command
 
 import (
 	"bytes"
 	"errors"
 	"testing"
 
-	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +20,7 @@ func (s *fakeSender) Send(msg []byte) {
 }
 
 func TestStatusCommand(t *testing.T) {
-	ctx, r, _ := command.NewTestContext()
+	ctx, r, _ := NewTestContext()
 
 	s := &fakeSender{}
 
@@ -39,7 +38,7 @@ func TestStatusCommand(t *testing.T) {
 }
 
 func TestOutletCommand(t *testing.T) {
-	ctx, r, _ := command.NewTestContext()
+	ctx, r, _ := NewTestContext()
 
 	o := &outlet.Outlet{ID: "foo"}
 
@@ -55,7 +54,7 @@ func TestOutletCommand(t *testing.T) {
 }
 
 func TestGroupCommand(t *testing.T) {
-	ctx, r, _ := command.NewTestContext()
+	ctx, r, _ := NewTestContext()
 
 	o1 := &outlet.Outlet{ID: "foo", State: outlet.StateOn}
 	o2 := &outlet.Outlet{ID: "baz"}
@@ -85,7 +84,7 @@ func TestGroupCommand(t *testing.T) {
 }
 
 func TestIntervalCommand(t *testing.T) {
-	ctx, r, _ := command.NewTestContext()
+	ctx, r, _ := NewTestContext()
 
 	o := &outlet.Outlet{ID: "foo", Schedule: schedule.New()}
 
@@ -162,7 +161,7 @@ func TestStateCorrectionCommand(t *testing.T) {
 				DesiredState: test.desiredState,
 			}
 
-			ctx, _, s := command.NewTestContext()
+			ctx, _, s := NewTestContext()
 			s.Err = test.switchErr
 
 			broadcast, err := cmd.Execute(ctx)

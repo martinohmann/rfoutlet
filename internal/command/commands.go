@@ -1,11 +1,9 @@
-// Package commands contains the commands can be handled by the controller.
-package commands
+package command
 
 import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 )
@@ -23,13 +21,13 @@ const (
 // StatusCommand is sent by a connected client to retrieve the list of current
 // outlet groups. This usually happens when the client first connects.
 type StatusCommand struct {
-	sender command.Sender
+	sender Sender
 }
 
-// Execute implements command.Command.
+// Execute implements Command.
 //
 // It sends the registered outlet groups back to the sender.
-func (c StatusCommand) Execute(context command.Context) (bool, error) {
+func (c StatusCommand) Execute(context Context) (bool, error) {
 	groups := context.GetGroups()
 
 	msg, err := json.Marshal(groups)
@@ -42,8 +40,8 @@ func (c StatusCommand) Execute(context command.Context) (bool, error) {
 	return false, nil
 }
 
-// SetSender implements command.SenderAwareCommand.
-func (c *StatusCommand) SetSender(sender command.Sender) {
+// SetSender implements SenderAwareCommand.
+func (c *StatusCommand) SetSender(sender Sender) {
 	c.sender = sender
 }
 
@@ -55,10 +53,10 @@ type OutletCommand struct {
 	Action string `json:"action"`
 }
 
-// Execute implements command.Command.
+// Execute implements Command.
 //
 // It switches an outlet based on the transmitted action.
-func (c OutletCommand) Execute(context command.Context) (bool, error) {
+func (c OutletCommand) Execute(context Context) (bool, error) {
 	outlet, ok := context.GetOutlet(c.OutletID)
 	if !ok {
 		return false, fmt.Errorf("outlet %q does not exist", c.OutletID)
@@ -91,10 +89,10 @@ type GroupCommand struct {
 	Action string `json:"action"`
 }
 
-// Execute implements command.Command.
+// Execute implements Command.
 //
 // It switches a group of outlets based on the transmitted action.
-func (c GroupCommand) Execute(context command.Context) (bool, error) {
+func (c GroupCommand) Execute(context Context) (bool, error) {
 	group, ok := context.GetGroup(c.GroupID)
 	if !ok {
 		return false, fmt.Errorf("outlet group %q does not exist", c.GroupID)
@@ -134,11 +132,11 @@ type IntervalCommand struct {
 	Interval schedule.Interval `json:"interval"`
 }
 
-// Execute implements command.Command.
+// Execute implements Command.
 //
 // It add, updates or deletes an interval from the outlet's schedule based on
 // the transmitted action.
-func (c IntervalCommand) Execute(context command.Context) (bool, error) {
+func (c IntervalCommand) Execute(context Context) (bool, error) {
 	outlet, ok := context.GetOutlet(c.OutletID)
 	if !ok {
 		return false, fmt.Errorf("outlet %q does not exist", c.OutletID)
@@ -191,10 +189,10 @@ type StateCorrectionCommand struct {
 	DesiredState outlet.State
 }
 
-// Execute implements command.Command.
+// Execute implements Command.
 //
 // It switch an outlet to the detected state.
-func (c StateCorrectionCommand) Execute(context command.Context) (bool, error) {
+func (c StateCorrectionCommand) Execute(context Context) (bool, error) {
 	// If the outlet was already switched to the desired state after we
 	// submitted the command, we can bail out early.
 	if c.Outlet.GetState() == c.DesiredState {

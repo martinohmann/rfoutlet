@@ -7,7 +7,6 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/martinohmann/rfoutlet/internal/command"
-	"github.com/martinohmann/rfoutlet/internal/controller/commands"
 	"github.com/martinohmann/rfoutlet/internal/outlet"
 	"github.com/martinohmann/rfoutlet/internal/schedule"
 	"github.com/stretchr/testify/assert"
@@ -62,7 +61,7 @@ func TestTimeSwitch(t *testing.T) {
 				},
 			},
 			expectedCommands: []command.Command{
-				commands.StateCorrectionCommand{
+				command.StateCorrectionCommand{
 					DesiredState: outlet.StateOn,
 					Outlet: &outlet.Outlet{
 						State: outlet.StateOff,
@@ -110,7 +109,7 @@ func TestTimeSwitch(t *testing.T) {
 				},
 			},
 			expectedCommands: []command.Command{
-				commands.StateCorrectionCommand{
+				command.StateCorrectionCommand{
 					DesiredState: outlet.StateOff,
 					Outlet: &outlet.Outlet{
 						State: outlet.StateOn,

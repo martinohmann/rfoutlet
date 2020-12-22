@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/martinohmann/rfoutlet/internal/command"
-	"github.com/martinohmann/rfoutlet/internal/controller/commands"
 )
 
 // Type is the type of a command.
@@ -32,13 +31,13 @@ type Envelope struct {
 func decodeCommand(envelope Envelope) (command.Command, error) {
 	switch envelope.Type {
 	case OutletType:
-		return decode(envelope.Data, &commands.OutletCommand{})
+		return decode(envelope.Data, &command.OutletCommand{})
 	case GroupType:
-		return decode(envelope.Data, &commands.GroupCommand{})
+		return decode(envelope.Data, &command.GroupCommand{})
 	case IntervalType:
-		return decode(envelope.Data, &commands.IntervalCommand{})
+		return decode(envelope.Data, &command.IntervalCommand{})
 	case StatusType:
-		return &commands.StatusCommand{}, nil
+		return &command.StatusCommand{}, nil
 	default:
 		return nil, fmt.Errorf("unknown command type %q", envelope.Type)
 	}
