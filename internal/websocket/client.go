@@ -69,7 +69,7 @@ func (c *client) listenRead() {
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	for {
-		envelope := Envelope{}
+		envelope := command.Envelope{}
 
 		if err := c.conn.ReadJSON(&envelope); err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure, websocket.CloseNormalClosure) {
@@ -78,7 +78,7 @@ func (c *client) listenRead() {
 			return
 		}
 
-		cmd, err := decodeCommand(envelope)
+		cmd, err := command.Unpack(envelope)
 		if err != nil {
 			log.Errorf("failed to decode command: %v", err)
 			continue
