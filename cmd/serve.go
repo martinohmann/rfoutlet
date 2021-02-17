@@ -11,7 +11,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/gobuffalo/packr"
 	"github.com/imdario/mergo"
 	"github.com/martinohmann/rfoutlet/internal/command"
 	"github.com/martinohmann/rfoutlet/internal/config"
@@ -21,11 +20,10 @@ import (
 	"github.com/martinohmann/rfoutlet/internal/timeswitch"
 	"github.com/martinohmann/rfoutlet/internal/websocket"
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
+	"github.com/martinohmann/rfoutlet/web"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
-
-const webDir = "../web/build"
 
 func NewServeCommand() *cobra.Command {
 	options := &ServeOptions{
@@ -160,7 +158,7 @@ func setupRouter(hub *websocket.Hub, commandQueue chan<- command.Command) http.H
 	r.GET("/", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/app") })
 	r.GET("/ws", websocket.Handler(hub, commandQueue))
 	r.GET("/healthz", func(c *gin.Context) { c.String(http.StatusOK, "ok") })
-	r.StaticFS("/app", packr.NewBox(webDir))
+	r.StaticFS("/app", http.FS(web.NewFS()))
 
 	return r
 }

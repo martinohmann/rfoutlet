@@ -1,6 +1,7 @@
 .DEFAULT_GOAL := help
 
-GOLANGCI_LINT_VERSION ?= v1.31.0
+GO ?= go
+GOLANGCI_LINT_VERSION ?= v1.37.0
 TEST_FLAGS ?= -race
 IMAGE ?= mohmann/rfoutlet
 IMAGE_TAG ?= latest
@@ -17,12 +18,11 @@ all: app binary ## install dependencies and build everything
 app: deps-app build-app ## install app dependencies and build
 
 .PHONY: binary
-binary: deps pack-app build ## install binary dependencies, pack app and build
+binary: deps build ## install binary dependencies and build
 
 .PHONY: deps
 deps: ## install go deps
-	go mod download
-	go get github.com/gobuffalo/packr/packr@v1.30.1
+	$(GO) mod download
 
 .PHONY: deps-app
 deps-app: ## install node deps
@@ -30,28 +30,24 @@ deps-app: ## install node deps
 
 .PHONY: build
 build: ## build rfoutlet
-	go build -ldflags="-s -w" -o rfoutlet main.go
+	$(GO) build -ldflags="-s -w" -o rfoutlet main.go
 
 .PHONY: build-app
 build-app: ## build node app
 	cd web && npm run build
 
-.PHONY: pack-app
-pack-app: ## pack app using packr
-	packr
-
 .PHONY: test
 test: ## run tests
-	go test $(TEST_FLAGS) $(PKGS)
+	$(GO) test $(TEST_FLAGS) $(PKGS)
 
 .PHONY: vet
 vet: ## run go vet
-	go vet $(PKGS)
+	$(GO) vet $(PKGS)
 
 .PHONY: coverage
 coverage: ## generate code coverage
-	go test $(TEST_FLAGS) -covermode=atomic -coverprofile=coverage.txt $(PKGS)
-	go tool cover -func=coverage.txt
+	$(GO) test $(TEST_FLAGS) -covermode=atomic -coverprofile=coverage.txt $(PKGS)
+	$(GO) tool cover -func=coverage.txt
 
 .PHONY: lint
 lint: ## run golangci-lint
@@ -63,7 +59,6 @@ lint: ## run golangci-lint
 clean: ## clean dependencies and artifacts
 	rm -rf vendor/ web/node_modules/ web/build/
 	rm -f rfoutlet
-	packr clean
 
 .PHONY: install
 install: build ## install rfoutlet into $GOPATH/bin

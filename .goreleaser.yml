@@ -12,8 +12,7 @@ builds:
     goarm:
       - 7
     hooks:
-      pre: make deps app pack-app
-      post: packr clean
+      pre: make deps app
 release:
   github:
     owner: martinohmann

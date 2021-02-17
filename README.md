@@ -115,7 +115,7 @@ and required software.
 
 - I use Arch Linux on the Raspberry PI, but Raspbian should also work
 - nodejs 15.0+
-- golang 1.13+
+- golang 1.16+
 - `make`
 
 Older software versions may also work, but I did not test that.
@@ -255,9 +255,9 @@ sudo pacman -Sy go nodejs npm make
 On Raspbian the following should do (untested):
 
 ```sh
-wget https://storage.googleapis.com/golang/go1.15.5.linux-armv6l.tar.gz
-sudo tar -C /usr/local -xvf go1.15.5.linux-armv6l.tar.gz
-rm go1.15.5.linux-armv6l.tar.gz
+wget https://storage.googleapis.com/golang/go1.16.0.linux-armv6l.tar.gz
+sudo tar -C /usr/local -xvf go1.16.0.linux-armv6l.tar.gz
+rm go1.16.0.linux-armv6l.tar.gz
 curl -sL https://deb.nodesource.com/setup_15.x | sudo -E bash -
 sudo apt-get install -y build-essential nodejs
 ```

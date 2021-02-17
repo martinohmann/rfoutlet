@@ -7,7 +7,7 @@ WORKDIR /web
 RUN npm install && \
     npm run build
 
-FROM golang:1.15.5-alpine3.12 as golang-builder
+FROM golang:1.16.0-alpine3.12 as golang-builder
 
 WORKDIR /go/src/github.com/martinohmann/rfoutlet
 
@@ -27,9 +27,10 @@ COPY --from=node-builder /web/build web/build
 ADD cmd/ cmd/
 ADD internal/ internal/
 ADD pkg/ pkg/
+ADD web/static.go web/static.go
 ADD main.go main.go
 
-RUN CGO_ENABLED=0 GOOS=linux make pack-app build
+RUN CGO_ENABLED=0 GOOS=linux make build
 
 FROM scratch
 

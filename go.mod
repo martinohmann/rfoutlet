@@ -1,12 +1,11 @@
 module github.com/martinohmann/rfoutlet
 
-go 1.13
+go 1.16
 
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.6.3
-	github.com/gobuffalo/packr v1.30.1
 	github.com/gorilla/websocket v1.4.2
 	github.com/imdario/mergo v0.3.11
 	github.com/jonboulle/clockwork v0.2.2
