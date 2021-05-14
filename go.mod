@@ -8,7 +8,7 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/gobuffalo/packr v1.30.1
 	github.com/gorilla/websocket v1.4.2
-	github.com/imdario/mergo v0.3.11
+	github.com/imdario/mergo v0.3.12
 	github.com/jonboulle/clockwork v0.2.2
 	github.com/posener/wstest v1.2.0
 	github.com/satori/go.uuid v1.2.0
