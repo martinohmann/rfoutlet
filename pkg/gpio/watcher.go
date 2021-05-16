@@ -13,7 +13,7 @@ func NewWatcher(chip *gpiod.Chip, offset int) (Watcher, error) {
 		events: make(chan gpiod.LineEvent),
 	}
 
-	pin, err := chip.RequestLine(offset, gpiod.WithBothEdges(w.handleEvent))
+	pin, err := chip.RequestLine(offset, gpiod.WithEventHandler(w.handleEvent), gpiod.WithBothEdges)
 	if err != nil {
 		return nil, err
 	}
