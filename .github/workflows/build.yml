@@ -11,7 +11,7 @@ jobs:
   build:
     strategy:
       matrix:
-        go-version: [1.13.x, 1.15.x]
+        go-version: [1.13.x, 1.15.x, 1.16.x]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -60,7 +60,7 @@ jobs:
         working-directory: web
     strategy:
       matrix:
-        node-version: ['15']
+        node-version: ['15', '16']
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
