@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-gonic/gin v1.7.1
+	github.com/gin-gonic/gin v1.7.2
 	github.com/gobuffalo/packr v1.30.1
 	github.com/gorilla/websocket v1.4.2
 	github.com/imdario/mergo v0.3.12
