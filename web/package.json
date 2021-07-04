@@ -11,7 +11,7 @@
     "i18next-browser-languagedetector": "^4.0.1",
     "luxon": "^1.21.2",
     "react": "^16.12.0",
-    "react-dom": "^16.12.0",
+    "react-dom": "^16.13.0",
     "react-i18next": "^11.2.4",
     "react-router-dom": "^5.1.2",
     "react-scripts": "^4.0.3",
