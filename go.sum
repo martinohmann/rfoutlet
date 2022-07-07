@@ -200,8 +200,8 @@ github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLY
 github.com/ugorji/go/codec v1.2.7 h1:YPXUKf7fYbp/y8xloBqZOw2qaVggbfwMlI8WM3wZUJ0=
 github.com/ugorji/go/codec v1.2.7/go.mod h1:WGN1fab3R1fzQlVQTkfxVtIBhWDRqOviHU95kRgeqEY=
 github.com/warthog618/config v0.4.1/go.mod h1:IzcIkVay6dCubN3WBAJzPuqHyE1fTPxICvKTQ/2JA9g=
-github.com/warthog618/gpiod v0.6.0 h1:akX8p4pL99m/wxhuknuh2vWS9BJ/N+eguts9ON8Lmjs=
-github.com/warthog618/gpiod v0.6.0/go.mod h1:RDkm3Ur6o0Wam7cSkyLuVMghs1CHlfdlnUfRMRyDc+w=
+github.com/warthog618/gpiod v0.8.0 h1:qxH9XVvWHpTxzWFSndBcujFyNH5zVRzHM63tcmm85o4=
+github.com/warthog618/gpiod v0.8.0/go.mod h1:a7Csa+IJtDBZ39++zC/6Srjo01qWejt/5velrDWuNkY=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
